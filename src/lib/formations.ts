@@ -47,6 +47,8 @@ const defensePositions: Record<Defense, [number, number, string][]> = {
     [305, 208, "Av"],
   ],
 };
+// Offense: F/E/D = left wing/pivot/right wing; A/B/C = left/center/right back.
+// In 2:4, B advances to a second pivot alongside E.
 export function formation(
   role: "defender" | "attacker",
   system: Defense | Offense,
@@ -56,20 +58,20 @@ export function formation(
       ? defensePositions[system as Defense]
       : system === "2:4"
         ? [
-            [28, 122, "A"],
-            [125, 265, "B"],
+            [28, 122, "F"],
+            [125, 265, "A"],
             [275, 265, "C"],
             [372, 122, "D"],
-            [154, 171, "E"],
-            [246, 171, "F"],
+            [154, 171, "B"],
+            [246, 171, "E"],
           ]
         : [
-            [28, 122, "A"],
-            [101, 256, "B"],
-            [200, 289, "C"],
-            [299, 256, "D"],
-            [372, 122, "E"],
-            [238, 174, "F"],
+            [28, 122, "F"],
+            [101, 256, "A"],
+            [200, 289, "B"],
+            [299, 256, "C"],
+            [372, 122, "D"],
+            [238, 174, "E"],
           ];
   return positions.map(([x, y, label]) => ({
     id: crypto.randomUUID(),
