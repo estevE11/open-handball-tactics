@@ -28,6 +28,18 @@ export function Court({ config }: { config: DrillProject["courtConfig"] }) {
         fill="#fafafa"
         stroke="#697d73"
       />
+      {[0, 20, 40].map((offset) => (
+        <rect
+          key={offset}
+          data-goal-post-stripe
+          x={170 + offset}
+          y="-12"
+          width="10"
+          height="12"
+          fill="#d95757"
+          stroke="none"
+        />
+      ))}
       <path
         d="M180 -12v12m10 -12v12m10 -12v12m10 -12v12m10 -12v12"
         stroke="#a1b0a8"
