@@ -341,7 +341,6 @@ export function TacticalCanvas({
           <Arrow
             key={arrow.id}
             arrow={previewArrow(arrow)}
-            selected={selected === arrow.id}
             onPointerDown={
               tool === "select" && playbackTime === null
                 ? (e) => begin(e, "move-arrow", arrow.id)

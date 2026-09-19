@@ -368,8 +368,17 @@ test("arrows move as a whole and support draggable endpoints and multiple Bézie
   await page.mouse.up();
   await expect(line).not.toHaveAttribute("d", original!);
   await expect(court.getByLabel("Arrow start point")).toBeVisible();
+  const originalColor = await line.getAttribute("stroke");
+  await page.getByLabel("Line color", { exact: true }).fill("#e11d48");
+  await expect(line).toHaveAttribute("stroke", "#e11d48");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(line).toHaveAttribute("stroke", originalColor!);
+  await page.mouse.click(target.x, target.y);
+  await page.getByLabel("Line color", { exact: true }).fill("#e11d48");
   await page.getByLabel("Arrowheads", { exact: true }).selectOption("both");
   await expect(court.locator("[data-arrow-head]")).toHaveCount(2);
+  for (const head of await court.locator("[data-arrow-head]").all())
+    await expect(head).toHaveAttribute("stroke", "#e11d48");
   await page.getByLabel("Arrowheads", { exact: true }).selectOption("none");
   await expect(court.locator("[data-arrow-head]")).toHaveCount(0);
   await page.getByLabel("Arrowheads", { exact: true }).selectOption("start");
@@ -408,6 +417,7 @@ test("arrows move as a whole and support draggable endpoints and multiple Bézie
   await page.reload();
   await expect(court.locator("[data-arrow-line]")).toHaveAttribute("d", curve!);
   await expect(court.locator("[data-arrow-head]")).toHaveCount(2);
+  await expect(line).toHaveAttribute("stroke", "#e11d48");
 });
 
 test("training equipment has distinct proportions and supports rotation", async ({

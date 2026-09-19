@@ -200,6 +200,22 @@ export function Inspector({
           )}
           {arrow && (
             <div className="arrow-settings">
+              <label className="inline-label">
+                Line color
+                <input
+                  type="color"
+                  aria-label="Line color"
+                  value={arrow.color}
+                  onChange={(e) =>
+                    edit((d) => {
+                      const current = d.keyframes[frameIndex].arrows.find(
+                        (a) => a.id === selected,
+                      );
+                      if (current) current.color = e.target.value;
+                    })
+                  }
+                />
+              </label>
               <label>
                 Arrowheads
                 <select

@@ -7,15 +7,13 @@ import {
 
 export function Arrow({
   arrow,
-  selected,
   onPointerDown,
 }: {
   arrow: TacticalArrow;
-  selected?: boolean;
   onPointerDown?: (event: React.PointerEvent) => void;
 }) {
   const d = arrowPath(arrow);
-  const color = selected ? "#2563eb" : arrow.color;
+  const color = arrow.color;
   const heads = arrow.heads ?? "end";
   const angles = arrowEndAngles(arrow);
   return (
