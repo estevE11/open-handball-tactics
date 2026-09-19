@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { kitSchema } from "./kit";
+import { petoSchema } from "./peto";
 
 const point = z.object({ x: z.number().finite(), y: z.number().finite() });
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
@@ -16,6 +17,7 @@ export const tokenSchema = z.object({
     .enum(["ball", "cone", "goal", "ladder", "text", "image"])
     .optional(),
   assetId: z.string().optional(),
+  peto: petoSchema.optional(),
 });
 export const arrowSchema = z.object({
   id: z.string(),

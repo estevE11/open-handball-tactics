@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { PlayerKit } from "../../types/kit";
 import { KitPattern } from "./KitPattern";
+import { Peto } from "./Peto";
 import type { TacticalToken } from "../../types/project";
 import { tokenRotation } from "../../lib/projectCompatibility";
 import { tokenLabelAngle, labelOutline } from "../../lib/tokenLabels";
@@ -30,6 +31,7 @@ export function Token({
   const outlineId = useId();
   const isPlayer = t.role !== "equipment";
   const kitId = `${outlineId}-kit`;
+  const shapeId = `${outlineId}-shape`;
   const fill = isPlayer && kit ? `url(#${kitId})` : t.color;
   // Shape and lettering share native coordinates, so every transform stays uniform.
   const r = isPlayer ? 14 : t.size;
@@ -38,6 +40,9 @@ export function Token({
   const handleRadius =
     t.equipment === "ladder" ? displayRadius * 1.8 : displayRadius;
   const rotation = tokenRotation(t);
+  const labelColor =
+    kit?.labelColor ?? (t.role === "defender" ? "#563b1e" : "white");
+  const outlineLabel = !!kit || !!t.peto?.enabled;
   return (
     <g
       transform={`translate(${t.position.x} ${t.position.y})`}
@@ -124,6 +129,7 @@ export function Token({
                 {t.shape === "triangle" ? (
                   <path
                     d={`M0 -${r + 2}L${r + 2} ${r - 1}H-${r + 2}Z`}
+                    id={isPlayer ? shapeId : undefined}
                     fill={fill}
                     stroke="white"
                     strokeWidth="1.5"
@@ -136,6 +142,7 @@ export function Token({
                     width={r * 2}
                     height={r * 2}
                     rx="4"
+                    id={isPlayer ? shapeId : undefined}
                     fill={fill}
                     stroke="white"
                     strokeWidth="1.5"
@@ -143,6 +150,7 @@ export function Token({
                 ) : (
                   <circle
                     r={r}
+                    id={isPlayer ? shapeId : undefined}
                     fill={fill}
                     stroke={t.equipment === "ball" ? "#4b514d" : "white"}
                     strokeWidth="1.5"
@@ -158,6 +166,9 @@ export function Token({
                 )}
               </>
             )}
+            {isPlayer && t.peto?.enabled && (
+              <Peto color={t.peto.color} shapeId={shapeId} />
+            )}
             {!t.equipment && labels && (
               <text
                 textAnchor="middle"
@@ -166,12 +177,9 @@ export function Token({
                 fontFamily="Arial, sans-serif"
                 fontSize={t.label.length > 2 ? 8 : 11}
                 fontWeight="700"
-                fill={
-                  kit?.labelColor ??
-                  (t.role === "defender" ? "#563b1e" : "white")
-                }
-                stroke={kit ? labelOutline(kit.labelColor) : undefined}
-                strokeWidth={kit ? 0.8 : undefined}
+                fill={labelColor}
+                stroke={outlineLabel ? labelOutline(labelColor) : undefined}
+                strokeWidth={outlineLabel ? 0.8 : undefined}
                 strokeLinejoin="round"
                 paintOrder="stroke"
                 pointerEvents="none"

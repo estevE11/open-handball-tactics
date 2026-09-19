@@ -1,5 +1,13 @@
-import { Circle, Triangle, Square, ImagePlus, Trash2 } from "lucide-react";
+import {
+  Circle,
+  Triangle,
+  Square,
+  ImagePlus,
+  Trash2,
+  Check,
+} from "lucide-react";
 import { useRef, useState } from "react";
+import { PETO_COLORS } from "../../types/peto";
 import { PlayerKits } from "../kits/PlayerKits";
 import { playerKit } from "../../lib/kits";
 import { CourtSettings } from "./CourtSettings";
@@ -115,6 +123,50 @@ export function Inspector({
                     },
                   )}
                 </div>
+              )}
+              {token.role !== "equipment" && (
+                <>
+                  <label className="toggle-row">
+                    Peto
+                    <input
+                      type="checkbox"
+                      checked={token.peto?.enabled ?? false}
+                      onChange={(e) =>
+                        updateToken({
+                          peto: {
+                            enabled: e.target.checked,
+                            color: token.peto?.color ?? "yellow",
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                  {token.peto?.enabled && (
+                    <div
+                      className="peto-colors"
+                      role="group"
+                      aria-label="Peto color"
+                    >
+                      {(
+                        Object.keys(PETO_COLORS) as (keyof typeof PETO_COLORS)[]
+                      ).map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          aria-label={`${PETO_COLORS[color].label} peto`}
+                          title={PETO_COLORS[color].label}
+                          aria-pressed={token.peto?.color === color}
+                          style={{ backgroundColor: PETO_COLORS[color].color }}
+                          onClick={() =>
+                            updateToken({ peto: { enabled: true, color } })
+                          }
+                        >
+                          {token.peto?.color === color && <Check size={17} />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
               {playerKit(project, token) ? (
                 <p className="muted">
