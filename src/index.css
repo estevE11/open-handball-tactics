@@ -497,14 +497,22 @@ h3 {
   flex-direction: column;
 }
 .topbar {
-  height: 59px;
-  min-height: 59px;
+  height: 68px;
+  min-height: 68px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #e8e8ea;
   padding: 0 31px;
   background: white;
+  gap: 18px;
+}
+.topbar-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
 }
 .breadcrumb {
   display: flex;
@@ -517,10 +525,36 @@ h3 {
   color: #555b60;
   font-weight: 450;
 }
+.topbar-context {
+  flex-shrink: 0;
+}
+.topbar-drill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+}
+.topbar-drill h1 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.55px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-drill .tag {
+  flex-shrink: 0;
+}
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 19px;
+  gap: 9px;
+  flex-shrink: 0;
+}
+.topbar-actions .button {
+  padding: 8px 11px;
 }
 .offline-status {
   display: flex;
@@ -698,7 +732,7 @@ h1 {
   border: 1px solid #e1e3e2;
   border-top: 0;
   position: relative;
-  padding: 18px 24px 15px;
+  padding: 12px 14px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1325,7 +1359,7 @@ h1 {
     width: 16px;
   }
   .canvas-area {
-    padding: 15px 10px;
+    padding: 8px 6px;
     height: clamp(400px, 56vh, 590px);
   }
   .inspector-section {
@@ -1338,7 +1372,7 @@ h1 {
   .board-hint > span:not(:first-child) {
     display: none;
   }
-  .heading-actions .duplicate-button {
+  .topbar-actions .duplicate-button {
     display: none;
   }
 }
@@ -1348,6 +1382,11 @@ h1 {
   }
   .editor-layout {
     grid-template-columns: minmax(0, 1fr);
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .topbar-context {
+    display: none;
   }
   .inspector-wrap {
     display: none;
@@ -1384,6 +1423,23 @@ h1 {
 @media (max-width: 700px) {
   .topbar {
     padding: 0 14px;
+    gap: 7px;
+  }
+  .topbar-main {
+    gap: 7px;
+  }
+  .topbar-context {
+    display: none;
+  }
+  .topbar-drill {
+    gap: 3px;
+  }
+  .topbar-drill h1 {
+    max-width: 165px;
+    font-size: 18px;
+  }
+  .topbar-drill .tag {
+    display: none;
   }
   .breadcrumb {
     gap: 7px;
@@ -1391,12 +1447,20 @@ h1 {
   .topbar-actions {
     gap: 6px;
   }
+  .topbar-actions .save-status,
+  .topbar-actions .offline-status {
+    display: none;
+  }
+  .topbar-actions .button {
+    padding: 7px;
+    font-size: 0;
+    gap: 0;
+  }
+  .topbar-actions .button > svg:last-child {
+    display: none;
+  }
   .offline-status {
     font-size: 9px;
-  }
-  .drill-heading {
-    padding: 18px 15px 15px;
-    align-items: center;
   }
   .title-row h1 {
     font-size: 21px;
@@ -1421,7 +1485,7 @@ h1 {
     display: none;
   }
   .editor-layout {
-    padding: 0 12px 18px;
+    padding: 0 6px 12px;
   }
   .toolbar {
     height: 47px;

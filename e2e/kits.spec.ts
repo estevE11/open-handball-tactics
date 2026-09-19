@@ -142,8 +142,8 @@ test("kit exports are self-contained and render three stripes in PNG, SVG, and a
       ctx.drawImage(image, 0, 0);
       let bands = 0,
         wasWhite = false;
-      for (let y = 602; y <= 653; y++) {
-        const [r, g, b] = ctx.getImageData(444, y, 1, 1).data;
+      for (let y = 584; y <= 635; y++) {
+        const [r, g, b] = ctx.getImageData(424, y, 1, 1).data;
         const white = r > 245 && g > 245 && b > 245;
         if (white && !wasWhite) bands++;
         wasWhite = white;

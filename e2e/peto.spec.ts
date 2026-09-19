@@ -136,7 +136,7 @@ test("player petos are translucent beneath labels, configurable, and survive ste
       canvas.height = image.height;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(image, 0, 0);
-      return [...ctx.getImageData(444, 644, 1, 1).data];
+      return [...ctx.getImageData(424, 626, 1, 1).data];
     },
     `data:image/png;base64,${files["PNG snapshot"].toString("base64")}`,
   );

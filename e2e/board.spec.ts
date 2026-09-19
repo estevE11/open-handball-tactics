@@ -41,7 +41,7 @@ test("formations, dragging, arrows, undo, steps, exports, and offline reload", a
   await page.getByText("Step 2", { exact: true }).first().click();
   await page.getByLabel("Onion skin").check();
   await page.getByLabel("Template").selectOption("full");
-  await expect(court).toHaveAttribute("viewBox", "-25 -22 850 444");
+  await expect(court).toHaveAttribute("viewBox", "-12 -12 824 424");
   await page.getByLabel("Template").selectOption("half");
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
@@ -166,7 +166,9 @@ test("mobile workspace stays within viewport", async ({ page }) => {
   await page.getByLabel("Toggle library").click();
   await expect(page.getByLabel("Create folder")).toBeVisible();
   await expect(page.getByLabel("Close library")).toBeVisible();
-  await page.getByLabel("Close library").click();
+  await page
+    .getByLabel("Close library")
+    .click({ position: { x: 380, y: 400 } });
   await expect(page.getByLabel("Close library")).toHaveCount(0);
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
 });

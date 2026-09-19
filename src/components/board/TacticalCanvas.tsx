@@ -269,8 +269,8 @@ export function TacticalCanvas({
       className={`tactical-canvas ${tool !== "select" ? "drawing" : ""}`}
       viewBox={
         config.type === "full"
-          ? "-25 -22 850 444"
-          : `-22 -25 ${width + 44} ${height + 50}`
+          ? "-12 -12 824 424"
+          : `-12 -16 ${width + 24} ${height + 32}`
       }
       aria-label="Interactive handball court"
       onPointerDown={down}

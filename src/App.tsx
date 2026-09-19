@@ -456,7 +456,7 @@ export default function App() {
       )}
       <main className="main-workspace">
         <header className="topbar">
-          <div className="breadcrumb">
+          <div className="topbar-main">
             <button
               className="icon-button mobile-menu"
               aria-label="Toggle library"
@@ -466,15 +466,74 @@ export default function App() {
             >
               <Menu size={19} />
             </button>
-            <span>Workspace</span>
-            <ChevronRight size={13} />
-            <strong>
-              {project
-                ? folderPath(project.folderId) || "All drills"
-                : "Loading"}
-            </strong>
+            <div className="breadcrumb topbar-context">
+              <span>Workspace</span>
+              <ChevronRight size={13} />
+              <strong>
+                {project
+                  ? folderPath(project.folderId) || "All drills"
+                  : "Loading"}
+              </strong>
+            </div>
+            {project && (
+              <div className="topbar-drill">
+                <h1>{project.title}</h1>
+                <button
+                  className="icon-button"
+                  aria-label="Drill details"
+                  onClick={() => setDialog({ type: "details" })}
+                >
+                  <MoreHorizontal size={19} />
+                </button>
+                {project.tags.map((tag) => (
+                  <span className="tag" key={tag}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="topbar-actions">
+            {project && (
+              <>
+                <span className="save-status" role="status">
+                  {board.saveStatus === "saved" && <Check size={12} />}{" "}
+                  {board.saveStatus === "saved"
+                    ? "All changes saved"
+                    : board.saveStatus === "saving"
+                      ? "Saving…"
+                      : "Save failed"}
+                </span>
+                <button
+                  className="button secondary duplicate-button"
+                  disabled={busy}
+                  onClick={() =>
+                    void run(async () => {
+                      await flushSaves();
+                      board.open(await library.duplicate(project));
+                    })
+                  }
+                >
+                  <Copy size={15} /> Duplicate
+                </button>
+                <button
+                  className="button primary"
+                  onClick={() => {
+                    board.setSelected(null);
+                    setDialog({ type: "export" });
+                  }}
+                >
+                  <ArrowDownToLine size={15} /> Export <ChevronDown size={12} />
+                </button>
+              </>
+            )}
+            <button
+              className="icon-button mobile-settings"
+              aria-label="Toggle settings"
+              onClick={() => setSettings(!settings)}
+            >
+              <Settings2 size={19} />
+            </button>
             <ThemeToggle onError={setNotice} />
             <span className="offline-status">
               <span />
@@ -536,61 +595,6 @@ export default function App() {
         )}
         {project ? (
           <>
-            <div className="drill-heading">
-              <div className="title-row">
-                <h1>{project.title}</h1>
-                <button
-                  className="icon-button"
-                  aria-label="Drill details"
-                  onClick={() => setDialog({ type: "details" })}
-                >
-                  <MoreHorizontal size={21} />
-                </button>
-                {project.tags.map((tag) => (
-                  <span className="tag" key={tag}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="heading-actions">
-                <span className="save-status" role="status">
-                  {board.saveStatus === "saved" && <Check size={12} />}{" "}
-                  {board.saveStatus === "saved"
-                    ? "All changes saved"
-                    : board.saveStatus === "saving"
-                      ? "Saving…"
-                      : "Save failed"}
-                </span>
-                <button
-                  className="button secondary duplicate-button"
-                  disabled={busy}
-                  onClick={() =>
-                    void run(async () => {
-                      await flushSaves();
-                      board.open(await library.duplicate(project));
-                    })
-                  }
-                >
-                  <Copy size={15} /> Duplicate
-                </button>
-                <button
-                  className="button primary"
-                  onClick={() => {
-                    board.setSelected(null);
-                    setDialog({ type: "export" });
-                  }}
-                >
-                  <ArrowDownToLine size={15} /> Export <ChevronDown size={12} />
-                </button>
-                <button
-                  className="icon-button mobile-settings"
-                  aria-label="Toggle settings"
-                  onClick={() => setSettings(!settings)}
-                >
-                  <Settings2 size={19} />
-                </button>
-              </div>
-            </div>
             <div className="editor-layout">
               <div className="board-column">
                 <div inert={board.playbackTime !== null}>

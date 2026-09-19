@@ -272,7 +272,7 @@ test("full court is horizontal with court-relative dragging, arrows, steps, and 
   await expect(attacker).toBeVisible();
   const original = await attacker.getAttribute("transform");
   await page.getByLabel("Template").selectOption("full");
-  await expect(court).toHaveAttribute("viewBox", "-25 -22 850 444");
+  await expect(court).toHaveAttribute("viewBox", "-12 -12 824 424");
   await expect(attacker).toHaveAttribute("transform", original!);
   await expectChipTransform(attacker, -90, 1, 0);
   const start = await courtPoint(court, 200, 286);
@@ -336,10 +336,13 @@ test("full court is horizontal with court-relative dragging, arrows, steps, and 
   await page.getByRole("button", { name: "Edit step", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
-  await expect(court).toHaveAttribute("viewBox", "-25 -22 850 444");
+  await expect(court).toHaveAttribute("viewBox", "-12 -12 824 424");
   await expect(arrow).toHaveAttribute("d", path!);
   await page.getByLabel("Template").selectOption("half");
-  await expect(court).toHaveAttribute("viewBox", "-22 -25 444 450");
+  await expect(court).toHaveAttribute("viewBox", "-12 -16 424 432");
+  await page.getByLabel("Court size").selectOption("16");
+  await expect(page.getByLabel("Court size")).toHaveValue("16");
+  await expect(court).toHaveAttribute("viewBox", "-12 -16 424 352");
   await expectChipTransform(attacker, 0, 1);
 });
 

@@ -7,13 +7,14 @@ export function courtRotation(config: DrillProject["courtConfig"]) {
 }
 
 export function courtSize(config: DrillProject["courtConfig"]) {
+  const halfDepth = Number(config.halfCourtDepth ?? "20");
   return {
     width: config.type === "custom_box" ? config.dimensions.width * 20 : 400,
     height:
       config.type === "full"
         ? 800
         : config.type === "half"
-          ? 400
+          ? halfDepth * 20
           : config.dimensions.height * 20,
   };
 }

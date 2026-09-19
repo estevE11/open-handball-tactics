@@ -58,9 +58,9 @@ export function Court({ config }: { config: DrillProject["courtConfig"] }) {
         <>
           {end()}
           {type === "full" && end(true)}
-          <path d={`M0 ${type === "full" ? 400 : 399}H400`} />
+          <path d={`M0 ${type === "full" ? 400 : height - 1}H400`} />
           <path
-            d="M0 310h-7M400 310h7"
+            d={`M0 ${type === "full" ? 310 : height - 90}h-7M400 ${type === "full" ? 310 : height - 90}h7`}
             stroke={highlight ? "#eaa958" : c.lines}
           />
           {type === "full" && <path d="M0 490h-7M400 490h7" />}

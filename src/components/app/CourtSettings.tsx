@@ -24,6 +24,10 @@ export function CourtSettings({
                 width: 20,
                 height: e.target.value === "full" ? 40 : 20,
               },
+              halfCourtDepth:
+                e.target.value === "half"
+                  ? (config.halfCourtDepth ?? "20")
+                  : config.halfCourtDepth,
             })
           }
         >
@@ -33,18 +37,36 @@ export function CourtSettings({
         </select>
       </label>
       {config.type === "half" && (
-        <label>
-          Goal position
-          <select
-            value={config.halfCourtEnd ?? "top"}
-            onChange={(e) =>
-              change({ halfCourtEnd: e.target.value as "top" | "bottom" })
-            }
-          >
-            <option value="top">Top · attacking view</option>
-            <option value="bottom">Bottom · defending view</option>
-          </select>
-        </label>
+        <>
+          <label>
+            Court size
+            <select
+              value={config.halfCourtDepth ?? "20"}
+              onChange={(e) => {
+                const halfCourtDepth = e.target.value as "16" | "20";
+                change({
+                  halfCourtDepth,
+                  dimensions: { width: 20, height: Number(halfCourtDepth) },
+                });
+              }}
+            >
+              <option value="20">20 × 20 m</option>
+              <option value="16">20 × 16 m · compact</option>
+            </select>
+          </label>
+          <label>
+            Goal position
+            <select
+              value={config.halfCourtEnd ?? "top"}
+              onChange={(e) =>
+                change({ halfCourtEnd: e.target.value as "top" | "bottom" })
+              }
+            >
+              <option value="top">Top · attacking view</option>
+              <option value="bottom">Bottom · defending view</option>
+            </select>
+          </label>
+        </>
       )}
       {config.type === "custom_box" && (
         <div className="two-cols">
