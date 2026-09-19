@@ -735,7 +735,7 @@ export default function App() {
         )}
         <footer className="workspace-footer">
           <span>
-            OPEN HANDBALL BOARD <span className="footer-version">v0.1</span>
+            OPEN HANDBALL BOARD <span className="footer-version">v0.2</span>
           </span>
           <span>Your ideas. Your court.</span>
           <span>
@@ -959,9 +959,23 @@ export default function App() {
               </p>
               <p>
                 Use the tools to add players and equipment. Drag to move them,
-                or choose an arrow tool and drag across the court. Select an
-                arrow to adjust its curve. Formation buttons replace that team’s
-                players in the current step.
+                or choose an arrow tool and drag across the court. Drag an
+                existing arrow to move the whole path; use its endpoints and
+                numbered Bézier handles to reshape it. The inspector controls
+                arrowheads and lets you add or remove bends.
+              </p>
+              <p>
+                Rotate a selected object with its round handle or the angle
+                input. Hold Shift while dragging the handle to snap to 15°. Use
+                Add step to copy your positions, then move or rotate players in
+                the new step. Play or scrub the timeline to preview their
+                movement and rotation. Choose Edit step to resume editing.
+              </p>
+              <p>
+                Workspace defaults in the top bar save your preferred court
+                settings and player scale for new drills. The inspector edits
+                this drill only. The sun/moon button changes the surrounding
+                interface without changing your court colors.
               </p>
               <p>
                 Export <strong>.hbd</strong> files as backups or to move drills
@@ -985,9 +999,9 @@ export default function App() {
                 <ShieldCheck size={15} /> Request persistent storage
               </button>
               <p className="muted">
-                Step 1 includes editable steps and onion skinning. Animation
-                playback, GIF/WebM, and PDF drill sheets are planned for the
-                next phase.
+                PNG, SVG, and editable .hbd exports are available. GIF/WebM
+                animation exports and PDF drill sheets are planned for a later
+                release.
               </p>
             </div>
           )}

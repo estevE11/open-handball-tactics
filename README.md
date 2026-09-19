@@ -20,39 +20,47 @@ npm run test:e2e  # Production browser tests; Google Chrome locally
 
 For environments without Chrome, run `npx playwright install chromium` and `CI=1 npm run test:e2e`. Build before running browser tests. CI installs Chromium and verifies lint, unit tests, the production build, and browser workflows.
 
-## Step 1 delivery
+## Features · v0.2
 
 - React 19, TypeScript, Vite, Tailwind CSS, Lucide, and Zustand, following Open Handball Video's `components/app`, `components/ui`, `lib`, `hooks`, `store`, and `types` separation.
 - Native SVG tactical engine with pointer capture, scalable court coordinates, drag positioning, and editable quadratic Bézier trajectories. SVG keeps the foundation lightweight and supports self-contained vector export without an additional rendering framework.
 - Full court (40 × 20 m), half court, and configurable rectangular practice areas. Floor/goal-area/line colors, line weights, grid, player labels, and boundary highlights are editable. Courts include goal areas, dashed 9 m lines, 7 m marks, 4 m goalkeeper marks, and substitution marks.
-- Triangle defenders with `1`, `2`, `3`, and `Av`; circle attackers with `A`–`F`; distinct goalkeeper. Player label, shape, size, and color are editable. Custom positional abbreviations and names can be entered as labels.
+- Defenders and goalkeepers are triangles pointing toward the attack by default. Defenders use `1`, `2`, `3`, and `Av`; circle attackers use `A`–`F`. Select an object to rotate it using the round handle or angle input; hold Shift for 15° snapping. Labels stay upright. Player label, shape, size, and color remain editable.
+- Workspace defaults store every court setting and a 50–200% player scale. New drills copy those defaults; existing drills keep independent overrides. **Apply workspace defaults** restores the defaults to the current drill with undo support. Scaling includes attackers, defenders, and goalkeepers and leaves equipment unchanged.
 - Defense presets: 6:0, 5:1, 3:2:1, 4:2, 3:3. Offense presets: 3:3 and 2:4. Applying a formation replaces only that role's players in the current step.
-- Running, passing, dribbling, and screen/block trajectories; drag the control handle of a selected trajectory to curve it.
-- Multiple balls, cones, mini-goals, agility ladders, text, and uploaded image markers. Click an image or drag it from the asset manager to place it.
+- Running, passing, dribbling, and screen/block trajectories. Drag the line to move the complete path, or drag its endpoints and numbered Bézier handles. Add/remove up to 12 control points. Choose end-only, start-only, double-ended, or headless paths in the inspector; screen paths use T-bar markers.
+- Multiple balls, compact striped training cones, mini-goals, eight-rung agility ladders, text, and uploaded image markers. Equipment supports rotation. Click an image or drag it from the asset manager to place it.
+- Selection follows the object's silhouette with a small gap, including rotated tokens and equipment. Selection handles and outlines are excluded from exports.
 - Nested folders with create, rename, move, duplicate, and recursive delete. Drill create, rename, move, duplicate, delete, tags, notes, and search by title/tag/folder path. Open folder management using its ellipsis; drill management uses the ellipsis beside its title.
-- Autosave with visible pending/error states, retry, bounded undo/redo, editable keyframe steps, and previous-step onion skinning.
+- Autosave with visible pending/error states, retry, bounded undo/redo, editable keyframe steps, and previous-step onion skinning. Copy a step, move or rotate the same players, and use Play or the timeline scrubber to preview movement and shortest-arc rotation. Each step's duration controls its transition to the next step; previewing never changes the saved frames.
+- Saved Light, Dark, and Follow system appearance settings. Dark mode changes the workspace UI while leaving the main canvas and exported images unchanged.
 - Portable `.hbd` import/export embeds binary assets and gives imports new identifiers. PNG/SVG snapshots include uploaded images.
 - Installable PWA with bundled icons and a precached application shell. New versions prompt for an update after pending saves complete.
 
-**Next phase:** animation playback/interpolation and timeline scrubbing, WebM/GIF export, and multi-thumbnail PDF drill sheets. These are not part of this Step 1 delivery. Steps currently store positions and trajectories without animating between them.
+**Planned:** WebM/GIF animation export and multi-thumbnail PDF drill sheets.
 
 ## Architecture
 
 ```text
 src/
   components/
-    app/                 Toolbar and board inspector
+    app/                 Inspector, shared court settings, theme, playback controls
     board/               Court geometry, tokens, arrows, pointer interactions
     library/             Recursive folder tree
     ui/                  Accessible native dialog
   hooks/useAssetUrls.ts   Blob URL ownership and cleanup
   lib/
     browserStorage.ts    Dexie schema and transactional library service
+    animation.ts         Position, rotation, and path interpolation
+    arrowGeometry.ts     Path translation and multi-bend Bézier geometry
+    preferences.ts       Validated browser-local court defaults and theme
+    projectCompatibility.ts  Additive compatibility for older saved drills
     formations.ts        Handball-specific formation coordinates and labels
     projectDefaults.ts   Serializable project construction
     projectIo.ts         Validated .hbd import/export with embedded images
     snapshot.ts          PNG and SVG snapshot export
   store/projectStore.ts  Editing, history, serialized autosave, save errors
+  store/preferencesStore.ts  Workspace defaults and appearance
   types/project.ts       Versioned Zod schemas and inferred TypeScript types
   App.tsx                Workspace and project lifecycle
 public/                  Locally bundled application icons
@@ -62,6 +70,8 @@ vercel.json              Static hosting and service-worker cache headers
 ```
 
 The database is `ohb.library.v1`, schema version 1. Separate `projects`, `folders`, and `assets` tables keep canvas JSON independent of binary images. Project and folder mutations update both sides of tree membership in one transaction. Folder moves reject cycles; subtree duplication creates independent IDs; subtree deletion removes its drills atomically. `parentId` and `folderId` are authoritative; the service synchronizes the schema's `childrenFolderIds` and `drillIds` lists.
+
+Small workspace preferences use the `ohb.preferences.v1` localStorage key; drill-specific court settings stay in IndexedDB and portable `.hbd` exports. Missing preferences use built-in defaults. Legacy projects without orientation receive forward-facing defenders and triangle goalkeepers when opened; explicit orientations remain intact. Legacy single-control-point arrows remain supported. New orientation, control-point, arrowhead, and scale fields are additive to project schema version 1.
 
 Image blobs belong to the reusable asset library. Deleting a drill retains its images so other drills and duplicates remain valid. Explicit asset deletion is blocked while any drill references that asset. Runtime `blob:` URLs are revoked when their owning subscription changes or unmounts; persisted references use `asset:<id>`. Images are limited to 10 MiB and PNG, JPEG, WebP, or GIF. Imports validate the full model, embedded asset references, and format version before an atomic transaction.
 
