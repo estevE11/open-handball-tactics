@@ -41,6 +41,10 @@ export function fitProjectToCourt(project: DrillProject) {
       arrow.end = fitPoint(arrow.end, project.courtConfig);
       if (arrow.control)
         arrow.control = fitPoint(arrow.control, project.courtConfig);
+      if (arrow.controlPoints)
+        arrow.controlPoints = arrow.controlPoints.map((point) =>
+          fitPoint(point, project.courtConfig),
+        );
     }
   }
 }

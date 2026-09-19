@@ -1,5 +1,17 @@
 import { expect, test, type Locator } from "@playwright/test";
 
+async function courtPoint(court: Locator, x: number, y: number) {
+  return court.evaluate(
+    (element, point) => {
+      const p = new DOMPoint(point.x, point.y).matrixTransform(
+        (element as SVGSVGElement).getScreenCTM()!,
+      );
+      return { x: p.x, y: p.y };
+    },
+    { x, y },
+  );
+}
+
 async function setRange(input: Locator, value: number | string) {
   await input.evaluate((element, next) => {
     const setter = Object.getOwnPropertyDescriptor(
@@ -122,4 +134,63 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   await page.getByRole("button", { name: "Apply workspace defaults" }).click();
   await expect(page.getByLabel("Court floor color")).toHaveValue("#abcabc");
   await expect(page.getByLabel("Player scale")).toHaveValue("1.5");
+});
+
+test("arrows move as a whole and support draggable endpoints and multiple Bézier points", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const court = page.getByLabel("Interactive handball court");
+  await expect(court).toBeVisible();
+  const start = await courtPoint(court, 70, 340),
+    end = await courtPoint(court, 160, 365);
+  await page.getByRole("button", { name: "Run arrow", exact: true }).click();
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y, { steps: 5 });
+  await page.mouse.up();
+  await page
+    .getByRole("button", { name: "Select & move (V)", exact: true })
+    .click();
+  const line = court.locator("[data-arrow-line]");
+  const original = await line.getAttribute("d");
+  const middle = await courtPoint(court, 115, 352.5),
+    target = await courtPoint(court, 155, 332.5);
+  await page.mouse.move(middle.x, middle.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 5 });
+  await page.mouse.up();
+  await expect(line).not.toHaveAttribute("d", original!);
+  await expect(court.getByLabel("Arrow start point")).toBeVisible();
+  await page.getByRole("button", { name: "Add Bézier point" }).click();
+  await page.getByRole("button", { name: "Add Bézier point" }).click();
+  await expect(court.locator('[aria-label^="Bézier point"]')).toHaveCount(3);
+  const curveBefore = await line.getAttribute("d");
+  const handle = (await court
+    .getByLabel("Bézier point 2", { exact: true })
+    .boundingBox())!;
+  await page.mouse.move(
+    handle.x + handle.width / 2,
+    handle.y + handle.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(handle.x + 15, handle.y - 50, { steps: 5 });
+  await page.mouse.up();
+  await expect(line).not.toHaveAttribute("d", curveBefore!);
+  const curve = await line.getAttribute("d");
+  expect(curve!.match(/Q/g)).toHaveLength(3);
+  const endpoint = (await court.getByLabel("Arrow end point").boundingBox())!;
+  await page.mouse.move(
+    endpoint.x + endpoint.width / 2,
+    endpoint.y + endpoint.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(endpoint.x + 40, endpoint.y + 10, { steps: 5 });
+  await page.mouse.up();
+  await expect(line).not.toHaveAttribute("d", curve!);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(line).toHaveAttribute("d", curve!);
+  await expect(page.getByRole("status")).toHaveText("All changes saved");
+  await page.reload();
+  await expect(court.locator("[data-arrow-line]")).toHaveAttribute("d", curve!);
 });

@@ -2,6 +2,12 @@ import { Circle, Triangle, Square, ImagePlus, Trash2 } from "lucide-react";
 import { useRef } from "react";
 import { CourtSettings } from "./CourtSettings";
 import { usePreferencesStore } from "../../store/preferencesStore";
+import {
+  addControl,
+  arrowControls,
+  editableControls,
+  withControls,
+} from "../../lib/arrowGeometry";
 import { tokenRotation } from "../../lib/projectCompatibility";
 import { fitProjectToCourt, courtSize } from "../../lib/courtGeometry";
 import {
@@ -124,9 +130,54 @@ export function Inspector({
             </>
           )}
           {arrow && (
-            <p className="muted">
-              Drag the blue handle to curve this trajectory.
-            </p>
+            <div className="arrow-settings">
+              <p className="muted">
+                Drag the line to move it. Blue endpoints change its reach;
+                numbered handles shape the curve.
+              </p>
+              <button
+                className="text-button"
+                disabled={arrowControls(arrow).length >= 12}
+                onClick={() =>
+                  edit((d) => {
+                    const frame = d.keyframes[frameIndex];
+                    const index = frame.arrows.findIndex(
+                      (a) => a.id === selected,
+                    );
+                    if (index !== -1)
+                      frame.arrows[index] = addControl(frame.arrows[index]);
+                  })
+                }
+              >
+                + Add Bézier point
+              </button>
+              <div className="bezier-points">
+                {editableControls(arrow).map((_, index) => (
+                  <button
+                    key={index}
+                    className="text-button"
+                    aria-label={`Remove Bézier point ${index + 1}`}
+                    onClick={() =>
+                      edit((d) => {
+                        const frame = d.keyframes[frameIndex];
+                        const at = frame.arrows.findIndex(
+                          (a) => a.id === selected,
+                        );
+                        if (at !== -1)
+                          frame.arrows[at] = withControls(
+                            frame.arrows[at],
+                            editableControls(frame.arrows[at]).filter(
+                              (_, i) => i !== index,
+                            ),
+                          );
+                      })
+                    }
+                  >
+                    Point {index + 1} ×
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
           {token && (
             <>

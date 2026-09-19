@@ -1,86 +1,122 @@
-import type { TacticalArrow } from "../../types/project";
+import type { TacticalArrow, Point } from "../../types/project";
+import {
+  arrowPath,
+  arrowEndAngles,
+  editableControls,
+} from "../../lib/arrowGeometry";
 
 export function Arrow({
   arrow,
   selected,
-  onSelect,
-  onControl,
+  onPointerDown,
 }: {
   arrow: TacticalArrow;
   selected?: boolean;
-  onSelect?: () => void;
-  onControl?: (event: React.PointerEvent) => void;
+  onPointerDown?: (event: React.PointerEvent) => void;
 }) {
-  const { start: s, end: e, control: c, type, color } = arrow;
-  const angle =
-    (Math.atan2(e.y - (c?.y ?? s.y), e.x - (c?.x ?? s.x)) * 180) / Math.PI;
-  let d = c
-    ? `M${s.x} ${s.y} Q${c.x} ${c.y} ${e.x} ${e.y}`
-    : `M${s.x} ${s.y} L${e.x} ${e.y}`;
-  if (type === "dribble") {
-    const dx = e.x - s.x,
-      dy = e.y - s.y,
-      length = Math.hypot(dx, dy) || 1;
-    const points = Array.from({ length: 81 }, (_, i) => {
-      const t = i / 80,
-        u = 1 - t;
-      const x = c ? u * u * s.x + 2 * u * t * c.x + t * t * e.x : s.x + dx * t;
-      const y = c ? u * u * s.y + 2 * u * t * c.y + t * t * e.y : s.y + dy * t;
-      const wave =
-        Math.sin(t * Math.PI * 2 * Math.max(2, Math.round(length / 22))) * 3;
-      return `${i ? "L" : "M"}${x - (dy / length) * wave} ${y + (dx / length) * wave}`;
-    });
-    d = points.join(" ");
-  }
+  const d = arrowPath(arrow);
+  const color = selected ? "#2563eb" : arrow.color;
   return (
     <g
-      onPointerDown={(event) => {
-        if (onSelect) {
-          event.stopPropagation();
-          onSelect();
-        }
-      }}
-      style={{ cursor: onSelect ? "pointer" : undefined }}
+      onPointerDown={onPointerDown}
+      style={{ cursor: onPointerDown ? "move" : undefined }}
+      data-arrow-id={arrow.id}
+      aria-label={`${arrow.type} trajectory`}
     >
-      <path d={d} fill="none" stroke="transparent" strokeWidth="16" />
       <path
         d={d}
         fill="none"
-        stroke={selected ? "#2563eb" : color}
-        strokeWidth="2.5"
-        strokeDasharray={type === "pass" ? "7 6" : undefined}
-        strokeLinecap="round"
+        stroke="transparent"
+        strokeWidth="16"
+        data-arrow-hit="true"
       />
       <path
-        transform={`translate(${e.x} ${e.y}) rotate(${angle})`}
-        d={type === "screen" ? "M0 -9V9" : "M-9 -5L0 0L-9 5"}
+        d={d}
         fill="none"
-        stroke={selected ? "#2563eb" : color}
+        stroke={color}
+        strokeWidth="2.5"
+        strokeDasharray={arrow.type === "pass" ? "7 6" : undefined}
+        strokeLinecap="round"
+        pointerEvents="none"
+        data-arrow-line="true"
+      />
+      <path
+        transform={`translate(${arrow.end.x} ${arrow.end.y}) rotate(${arrowEndAngles(arrow).end})`}
+        d={arrow.type === "screen" ? "M0 -9V9" : "M-9 -5L0 0L-9 5"}
+        fill="none"
+        stroke={color}
         strokeWidth="2.5"
         strokeLinejoin="round"
+        pointerEvents="none"
       />
-      {selected && (
-        <>
-          <path
-            d={`M${s.x} ${s.y}L${c?.x ?? (s.x + e.x) / 2} ${c?.y ?? (s.y + e.y) / 2}L${e.x} ${e.y}`}
-            fill="none"
-            stroke="#2563eb"
-            strokeWidth="1"
-            strokeDasharray="3 3"
-            opacity="0.5"
-          />
+    </g>
+  );
+}
+
+export function ArrowHandles({
+  arrow,
+  onHandle,
+}: {
+  arrow: TacticalArrow;
+  onHandle: (
+    event: React.PointerEvent,
+    kind: "control" | "start" | "end",
+    origin: Point,
+    index?: number,
+  ) => void;
+}) {
+  const controls = editableControls(arrow);
+  return (
+    <g data-editor-only="true">
+      <path
+        d={[arrow.start, ...controls, arrow.end]
+          .map((p, i) => `${i ? "L" : "M"}${p.x} ${p.y}`)
+          .join(" ")}
+        fill="none"
+        stroke="#2563eb"
+        strokeWidth="1"
+        strokeDasharray="3 3"
+        opacity=".4"
+        pointerEvents="none"
+      />
+      {controls.map((p, index) => (
+        <g key={index}>
           <circle
-            aria-label="Curve control"
-            cx={c?.x ?? (s.x + e.x) / 2}
-            cy={c?.y ?? (s.y + e.y) / 2}
-            r="6"
+            aria-label={`Bézier point ${index + 1}`}
+            cx={p.x}
+            cy={p.y}
+            r="5"
             fill="white"
             stroke="#2563eb"
-            strokeWidth="2"
-            onPointerDown={onControl}
+            strokeWidth="1.5"
+            style={{ cursor: "grab" }}
+            onPointerDown={(e) => onHandle(e, "control", p, index)}
           />
-        </>
-      )}
+          <text
+            x={p.x + 8}
+            y={p.y - 7}
+            fontSize="8"
+            fill="#2563eb"
+            pointerEvents="none"
+          >
+            {index + 1}
+          </text>
+        </g>
+      ))}
+      {(["start", "end"] as const).map((key) => (
+        <circle
+          key={key}
+          aria-label={`Arrow ${key} point`}
+          cx={arrow[key].x}
+          cy={arrow[key].y}
+          r="5"
+          fill="#2563eb"
+          stroke="white"
+          strokeWidth="1.5"
+          style={{ cursor: "grab" }}
+          onPointerDown={(e) => onHandle(e, key, arrow[key])}
+        />
+      ))}
     </g>
   );
 }

@@ -1,5 +1,6 @@
 import type { DrillProject, Keyframe, Point } from "../types/project";
 import { tokenRotation } from "./projectCompatibility";
+import { arrowControls, withControls } from "./arrowGeometry";
 
 export const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 export const mixPoint = (a: Point, b: Point, t: number): Point => ({
@@ -58,17 +59,29 @@ export function sampleProject(
       arrows: from.arrows.map((arrow) => {
         const next = arrows.get(arrow.id);
         if (!next) return arrow;
-        const control = arrow.control ?? mixPoint(arrow.start, arrow.end, 0.5);
-        const nextControl = next.control ?? mixPoint(next.start, next.end, 0.5);
-        return {
-          ...arrow,
-          start: mixPoint(arrow.start, next.start, t),
-          end: mixPoint(arrow.end, next.end, t),
-          control:
-            arrow.control || next.control
-              ? mixPoint(control, nextControl, t)
-              : undefined,
-        };
+        const controls = arrowControls(arrow),
+          nextControls = arrowControls(next);
+        const count = Math.max(controls.length, nextControls.length);
+        const controlAt = (
+          points: Point[],
+          index: number,
+          start: Point,
+          end: Point,
+        ) => points[index] ?? mixPoint(start, end, (index + 1) / (count + 1));
+        return withControls(
+          {
+            ...arrow,
+            start: mixPoint(arrow.start, next.start, t),
+            end: mixPoint(arrow.end, next.end, t),
+          },
+          Array.from({ length: count }, (_, index) =>
+            mixPoint(
+              controlAt(controls, index, arrow.start, arrow.end),
+              controlAt(nextControls, index, next.start, next.end),
+              t,
+            ),
+          ),
+        );
       }),
     },
   };

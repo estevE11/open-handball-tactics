@@ -2,11 +2,34 @@ import { useRef, useState } from "react";
 import { useProjectStore } from "../../store/projectStore";
 import type { Point, TacticalArrow, TacticalToken } from "../../types/project";
 import { Court } from "./Court";
-import { Arrow } from "./Arrow";
+import { Arrow, ArrowHandles } from "./Arrow";
 import { Token } from "./Token";
 import { sampleProject } from "../../lib/animation";
 import { tokenRotation } from "../../lib/projectCompatibility";
+import { courtSize } from "../../lib/courtGeometry";
+import {
+  editableControls,
+  translateArrow,
+  withControls,
+} from "../../lib/arrowGeometry";
 
+type Gesture = {
+  kind:
+    | "token"
+    | "draw-arrow"
+    | "move-arrow"
+    | "control"
+    | "start"
+    | "end"
+    | "rotate";
+  id: string;
+  start: Point;
+  point: Point;
+  offset?: Point;
+  rotation?: number;
+  index?: number;
+  originalArrow?: TacticalArrow;
+};
 export function TacticalCanvas({
   assetUrls,
   onAssetDrop,
@@ -27,28 +50,14 @@ export function TacticalCanvas({
     playbackTime,
   } = useProjectStore();
   const svg = useRef<SVGSVGElement>(null);
-  const [gesture, setGesture] = useState<{
-    kind: "token" | "arrow" | "curve" | "rotate";
-    id: string;
-    start: Point;
-    offset?: Point;
-    point: Point;
-    rotation?: number;
-  } | null>(null);
+  const [gesture, setGesture] = useState<Gesture | null>(null);
   if (!project) return null;
   const frame =
     playbackTime === null
       ? project.keyframes[frameIndex]
       : sampleProject(project, playbackTime).frame;
   const config = project.courtConfig;
-  const width =
-    config.type === "custom_box" ? config.dimensions.width * 20 : 400;
-  const height =
-    config.type === "full"
-      ? 800
-      : config.type === "half"
-        ? 400
-        : config.dimensions.height * 20;
+  const { width, height } = courtSize(config);
   function point(event: { clientX: number; clientY: number }): Point {
     const matrix = svg.current?.getScreenCTM()?.inverse();
     const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(
@@ -61,9 +70,10 @@ export function TacticalCanvas({
   }
   function begin(
     event: React.PointerEvent,
-    kind: "token" | "curve" | "rotate",
+    kind: Gesture["kind"],
     id: string,
     origin?: Point,
+    index?: number,
   ) {
     if (tool !== "select" || playbackTime !== null || event.button !== 0)
       return;
@@ -76,12 +86,35 @@ export function TacticalCanvas({
       id,
       start: p,
       point: origin ?? p,
+      index,
       offset: origin ? { x: origin.x - p.x, y: origin.y - p.y } : undefined,
       rotation:
         kind === "rotate"
           ? tokenRotation(frame.tokens.find((t) => t.id === id)!)
           : undefined,
+      originalArrow: frame.arrows.find((a) => a.id === id),
     });
+  }
+  function previewArrow(arrow: TacticalArrow): TacticalArrow {
+    if (!gesture || gesture.id !== arrow.id) return arrow;
+    const original = gesture.originalArrow ?? arrow;
+    if (gesture.kind === "move-arrow")
+      return translateArrow(
+        original,
+        {
+          x: gesture.point.x - gesture.start.x,
+          y: gesture.point.y - gesture.start.y,
+        },
+        { width, height },
+      );
+    if (gesture.kind === "start" || gesture.kind === "end")
+      return { ...original, [gesture.kind]: gesture.point };
+    if (gesture.kind === "control") {
+      const controls = [...editableControls(original)];
+      controls[gesture.index ?? 0] = gesture.point;
+      return withControls(original, controls);
+    }
+    return arrow;
   }
   function down(event: React.PointerEvent) {
     if (event.button !== 0 || playbackTime !== null) return;
@@ -93,7 +126,7 @@ export function TacticalCanvas({
     if (["run", "pass", "dribble", "screen"].includes(tool)) {
       svg.current?.setPointerCapture(event.pointerId);
       setGesture({
-        kind: "arrow",
+        kind: "draw-arrow",
         id: crypto.randomUUID(),
         start: p,
         point: p,
@@ -147,7 +180,7 @@ export function TacticalCanvas({
   function finish() {
     if (!gesture) return;
     if (
-      gesture.kind === "arrow" &&
+      gesture.kind === "draw-arrow" &&
       Math.hypot(
         gesture.point.x - gesture.start.x,
         gesture.point.y - gesture.start.y,
@@ -159,20 +192,23 @@ export function TacticalCanvas({
           type: tool as TacticalArrow["type"],
           start: gesture.start,
           end: gesture.point,
+          controlPoints: [],
           color: "#46564d",
         });
       });
-    } else if (
-      gesture.kind === "token" &&
-      (gesture.point.x !== gesture.start.x ||
-        gesture.point.y !== gesture.start.y)
-    ) {
-      edit((d) => {
-        const t = d.keyframes[frameIndex].tokens.find(
-          (t) => t.id === gesture.id,
-        );
-        if (t) t.position = gesture.point;
-      });
+    } else if (gesture.kind === "token") {
+      const original = frame.tokens.find((t) => t.id === gesture.id);
+      if (
+        original &&
+        (original.position.x !== gesture.point.x ||
+          original.position.y !== gesture.point.y)
+      )
+        edit((d) => {
+          const token = d.keyframes[frameIndex].tokens.find(
+            (t) => t.id === gesture.id,
+          );
+          if (token) token.position = gesture.point;
+        });
     } else if (gesture.kind === "rotate") {
       const original = frame.tokens.find((t) => t.id === gesture.id);
       if (original && gesture.rotation !== tokenRotation(original))
@@ -182,16 +218,19 @@ export function TacticalCanvas({
           );
           if (token) token.rotation = gesture.rotation;
         });
-    } else if (gesture.kind === "curve") {
-      edit((d) => {
-        const a = d.keyframes[frameIndex].arrows.find(
-          (a) => a.id === gesture.id,
-        );
-        if (a) a.control = gesture.point;
-      });
+    } else if (gesture.originalArrow) {
+      const next = previewArrow(gesture.originalArrow);
+      if (JSON.stringify(next) !== JSON.stringify(gesture.originalArrow))
+        edit((d) => {
+          const index = d.keyframes[frameIndex].arrows.findIndex(
+            (a) => a.id === gesture.id,
+          );
+          if (index !== -1) d.keyframes[frameIndex].arrows[index] = next;
+        });
     }
     setGesture(null);
   }
+  const selectedArrow = frame.arrows.find((arrow) => arrow.id === selected);
   return (
     <svg
       id="tactical-canvas"
@@ -201,31 +240,30 @@ export function TacticalCanvas({
       aria-label="Interactive handball court"
       onPointerDown={down}
       onPointerMove={(e) => {
-        if (gesture) {
-          const p = point(e);
-          if (gesture.kind === "rotate") {
-            const token = frame.tokens.find((t) => t.id === gesture.id);
-            if (!token) return;
-            const angle =
-              ((Math.atan2(p.y - token.position.y, p.x - token.position.x) *
-                180) /
-                Math.PI +
-                450) %
-              360;
-            setGesture({
-              ...gesture,
-              rotation: e.shiftKey ? Math.round(angle / 15) * 15 : angle,
-            });
-            return;
-          }
+        if (!gesture) return;
+        const p = point(e);
+        if (gesture.kind === "rotate") {
+          const token = frame.tokens.find((t) => t.id === gesture.id);
+          if (!token) return;
+          const angle =
+            ((Math.atan2(p.y - token.position.y, p.x - token.position.x) *
+              180) /
+              Math.PI +
+              450) %
+            360;
           setGesture({
             ...gesture,
-            point: {
-              x: Math.max(0, Math.min(width, p.x + (gesture.offset?.x ?? 0))),
-              y: Math.max(0, Math.min(height, p.y + (gesture.offset?.y ?? 0))),
-            },
+            rotation: e.shiftKey ? Math.round(angle / 15) * 15 : angle,
           });
+          return;
         }
+        setGesture({
+          ...gesture,
+          point: {
+            x: Math.max(0, Math.min(width, p.x + (gesture.offset?.x ?? 0))),
+            y: Math.max(0, Math.min(height, p.y + (gesture.offset?.y ?? 0))),
+          },
+        });
       }}
       onPointerUp={finish}
       onPointerCancel={() => setGesture(null)}
@@ -238,35 +276,30 @@ export function TacticalCanvas({
     >
       <Court config={config} />
       {onion && frameIndex > 0 && playbackTime === null && (
-        <g opacity="0.2" pointerEvents="none">
-          {project.keyframes[frameIndex - 1].tokens.map((t) => (
+        <g opacity=".2" pointerEvents="none">
+          {project.keyframes[frameIndex - 1].tokens.map((token) => (
             <Token
+              key={token.id}
+              token={token}
               playerScale={config.playerScale}
-              key={t.id}
-              token={t}
-              image={t.assetId ? assetUrls[t.assetId] : undefined}
+              image={token.assetId ? assetUrls[token.assetId] : undefined}
             />
           ))}
         </g>
       )}
-      {frame.arrows.map((a) => (
+      {frame.arrows.map((arrow) => (
         <Arrow
-          key={a.id}
-          arrow={
-            gesture?.kind === "curve" && gesture.id === a.id
-              ? { ...a, control: gesture.point }
-              : a
-          }
-          selected={selected === a.id}
-          onSelect={
+          key={arrow.id}
+          arrow={previewArrow(arrow)}
+          selected={selected === arrow.id}
+          onPointerDown={
             tool === "select" && playbackTime === null
-              ? () => setSelected(a.id)
+              ? (e) => begin(e, "move-arrow", arrow.id)
               : undefined
           }
-          onControl={(e) => begin(e, "curve", a.id)}
         />
       ))}
-      {gesture?.kind === "arrow" && (
+      {gesture?.kind === "draw-arrow" && (
         <Arrow
           arrow={{
             id: gesture.id,
@@ -277,30 +310,45 @@ export function TacticalCanvas({
           }}
         />
       )}
-      {frame.tokens.map((t) => (
+      {frame.tokens.map((token) => (
         <Token
-          playerScale={config.playerScale}
-          key={t.id}
+          key={token.id}
           token={
-            gesture?.kind === "token" && gesture.id === t.id
-              ? { ...t, position: gesture.point }
-              : gesture?.kind === "rotate" && gesture.id === t.id
-                ? { ...t, rotation: gesture.rotation }
-                : t
+            gesture?.id === token.id
+              ? {
+                  ...token,
+                  ...(gesture.kind === "token"
+                    ? { position: gesture.point }
+                    : gesture.kind === "rotate"
+                      ? { rotation: gesture.rotation }
+                      : {}),
+                }
+              : token
           }
-          selected={selected === t.id}
+          playerScale={config.playerScale}
+          selected={selected === token.id}
           labels={config.showLabels}
-          image={t.assetId ? assetUrls[t.assetId] : undefined}
+          image={token.assetId ? assetUrls[token.assetId] : undefined}
           onPointerDown={
             playbackTime === null
-              ? (e) => begin(e, "token", t.id, t.position)
+              ? (e) => begin(e, "token", token.id, token.position)
               : undefined
           }
           onRotate={
-            playbackTime === null ? (e) => begin(e, "rotate", t.id) : undefined
+            playbackTime === null
+              ? (e) => begin(e, "rotate", token.id)
+              : undefined
           }
         />
       ))}
+      {selectedArrow && playbackTime === null && (
+        <ArrowHandles
+          arrow={previewArrow(selectedArrow)}
+          onHandle={(e, kind, origin, index) =>
+            begin(e, kind, selectedArrow.id, origin, index)
+          }
+        />
+      )}
     </svg>
   );
 }

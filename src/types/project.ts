@@ -22,6 +22,7 @@ export const arrowSchema = z.object({
   start: point,
   end: point,
   control: point.optional(),
+  controlPoints: z.array(point).max(12).optional(),
   color,
 });
 export const courtConfigSchema = z.object({

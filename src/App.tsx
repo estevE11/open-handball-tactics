@@ -619,7 +619,7 @@ export default function App() {
                 <div className="board-hint">
                   <span>
                     {board.tool === "select"
-                      ? "Drag players to position · Select an arrow to curve it"
+                      ? "Drag players or arrows to move · Select to rotate or reshape"
                       : ["run", "pass", "dribble", "screen"].includes(
                             board.tool,
                           )
