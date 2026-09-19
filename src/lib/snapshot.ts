@@ -8,6 +8,12 @@ export async function snapshot(format: "svg" | "png", title: string) {
   svg.setAttribute("width", String(original.viewBox.baseVal.width * 2));
   svg.setAttribute("height", String(original.viewBox.baseVal.height * 2));
   svg.style.background = "#fafaf8";
+  svg
+    .querySelectorAll("[data-editor-only]")
+    .forEach((element) => element.remove());
+  svg
+    .querySelectorAll("[data-token-glyph]")
+    .forEach((element) => element.removeAttribute("filter"));
   for (const image of svg.querySelectorAll("image")) {
     // Object URLs are temporary. Resolve the displayed image to a self-contained data URL.
     const href = image.getAttribute("href");

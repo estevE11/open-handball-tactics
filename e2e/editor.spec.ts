@@ -28,8 +28,13 @@ test("defenders and goalkeepers face attackers, rotate, and animate between step
     "transform",
     "rotate(180)",
   );
-  await expect(keeper.locator("[data-token-body] > path")).toHaveCount(1);
+  await expect(keeper.locator("[data-token-glyph] path")).toHaveCount(1);
   await defender.click();
+  await expect(defender.locator("[data-token-glyph]")).toHaveAttribute(
+    "filter",
+    /url/,
+  );
+  await expect(defender.locator("rect")).toHaveCount(0);
   await page.getByLabel("Object rotation").fill("350");
   await page.getByRole("button", { name: "Add step", exact: true }).click();
   await defender.click();
