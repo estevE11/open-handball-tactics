@@ -1,5 +1,6 @@
 import { Circle, Triangle, Square, ImagePlus, Trash2 } from "lucide-react";
 import { useRef } from "react";
+import { tokenRotation } from "../../lib/projectCompatibility";
 import { fitProjectToCourt, courtSize } from "../../lib/courtGeometry";
 import {
   defenses,
@@ -124,6 +125,32 @@ export function Inspector({
             <p className="muted">
               Drag the blue handle to curve this trajectory.
             </p>
+          )}
+          {token && (
+            <>
+              <label className="inline-label">
+                Rotation
+                <input
+                  className="rotation-input"
+                  type="number"
+                  aria-label="Object rotation"
+                  min="0"
+                  max="360"
+                  step="5"
+                  value={Math.round(((tokenRotation(token) % 360) + 360) % 360)}
+                  onChange={(e) => {
+                    if (Number.isFinite(e.target.valueAsNumber))
+                      updateToken({
+                        rotation: ((e.target.valueAsNumber % 360) + 360) % 360,
+                      });
+                  }}
+                />
+                <span>°</span>
+              </label>
+              <p className="muted">
+                Drag the round handle to rotate. Hold Shift to snap to 15°.
+              </p>
+            </>
           )}
           <button
             className="text-button danger"

@@ -32,6 +32,7 @@ import { useAssetUrls } from "./hooks/useAssetUrls";
 import { FolderTree } from "./components/library/FolderTree";
 import { TacticalCanvas } from "./components/board/TacticalCanvas";
 import { Toolbar } from "./components/app/Toolbar";
+import { PlaybackControls } from "./components/app/PlaybackControls";
 import { Inspector } from "./components/app/Inspector";
 import { Modal } from "./components/ui/Modal";
 import type { DrillProject, FolderNode, Point } from "./types/project";
@@ -127,6 +128,10 @@ export default function App() {
       )
         return;
       const state = useProjectStore.getState();
+      if (state.playbackTime !== null) {
+        if (event.key === "Escape") state.stopPlayback();
+        return;
+      }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
         event.preventDefault();
         if (event.shiftKey) state.redo();
@@ -557,7 +562,9 @@ export default function App() {
             </div>
             <div className="editor-layout">
               <div className="board-column">
-                <Toolbar />
+                <div inert={board.playbackTime !== null}>
+                  <Toolbar />
+                </div>
                 <div className="canvas-area">
                   <div className="canvas-topline">
                     <span>
@@ -586,7 +593,7 @@ export default function App() {
                       Defenders
                     </span>
                     <span>
-                      <i className="legend-square" />
+                      <i className="legend-triangle legend-goalkeeper" />
                       Goalkeeper
                     </span>
                   </div>
@@ -607,6 +614,7 @@ export default function App() {
                   <span>Undo</span>
                 </div>
                 <div className="steps-panel">
+                  <PlaybackControls />
                   <div className="steps-title">
                     <Layers size={16} />
                     <strong>Drill steps</strong>
@@ -676,6 +684,7 @@ export default function App() {
               </div>
               <div
                 className={`inspector-wrap ${settings ? "mobile-open" : ""}`}
+                inert={board.playbackTime !== null}
               >
                 <Inspector
                   assets={assets}

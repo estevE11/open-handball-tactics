@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import { normalizeProject } from "./projectCompatibility";
 import {
   projectSchema,
   type DrillProject,
@@ -43,7 +44,7 @@ export class LibraryService {
     );
   }
   async save(project: DrillProject) {
-    const valid = projectSchema.parse(project);
+    const valid = normalizeProject(projectSchema.parse(project));
     await this.database.transaction(
       "rw",
       this.database.projects,

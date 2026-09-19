@@ -4,6 +4,8 @@ import type { Point, TacticalArrow, TacticalToken } from "../../types/project";
 import { Court } from "./Court";
 import { Arrow } from "./Arrow";
 import { Token } from "./Token";
+import { sampleProject } from "../../lib/animation";
+import { tokenRotation } from "../../lib/projectCompatibility";
 
 export function TacticalCanvas({
   assetUrls,
@@ -14,18 +16,30 @@ export function TacticalCanvas({
   onAssetDrop: (id: string, point: Point) => void;
   onion: boolean;
 }) {
-  const { project, frameIndex, tool, selected, edit, setSelected, setTool } =
-    useProjectStore();
+  const {
+    project,
+    frameIndex,
+    tool,
+    selected,
+    edit,
+    setSelected,
+    setTool,
+    playbackTime,
+  } = useProjectStore();
   const svg = useRef<SVGSVGElement>(null);
   const [gesture, setGesture] = useState<{
-    kind: "token" | "arrow" | "curve";
+    kind: "token" | "arrow" | "curve" | "rotate";
     id: string;
     start: Point;
     offset?: Point;
     point: Point;
+    rotation?: number;
   } | null>(null);
   if (!project) return null;
-  const frame = project.keyframes[frameIndex];
+  const frame =
+    playbackTime === null
+      ? project.keyframes[frameIndex]
+      : sampleProject(project, playbackTime).frame;
   const config = project.courtConfig;
   const width =
     config.type === "custom_box" ? config.dimensions.width * 20 : 400;
@@ -47,11 +61,12 @@ export function TacticalCanvas({
   }
   function begin(
     event: React.PointerEvent,
-    kind: "token" | "curve",
+    kind: "token" | "curve" | "rotate",
     id: string,
     origin?: Point,
   ) {
-    if (tool !== "select") return;
+    if (tool !== "select" || playbackTime !== null || event.button !== 0)
+      return;
     event.stopPropagation();
     svg.current?.setPointerCapture(event.pointerId);
     const p = point(event);
@@ -62,10 +77,14 @@ export function TacticalCanvas({
       start: p,
       point: origin ?? p,
       offset: origin ? { x: origin.x - p.x, y: origin.y - p.y } : undefined,
+      rotation:
+        kind === "rotate"
+          ? tokenRotation(frame.tokens.find((t) => t.id === id)!)
+          : undefined,
     });
   }
   function down(event: React.PointerEvent) {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || playbackTime !== null) return;
     const p = point(event);
     if (tool === "select") {
       setSelected(null);
@@ -104,11 +123,10 @@ export function TacticalCanvas({
       equipment,
       label,
       shape:
-        tool === "defender" || tool === "cone"
+        tool === "defender" || tool === "cone" || tool === "goalkeeper"
           ? "triangle"
-          : tool === "goalkeeper"
-            ? "square"
-            : "circle",
+          : "circle",
+      rotation: role === "defender" || role === "goalkeeper" ? 180 : 0,
       color:
         tool === "defender" || tool === "cone"
           ? "#eaa958"
@@ -155,6 +173,15 @@ export function TacticalCanvas({
         );
         if (t) t.position = gesture.point;
       });
+    } else if (gesture.kind === "rotate") {
+      const original = frame.tokens.find((t) => t.id === gesture.id);
+      if (original && gesture.rotation !== tokenRotation(original))
+        edit((d) => {
+          const token = d.keyframes[frameIndex].tokens.find(
+            (t) => t.id === gesture.id,
+          );
+          if (token) token.rotation = gesture.rotation;
+        });
     } else if (gesture.kind === "curve") {
       edit((d) => {
         const a = d.keyframes[frameIndex].arrows.find(
@@ -176,6 +203,21 @@ export function TacticalCanvas({
       onPointerMove={(e) => {
         if (gesture) {
           const p = point(e);
+          if (gesture.kind === "rotate") {
+            const token = frame.tokens.find((t) => t.id === gesture.id);
+            if (!token) return;
+            const angle =
+              ((Math.atan2(p.y - token.position.y, p.x - token.position.x) *
+                180) /
+                Math.PI +
+                450) %
+              360;
+            setGesture({
+              ...gesture,
+              rotation: e.shiftKey ? Math.round(angle / 15) * 15 : angle,
+            });
+            return;
+          }
           setGesture({
             ...gesture,
             point: {
@@ -191,11 +233,11 @@ export function TacticalCanvas({
       onDrop={(e) => {
         e.preventDefault();
         const id = e.dataTransfer.getData("application/handball-asset");
-        if (id) onAssetDrop(id, point(e));
+        if (id && playbackTime === null) onAssetDrop(id, point(e));
       }}
     >
       <Court config={config} />
-      {onion && frameIndex > 0 && (
+      {onion && frameIndex > 0 && playbackTime === null && (
         <g opacity="0.2" pointerEvents="none">
           {project.keyframes[frameIndex - 1].tokens.map((t) => (
             <Token
@@ -215,7 +257,11 @@ export function TacticalCanvas({
               : a
           }
           selected={selected === a.id}
-          onSelect={tool === "select" ? () => setSelected(a.id) : undefined}
+          onSelect={
+            tool === "select" && playbackTime === null
+              ? () => setSelected(a.id)
+              : undefined
+          }
           onControl={(e) => begin(e, "curve", a.id)}
         />
       ))}
@@ -236,12 +282,21 @@ export function TacticalCanvas({
           token={
             gesture?.kind === "token" && gesture.id === t.id
               ? { ...t, position: gesture.point }
-              : t
+              : gesture?.kind === "rotate" && gesture.id === t.id
+                ? { ...t, rotation: gesture.rotation }
+                : t
           }
           selected={selected === t.id}
           labels={config.showLabels}
           image={t.assetId ? assetUrls[t.assetId] : undefined}
-          onPointerDown={(e) => begin(e, "token", t.id, t.position)}
+          onPointerDown={
+            playbackTime === null
+              ? (e) => begin(e, "token", t.id, t.position)
+              : undefined
+          }
+          onRotate={
+            playbackTime === null ? (e) => begin(e, "rotate", t.id) : undefined
+          }
         />
       ))}
     </svg>

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import type { DrillProject, Tool } from "../types/project";
 import { library } from "../lib/browserStorage";
+import { normalizeProject } from "../lib/projectCompatibility";
+import { animationDuration, sampleProject } from "../lib/animation";
 
 // Serialize writes so an older save can never finish after a newer edit.
 let pending: Promise<void> = Promise.resolve();
@@ -8,6 +10,10 @@ let revision = 0;
 interface BoardState {
   project: DrillProject | null;
   frameIndex: number;
+  playbackTime: number | null;
+  playing: boolean;
+  setPlayback: (time: number, playing?: boolean) => void;
+  stopPlayback: () => void;
   tool: Tool;
   selected: string | null;
   past: DrillProject[];
@@ -51,6 +57,28 @@ export async function flushSaves() {
 export const useProjectStore = create<BoardState>((set, get) => ({
   project: null,
   frameIndex: 0,
+  playbackTime: null,
+  playing: false,
+  setPlayback: (time, playing = false) => {
+    const project = get().project;
+    if (project)
+      set({
+        playbackTime: Math.max(0, Math.min(animationDuration(project), time)),
+        playing,
+        selected: null,
+      });
+  },
+  stopPlayback: () => {
+    const state = get();
+    set({
+      frameIndex:
+        state.project && state.playbackTime !== null
+          ? sampleProject(state.project, state.playbackTime).index
+          : state.frameIndex,
+      playbackTime: null,
+      playing: false,
+    });
+  },
   tool: "select",
   selected: null,
   past: [],
@@ -59,8 +87,10 @@ export const useProjectStore = create<BoardState>((set, get) => ({
   error: null,
   open: (project) =>
     set({
-      project: structuredClone(project),
+      project: normalizeProject(project),
       frameIndex: 0,
+      playbackTime: null,
+      playing: false,
       selected: null,
       past: [],
       future: [],
@@ -75,6 +105,8 @@ export const useProjectStore = create<BoardState>((set, get) => ({
     project.updatedAt = Date.now();
     set({
       project,
+      playbackTime: null,
+      playing: false,
       past: [...state.past.slice(-49), state.project],
       future: [],
     });
@@ -90,6 +122,8 @@ export const useProjectStore = create<BoardState>((set, get) => ({
       future: [state.project, ...state.future],
       frameIndex: Math.min(state.frameIndex, project.keyframes.length - 1),
       selected: null,
+      playbackTime: null,
+      playing: false,
     });
     persist(project);
   },
@@ -103,12 +137,15 @@ export const useProjectStore = create<BoardState>((set, get) => ({
       future: state.future.slice(1),
       frameIndex: Math.min(state.frameIndex, project.keyframes.length - 1),
       selected: null,
+      playbackTime: null,
+      playing: false,
     });
     persist(project);
   },
   setTool: (tool) => set({ tool, selected: null }),
   setSelected: (selected) => set({ selected }),
-  setFrame: (frameIndex) => set({ frameIndex, selected: null }),
+  setFrame: (frameIndex) =>
+    set({ frameIndex, selected: null, playbackTime: null, playing: false }),
   retry: () => {
     const project = get().project;
     if (project) persist(project);

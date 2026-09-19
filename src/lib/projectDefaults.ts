@@ -35,7 +35,8 @@ export function newProject(
           {
             id: crypto.randomUUID(),
             role: "goalkeeper",
-            shape: "square",
+            shape: "triangle",
+            rotation: 180,
             label: "GK",
             color: "#879a85",
             size: 13,

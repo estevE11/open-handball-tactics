@@ -9,6 +9,7 @@ export const tokenSchema = z.object({
   label: z.string().max(80),
   color,
   size: z.number().min(2).max(100),
+  rotation: z.number().finite().optional(),
   position: point,
   equipment: z
     .enum(["ball", "cone", "goal", "ladder", "text", "image"])

@@ -1457,3 +1457,47 @@ h1 {
     transition: none !important;
   }
 }
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 13px;
+  border-bottom: 1px solid #eceeeb;
+  flex-wrap: wrap;
+}
+.playback-controls input[type="range"] {
+  flex: 1;
+  min-width: 70px;
+}
+.playback-controls .playback-time {
+  font-size: 10px;
+  color: #788478;
+  font-variant-numeric: tabular-nums;
+}
+.playback-controls .duration-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+}
+.duration-label input {
+  width: 57px;
+  padding: 4px;
+}
+.rotation-input {
+  max-width: 70px;
+  padding: 5px;
+  margin-left: auto;
+}
+.legend-triangle {
+  transform: rotate(180deg);
+}
+.legend-goalkeeper {
+  border-bottom-color: #879a85;
+}
+.tool-defender svg,
+.tool-goalkeeper svg {
+  transform: rotate(180deg);
+}

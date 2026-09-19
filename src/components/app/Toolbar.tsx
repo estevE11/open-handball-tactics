@@ -2,7 +2,6 @@ import {
   MousePointer2,
   Circle,
   Triangle,
-  Square,
   MoveUpRight,
   ArrowUpRight,
   Waves,
@@ -23,7 +22,7 @@ const groups: { tool: Tool; label: string; icon: typeof Circle }[][] = [
   [
     { tool: "attacker", label: "Attacker", icon: Circle },
     { tool: "defender", label: "Defender", icon: Triangle },
-    { tool: "goalkeeper", label: "Goalkeeper", icon: Square },
+    { tool: "goalkeeper", label: "Goalkeeper", icon: Triangle },
   ],
   [
     { tool: "run", label: "Run arrow", icon: MoveUpRight },

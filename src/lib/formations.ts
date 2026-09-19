@@ -78,6 +78,7 @@ export function formation(
     label,
     color: role === "defender" ? "#eaa958" : "#4f8cba",
     size: 14,
+    rotation: role === "defender" ? 180 : 0,
     position: { x, y },
   }));
 }
