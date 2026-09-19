@@ -1,7 +1,7 @@
 import { useId } from "react";
 import type { TacticalToken } from "../../types/project";
 import { tokenRotation } from "../../lib/projectCompatibility";
-import { ConeGlyph } from "./Equipment";
+import { ConeGlyph, LadderGlyph } from "./Equipment";
 
 export function Token({
   token: t,
@@ -23,6 +23,7 @@ export function Token({
   const outlineId = useId();
   const scale = t.role === "equipment" ? 1 : playerScale;
   const r = t.size * scale;
+  const handleRadius = t.equipment === "ladder" ? r * 1.8 : r;
   const rotation = tokenRotation(t);
   return (
     <g
@@ -94,12 +95,7 @@ export function Token({
               {t.label}
             </text>
           ) : t.equipment === "ladder" ? (
-            <g stroke={t.color} strokeWidth="3">
-              <path d={`M-${r / 2} -${r}V${r}M${r / 2} -${r}V${r}`} />
-              {[-1, -0.5, 0, 0.5, 1].map((y) => (
-                <path key={y} d={`M-${r / 2} ${y * r}h${r}`} />
-              ))}
-            </g>
+            <LadderGlyph size={r} color={t.color} />
           ) : t.equipment === "goal" ? (
             <path
               d={`M-${r} ${r / 2}V-${r / 2}H${r}V${r / 2}`}
@@ -150,14 +146,14 @@ export function Token({
         {selected && onRotate && (
           <g data-editor-only="true">
             <path
-              d={`M0 -${r + 5}V-${r + 16}`}
+              d={`M0 -${handleRadius + 5}V-${handleRadius + 16}`}
               stroke="#2563eb"
               strokeWidth="1"
             />
             <circle
               aria-label="Rotate object"
               cx="0"
-              cy={-r - 19}
+              cy={-handleRadius - 19}
               r="5"
               fill="white"
               stroke="#2563eb"

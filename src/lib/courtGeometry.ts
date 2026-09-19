@@ -32,6 +32,7 @@ export function fitProjectToCourt(project: DrillProject) {
         token.position,
         project.courtConfig,
         token.size *
+          (token.equipment === "ladder" ? 1.8 : 1) *
           (token.role === "equipment"
             ? 1
             : (project.courtConfig.playerScale ?? 1)),

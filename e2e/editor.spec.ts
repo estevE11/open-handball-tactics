@@ -203,3 +203,45 @@ test("arrows move as a whole and support draggable endpoints and multiple Bézie
   await expect(court.locator("[data-arrow-line]")).toHaveAttribute("d", curve!);
   await expect(court.locator("[data-arrow-head]")).toHaveCount(2);
 });
+
+test("training equipment has distinct proportions and supports rotation", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const court = page.getByLabel("Interactive handball court");
+  await expect(court).toBeVisible();
+  await page.getByRole("button", { name: "Cone", exact: true }).click();
+  const conePosition = await courtPoint(court, 90, 330);
+  await page.mouse.click(conePosition.x, conePosition.y);
+  const cone = court.locator('[data-equipment="cone"]');
+  await expect(cone).toBeVisible();
+  const coneBox = (await cone.boundingBox())!;
+  const playerBox = (await page
+    .getByRole("img", { name: "defender 1", exact: true })
+    .first()
+    .boundingBox())!;
+  expect(coneBox.width).toBeLessThan(playerBox.width);
+  await page
+    .getByRole("button", { name: "Agility ladder", exact: true })
+    .click();
+  const ladderPosition = await courtPoint(court, 300, 340);
+  await page.mouse.click(ladderPosition.x, ladderPosition.y);
+  const ladder = court.locator('[data-equipment="ladder"]');
+  await expect(ladder.locator("[data-ladder-rung]")).toHaveCount(8);
+  const ladderBox = (await ladder.boundingBox())!;
+  expect(ladderBox.height).toBeGreaterThan(ladderBox.width * 2.5);
+  await page.getByLabel("Object rotation").fill("90");
+  await expect(
+    page
+      .getByRole("img", { name: "equipment ladder" })
+      .locator("[data-token-body]"),
+  ).toHaveAttribute("transform", "rotate(90)");
+  await expect(page.getByRole("status")).toHaveText("All changes saved");
+  await page.screenshot({
+    path: "/tmp/handball-equipment.png",
+    fullPage: true,
+  });
+  await page.reload();
+  await expect(court.locator('[data-equipment="cone"]')).toHaveCount(1);
+  await expect(court.locator('[data-equipment="ladder"]')).toHaveCount(1);
+});

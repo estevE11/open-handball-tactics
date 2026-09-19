@@ -161,16 +161,25 @@ export function TacticalCanvas({
           : "circle",
       rotation: role === "defender" || role === "goalkeeper" ? 180 : 0,
       color:
-        tool === "cone"
-          ? "#e87935"
-          : tool === "defender"
-            ? "#eaa958"
-            : tool === "goalkeeper"
-              ? "#879a85"
-              : tool === "attacker"
-                ? "#4f8cba"
-                : "#46564d",
-      size: tool === "ball" ? 6 : tool === "cone" ? 10 : 14,
+        tool === "ladder"
+          ? "#e9b54c"
+          : tool === "cone"
+            ? "#e87935"
+            : tool === "defender"
+              ? "#eaa958"
+              : tool === "goalkeeper"
+                ? "#879a85"
+                : tool === "attacker"
+                  ? "#4f8cba"
+                  : "#46564d",
+      size:
+        tool === "ball"
+          ? 6
+          : tool === "cone"
+            ? 10
+            : tool === "ladder"
+              ? 22
+              : 14,
       position: p,
     };
     edit((d) => {

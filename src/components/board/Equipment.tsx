@@ -42,3 +42,68 @@ export function ConeGlyph({ size: r, color }: { size: number; color: string }) {
     </g>
   );
 }
+
+export function LadderGlyph({
+  size: r,
+  color,
+}: {
+  size: number;
+  color: string;
+}) {
+  return (
+    <g data-equipment="ladder">
+      {[-1, 1].map((side) => (
+        <rect
+          key={side}
+          x={side * r * 0.45 - r * 0.065}
+          y={-r * 1.7}
+          width={r * 0.13}
+          height={r * 3.4}
+          rx={r * 0.035}
+          fill="#3e4942"
+        />
+      ))}
+      {Array.from({ length: 8 }, (_, index) => {
+        const y = -r * 1.5 + (index * r * 3) / 7;
+        return (
+          <g key={index} data-ladder-rung="true">
+            <rect
+              x={-r * 0.56}
+              y={y - r * 0.07}
+              width={r * 1.12}
+              height={r * 0.14}
+              rx={r * 0.03}
+              fill={color}
+              stroke="#9b7a2c"
+              strokeWidth=".55"
+            />
+            <path
+              d={`M${-r * 0.36} ${y - r * 0.025} H${r * 0.36}`}
+              stroke="white"
+              strokeWidth=".6"
+              opacity=".5"
+            />
+            {[-1, 1].map((side) => (
+              <circle
+                key={side}
+                cx={side * r * 0.45}
+                cy={y}
+                r={r * 0.028}
+                fill="#565443"
+              />
+            ))}
+          </g>
+        );
+      })}
+      {[-1, 1].map((side) => (
+        <path
+          key={side}
+          d={`M${side * r * 0.45} ${-r * 1.7}v${-r * 0.1}m0 ${r * 3.5}v${r * 0.1}`}
+          stroke="#525c50"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+      ))}
+    </g>
+  );
+}
