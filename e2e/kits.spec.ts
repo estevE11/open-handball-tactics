@@ -38,7 +38,9 @@ test("kit library creates, edits, reuses and applies kits across roles, formatio
   await expect(
     court.locator('[aria-label^="defender"][data-kit-id]'),
   ).toHaveCount(0);
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
+  await page.getByRole("tab", { name: "Editor", exact: true }).click();
   await page.getByRole("button", { name: "2:4", exact: true }).click();
   await expect(
     court.locator('[aria-label^="attacker"][data-kit-id]'),
@@ -67,6 +69,7 @@ test("kit library creates, edits, reuses and applies kits across roles, formatio
   await expect(court.locator('[data-kit-pattern="stripes"]')).toHaveCount(12);
   await page.getByRole("button", { name: "Redo", exact: true }).click();
   await expect(court.locator('[data-kit-pattern="halves"]')).toHaveCount(12);
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: /01 Starting positions/ }).click();
   await expect(court.locator('[data-kit-pattern="halves"]')).toHaveCount(12);
   await page.getByLabel("Animation timeline").evaluate((element) => {

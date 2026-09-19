@@ -37,15 +37,18 @@ test("formations, dragging, arrows, undo, steps, exports, and offline reload", a
   });
   await page.mouse.up();
   await expect(court.locator('path[stroke-dasharray="7 6"]')).toHaveCount(1);
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
   await page.getByText("Step 2", { exact: true }).first().click();
   await page.getByLabel("Onion skin").check();
+  await page.getByRole("tab", { name: "Editor", exact: true }).click();
   await page.getByLabel("Template").selectOption("full");
   await expect(court).toHaveAttribute("viewBox", "-12 -12 824 424");
   await page.getByLabel("Template").selectOption("half");
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
   await expect(court.getByRole("img", { name: "defender Av" })).toBeVisible();
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await expect(page.getByRole("button", { name: /02 Step 2/ })).toBeVisible();
   await page.getByRole("button", { name: /^Export/ }).click();
   for (const name of ["Handball project", "PNG snapshot", "SVG snapshot"]) {
@@ -186,4 +189,23 @@ test("library opens as an overlay drawer on the workspace", async ({
   await expect(page.locator(".sidebar-scrim")).toBeVisible();
   await page.getByLabel("Close library").click();
   await expect(page.getByLabel("Close library")).toHaveCount(0);
+});
+
+test("editor and animation panes share the right panel", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("tab", { name: "Editor", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator(".steps-panel")).toHaveCount(0);
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
+  await expect(
+    page.getByRole("region", { name: "Animation panel" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Add step", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Switch to editor pane" }).click();
+  await expect(
+    page.getByRole("tab", { name: "Editor", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
 });

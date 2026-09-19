@@ -120,10 +120,13 @@ test("player lettering stays attached through shape, size, rotation, animation, 
       .click();
     await expectChipTransform(attacker, 45, 3);
   }
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
+  await page.getByRole("tab", { name: "Editor", exact: true }).click();
   await attacker.click();
   await setRange(page.getByLabel("Token size"), 14);
   await page.getByLabel("Object rotation").fill("135");
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByLabel("Onion skin").check();
   const copies = page.getByRole("img", { name: "attacker C", exact: true });
   await expect(copies).toHaveCount(2);
@@ -179,9 +182,12 @@ test("defenders and goalkeepers face attackers, rotate, and animate between step
   );
   await expect(defender.locator("rect")).toHaveCount(0);
   await page.getByLabel("Object rotation").fill("350");
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
+  await page.getByRole("tab", { name: "Editor", exact: true }).click();
   await defender.click();
   await page.getByLabel("Object rotation").fill("10");
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await setRange(page.getByLabel("Animation timeline"), 750);
   await expect(defender.locator("[data-token-body]")).toHaveAttribute(
     "transform",
@@ -204,6 +210,7 @@ test("defenders and goalkeepers face attackers, rotate, and animate between step
     "transform",
     "rotate(350)",
   );
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: /02 Step 2/ }).click();
   await expect(defender.locator("[data-token-body]")).toHaveAttribute(
     "transform",
@@ -304,6 +311,7 @@ test("full court is horizontal with court-relative dragging, arrows, steps, and 
   const arrow = court.locator("[data-arrow-line]");
   await expect(arrow).toHaveCount(1);
   const path = await arrow.getAttribute("d");
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
   await page.getByLabel("Onion skin").check();
   await expect(

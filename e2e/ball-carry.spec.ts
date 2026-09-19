@@ -103,6 +103,7 @@ for (const template of ["half", "half-bottom", "full"] as const) {
     await drag(page, chip, 160, 220);
     await expectPosition(ballChip, 300, 300);
     await drag(page, ballChip, 178, 220);
+    await page.getByRole("tab", { name: "Animation", exact: true }).click();
     await page.getByRole("button", { name: "Add step", exact: true }).click();
     await drag(page, chip, 220, 280);
     await expectPosition(ballChip, 238, 280);

@@ -69,10 +69,13 @@ test("player petos are translucent beneath labels, configurable, and survive ste
   await expect(player.locator('[data-kit-pattern="stripes"]')).toHaveCount(1);
   await expect(player.locator('[data-peto="yellow"]')).toHaveCount(1);
   await page.screenshot({ path: "/tmp/handball-peto.png", fullPage: true });
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
+  await page.getByRole("tab", { name: "Editor", exact: true }).click();
   await player.click();
   await page.getByLabel("Object rotation").fill("60");
   await setRange(page.getByLabel("Token size"), "28");
+  await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await setRange(page.getByLabel("Animation timeline"), "750");
   expect(
     await player.evaluate((element) => {
@@ -146,13 +149,11 @@ test("player petos are translucent beneath labels, configurable, and survive ste
   expect(pixel[2]).toBeLessThan(130);
   await exported.close();
   await page.getByLabel("Close dialog").click();
-  await page
-    .locator('input[type="file"][accept^=".hbd"]')
-    .setInputFiles({
-      name: "peto.hbd",
-      mimeType: "application/json",
-      buffer: files["Handball project"],
-    });
+  await page.locator('input[type="file"][accept^=".hbd"]').setInputFiles({
+    name: "peto.hbd",
+    mimeType: "application/json",
+    buffer: files["Handball project"],
+  });
   await expect(court.locator('[data-peto="yellow"]')).toHaveCount(1);
 });
 

@@ -118,10 +118,13 @@ for (const view of ["top", "bottom", "full"] as const) {
     await defender.click();
     await page.getByLabel("Object rotation").fill("150");
     expect(await angle(defender)).toBeCloseTo(-30);
+    await page.getByRole("tab", { name: "Animation", exact: true }).click();
     await page.getByRole("button", { name: "Add step", exact: true }).click();
+    await page.getByRole("tab", { name: "Editor", exact: true }).click();
     await defender.click();
     await page.getByLabel("Object rotation").fill("210");
     expect(await angle(defender)).toBeCloseTo(30);
+    await page.getByRole("tab", { name: "Animation", exact: true }).click();
     await page.getByLabel("Onion skin").check();
     expect(await angle(defenders.first())).toBeCloseTo(-30);
     expect(await angle(defenders.nth(2))).toBeCloseTo(30);

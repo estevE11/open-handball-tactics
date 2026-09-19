@@ -12,7 +12,6 @@ import {
   FilePlus2,
   FolderPlus,
   HardDrive,
-  Layers,
   Menu,
   MoreHorizontal,
   Plus,
@@ -32,7 +31,7 @@ import { useAssetUrls } from "./hooks/useAssetUrls";
 import { FolderTree } from "./components/library/FolderTree";
 import { TacticalCanvas } from "./components/board/TacticalCanvas";
 import { Toolbar } from "./components/app/Toolbar";
-import { PlaybackControls } from "./components/app/PlaybackControls";
+import { AnimationPanel } from "./components/app/AnimationPanel";
 import { WorkspaceSettings } from "./components/app/WorkspaceSettings";
 import { ThemeToggle } from "./components/app/ThemeToggle";
 import { usePreferencesStore } from "./store/preferencesStore";
@@ -54,7 +53,7 @@ function createProject(title?: string, folderId: string | null = null) {
 
 export default function App() {
   const board = useProjectStore();
-  const { project, frameIndex, edit, setFrame } = board;
+  const { project, frameIndex, edit } = board;
   const projects =
     useLiveQuery(
       () => db.projects.orderBy("updatedAt").reverse().toArray(),
@@ -69,6 +68,9 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [onion, setOnion] = useState(false);
+  const [activePane, setActivePane] = useState<"editor" | "animation">(
+    "editor",
+  );
   const [sidebar, setSidebar] = useState(false);
   const [settings, setSettings] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
@@ -597,6 +599,19 @@ export default function App() {
           <>
             <div className="editor-layout">
               <div className="board-column">
+                <div className="pane-switch-row">
+                  <button
+                    className="pane-switch"
+                    onClick={() =>
+                      setActivePane((pane) =>
+                        pane === "editor" ? "animation" : "editor",
+                      )
+                    }
+                  >
+                    Switch to {activePane === "editor" ? "animation" : "editor"}{" "}
+                    pane
+                  </button>
+                </div>
                 <div inert={board.playbackTime !== null}>
                   <Toolbar />
                 </div>
@@ -648,86 +663,52 @@ export default function App() {
                   <kbd>⌘ Z</kbd>
                   <span>Undo</span>
                 </div>
-                <div className="steps-panel">
-                  <PlaybackControls />
-                  <div className="steps-title">
-                    <Layers size={16} />
-                    <strong>Drill steps</strong>
-                    <span>{project.keyframes.length} / 200</span>
-                    <label title="Show the previous step on the court">
-                      <input
-                        type="checkbox"
-                        checked={onion}
-                        onChange={(e) => setOnion(e.target.checked)}
-                      />{" "}
-                      Onion skin
-                    </label>
-                  </div>
-                  <div className="steps-list">
-                    {project.keyframes.map((frame, index) => (
-                      <div
-                        className={`step-item ${index === frameIndex ? "active" : ""}`}
-                        key={frame.id}
-                      >
-                        <button
-                          className="step-select"
-                          onClick={() => setFrame(index)}
-                        >
-                          <span className="step-number">
-                            {String(index + 1).padStart(2, "0")}
-                          </span>
-                          <span>{frame.name}</span>
-                        </button>
-                        {project.keyframes.length > 1 &&
-                          index === frameIndex && (
-                            <button
-                              className="icon-button"
-                              aria-label="Delete step"
-                              onClick={() => {
-                                edit((d) => {
-                                  d.keyframes.splice(index, 1);
-                                });
-                                setFrame(Math.max(0, index - 1));
-                              }}
-                            >
-                              <X size={12} />
-                            </button>
-                          )}
-                      </div>
-                    ))}
-                    <button
-                      className="add-step"
-                      disabled={project.keyframes.length >= 200}
-                      onClick={() => {
-                        const index = project.keyframes.length;
-                        edit((d) => {
-                          const frame = structuredClone(
-                            d.keyframes[frameIndex],
-                          );
-                          frame.id = crypto.randomUUID();
-                          frame.name = `Step ${index + 1}`;
-                          d.keyframes.push(frame);
-                        });
-                        setFrame(index);
-                      }}
-                    >
-                      <Plus size={17} />
-                      <span>Add step</span>
-                    </button>
-                  </div>
-                </div>
               </div>
               <div
                 className={`inspector-wrap ${settings ? "mobile-open" : ""}`}
-                inert={board.playbackTime !== null}
               >
-                <Inspector
-                  assets={assets}
-                  urls={urls}
-                  upload={(file) => void run(() => library.uploadAsset(file))}
-                  addAsset={addAsset}
-                  removeAsset={(id) => void run(() => library.deleteAsset(id))}
-                />
+                <div
+                  className="pane-tabs"
+                  role="tablist"
+                  aria-label="Workspace pane"
+                >
+                  <button
+                    role="tab"
+                    aria-selected={activePane === "editor"}
+                    className={activePane === "editor" ? "active" : ""}
+                    onClick={() => setActivePane("editor")}
+                  >
+                    Editor
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={activePane === "animation"}
+                    className={activePane === "animation" ? "active" : ""}
+                    onClick={() => setActivePane("animation")}
+                  >
+                    Animation
+                  </button>
+                </div>
+                {activePane === "editor" ? (
+                  <div
+                    className="editor-pane"
+                    inert={board.playbackTime !== null}
+                  >
+                    <Inspector
+                      assets={assets}
+                      urls={urls}
+                      upload={(file) =>
+                        void run(() => library.uploadAsset(file))
+                      }
+                      addAsset={addAsset}
+                      removeAsset={(id) =>
+                        void run(() => library.deleteAsset(id))
+                      }
+                    />
+                  </div>
+                ) : (
+                  <AnimationPanel onion={onion} setOnion={setOnion} />
+                )}
               </div>
             </div>
           </>
