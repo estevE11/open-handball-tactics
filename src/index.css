@@ -1528,9 +1528,13 @@ h1 {
   gap: 12px;
   margin-top: 18px;
 }
-.apply-defaults {
-  font-size: 9px;
+.court-defaults-actions {
+  gap: 8px;
   margin-top: 12px;
+  margin-bottom: 8px;
+}
+.court-defaults-actions .text-button {
+  font-size: 9px;
 }
 .dialog-error {
   color: #ad483a;

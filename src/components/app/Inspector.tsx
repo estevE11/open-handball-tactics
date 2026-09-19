@@ -1,5 +1,5 @@
 import { Circle, Triangle, Square, ImagePlus, Trash2 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { CourtSettings } from "./CourtSettings";
 import { usePreferencesStore } from "../../store/preferencesStore";
 import {
@@ -18,7 +18,12 @@ import {
   type Offense,
 } from "../../lib/formations";
 import { useProjectStore } from "../../store/projectStore";
-import type { Point, StoredAsset, TacticalToken } from "../../types/project";
+import type {
+  CourtConfig,
+  Point,
+  StoredAsset,
+  TacticalToken,
+} from "../../types/project";
 
 export function Inspector({
   assets,
@@ -35,6 +40,10 @@ export function Inspector({
 }) {
   const { project, frameIndex, edit, selected } = useProjectStore();
   const file = useRef<HTMLInputElement>(null);
+  const [defaultsResult, setDefaultsResult] = useState<{
+    config: CourtConfig;
+    error: string | null;
+  } | null>(null);
   if (!project) return null;
   const config = project.courtConfig;
   const token = project.keyframes[frameIndex].tokens.find(
@@ -255,19 +264,52 @@ export function Inspector({
             })
           }
         />
-        <button
-          className="text-button apply-defaults"
-          onClick={() =>
-            edit((d) => {
-              d.courtConfig = structuredClone(
-                usePreferencesStore.getState().courtDefaults,
-              );
-              fitProjectToCourt(d);
-            })
-          }
-        >
-          Apply workspace defaults
-        </button>
+        <div className="defaults-actions court-defaults-actions">
+          <button
+            className="text-button"
+            onClick={() =>
+              edit((d) => {
+                d.courtConfig = structuredClone(
+                  usePreferencesStore.getState().courtDefaults,
+                );
+                fitProjectToCourt(d);
+              })
+            }
+          >
+            Apply workspace defaults
+          </button>
+          <button
+            className="text-button"
+            title="Use this drill’s court settings as the defaults for new drills"
+            onClick={() => {
+              try {
+                usePreferencesStore
+                  .getState()
+                  .setCourtDefaults(structuredClone(config));
+                setDefaultsResult({ config, error: null });
+              } catch (error) {
+                setDefaultsResult({
+                  config,
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Could not save defaults.",
+                });
+              }
+            }}
+          >
+            Save as defaults
+          </button>
+        </div>
+        {defaultsResult?.config === config && (
+          <p
+            className={defaultsResult.error ? "dialog-error" : "muted"}
+            role={defaultsResult.error ? "alert" : undefined}
+            aria-live="polite"
+          >
+            {defaultsResult.error ?? "Workspace defaults saved."}
+          </p>
+        )}
       </section>
       <section className="inspector-section">
         <h3>Quick formations</h3>
