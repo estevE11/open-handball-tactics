@@ -60,6 +60,23 @@ export class LibraryService {
     await this.save(copy)
     return copy
   }
+  async duplicateFolder(id: string) {
+    return this.database.transaction('rw', this.database.projects, this.database.folders, async () => {
+      const source = await this.database.folders.get(id)
+      if (!source) throw new Error('This folder no longer exists.')
+      const folders = await this.database.folders.toArray()
+      const projects = await this.database.projects.toArray()
+      const copyBranch = async (folder: FolderNode, parentId: string | null, root = false): Promise<FolderNode> => {
+        const copy = await this.createFolder(root ? `${folder.name.slice(0, 150)} (copy)` : folder.name, parentId)
+        for (const p of projects.filter(p => p.folderId === folder.id)) {
+          await this.save({ ...structuredClone(p), id: crypto.randomUUID(), folderId: copy.id, createdAt: Date.now() })
+        }
+        for (const child of folders.filter(f => f.parentId === folder.id)) await copyBranch(child, copy.id)
+        return copy
+      }
+      return copyBranch(source, source.parentId, true)
+    })
+  }
   private async pruneAssets() {
     const projects = await this.database.projects.toArray()
     const used = new Set(projects.flatMap(p => p.customAssets.map(a => a.id)))
