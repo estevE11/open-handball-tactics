@@ -21,9 +21,13 @@ export function Token({
   onRotate?: (event: React.PointerEvent) => void;
 }) {
   const outlineId = useId();
-  const scale = t.role === "equipment" ? 1 : playerScale;
-  const r = t.size * scale;
-  const handleRadius = t.equipment === "ladder" ? r * 1.8 : r;
+  const isPlayer = t.role !== "equipment";
+  // Shape and lettering share native coordinates, so every transform stays uniform.
+  const r = isPlayer ? 14 : t.size;
+  const contentScale = isPlayer ? (t.size / 14) * playerScale : 1;
+  const displayRadius = r * contentScale;
+  const handleRadius =
+    t.equipment === "ladder" ? displayRadius * 1.8 : displayRadius;
   const rotation = tokenRotation(t);
   return (
     <g
@@ -80,68 +84,83 @@ export function Token({
           data-token-glyph="true"
           filter={selected ? `url(#${outlineId})` : undefined}
         >
-          {t.equipment === "image" ? (
-            <image href={image} x={-r} y={-r} width={r * 2} height={r * 2} />
-          ) : t.equipment === "cone" ? (
-            <ConeGlyph size={r} color={t.color} />
-          ) : t.equipment === "text" ? (
-            <text
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize={r}
-              fill={t.color}
-              fontFamily="Arial, sans-serif"
-            >
-              {t.label}
-            </text>
-          ) : t.equipment === "ladder" ? (
-            <LadderGlyph size={r} color={t.color} />
-          ) : t.equipment === "goal" ? (
-            <path
-              d={`M-${r} ${r / 2}V-${r / 2}H${r}V${r / 2}`}
-              fill="none"
-              stroke={t.color}
-              strokeWidth="4"
-            />
-          ) : (
-            <>
-              {t.shape === "triangle" ? (
-                <path
-                  d={`M0 -${r + 2}L${r + 2} ${r - 1}H-${r + 2}Z`}
-                  fill={t.color}
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-              ) : t.shape === "square" ? (
-                <rect
-                  x={-r}
-                  y={-r}
-                  width={r * 2}
-                  height={r * 2}
-                  rx="4"
-                  fill={t.color}
-                  stroke="white"
-                  strokeWidth="1.5"
-                />
-              ) : (
-                <circle
-                  r={r}
-                  fill={t.color}
-                  stroke={t.equipment === "ball" ? "#4b514d" : "white"}
-                  strokeWidth="1.5"
-                />
-              )}
-              {t.equipment === "ball" && (
-                <path
-                  d={`M0 -${r}L-${r / 2} 0L0 ${r}M-${r / 2} 0H${r}`}
-                  fill="none"
-                  stroke="#4b514d"
-                  strokeWidth="1"
-                />
-              )}
-            </>
-          )}
+          <g transform={`scale(${contentScale})`}>
+            {t.equipment === "image" ? (
+              <image href={image} x={-r} y={-r} width={r * 2} height={r * 2} />
+            ) : t.equipment === "cone" ? (
+              <ConeGlyph size={r} color={t.color} />
+            ) : t.equipment === "text" ? (
+              <text
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={r}
+                fill={t.color}
+                fontFamily="Arial, sans-serif"
+              >
+                {t.label}
+              </text>
+            ) : t.equipment === "ladder" ? (
+              <LadderGlyph size={r} color={t.color} />
+            ) : t.equipment === "goal" ? (
+              <path
+                d={`M-${r} ${r / 2}V-${r / 2}H${r}V${r / 2}`}
+                fill="none"
+                stroke={t.color}
+                strokeWidth="4"
+              />
+            ) : (
+              <>
+                {t.shape === "triangle" ? (
+                  <path
+                    d={`M0 -${r + 2}L${r + 2} ${r - 1}H-${r + 2}Z`}
+                    fill={t.color}
+                    stroke="white"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
+                ) : t.shape === "square" ? (
+                  <rect
+                    x={-r}
+                    y={-r}
+                    width={r * 2}
+                    height={r * 2}
+                    rx="4"
+                    fill={t.color}
+                    stroke="white"
+                    strokeWidth="1.5"
+                  />
+                ) : (
+                  <circle
+                    r={r}
+                    fill={t.color}
+                    stroke={t.equipment === "ball" ? "#4b514d" : "white"}
+                    strokeWidth="1.5"
+                  />
+                )}
+                {t.equipment === "ball" && (
+                  <path
+                    d={`M0 -${r}L-${r / 2} 0L0 ${r}M-${r / 2} 0H${r}`}
+                    fill="none"
+                    stroke="#4b514d"
+                    strokeWidth="1"
+                  />
+                )}
+              </>
+            )}
+            {!t.equipment && labels && (
+              <text
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontFamily="Arial, sans-serif"
+                fontSize={t.label.length > 2 ? 8 : 11}
+                fontWeight="700"
+                fill={t.role === "defender" ? "#563b1e" : "white"}
+                pointerEvents="none"
+              >
+                {t.label}
+              </text>
+            )}
+          </g>
         </g>
         {selected && onRotate && (
           <g data-editor-only="true">
@@ -164,19 +183,6 @@ export function Token({
           </g>
         )}
       </g>
-      {!t.equipment && labels && (
-        <text
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontFamily="Arial, sans-serif"
-          fontSize={(t.label.length > 2 ? 8 : 11) * scale}
-          fontWeight="700"
-          fill={t.role === "defender" ? "#563b1e" : "white"}
-          pointerEvents="none"
-        >
-          {t.label}
-        </text>
-      )}
     </g>
   );
 }

@@ -1,4 +1,5 @@
 import { expect, test, type Locator } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 async function courtPoint(court: Locator, x: number, y: number) {
   return court.evaluate(
@@ -23,6 +24,118 @@ async function setRange(input: Locator, value: number | string) {
     element.dispatchEvent(new Event("change", { bubbles: true }));
   }, value);
 }
+
+// Compare actual rendered coordinate systems, including ancestor transforms.
+async function expectChipTransform(
+  token: Locator,
+  angle: number,
+  scale: number,
+) {
+  const geometry = await token.evaluate((element) => {
+    const shape = element.querySelector<SVGGraphicsElement>(
+      "[data-token-glyph] path, [data-token-glyph] circle, [data-token-glyph] rect",
+    )!;
+    const label = element.querySelector<SVGTextElement>("text")!;
+    const court = element.closest("svg")!;
+    const relative = (node: SVGGraphicsElement) => {
+      const matrix = court
+        .getScreenCTM()!
+        .inverse()
+        .multiply(node.getScreenCTM()!);
+      return [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f];
+    };
+    return { shape: relative(shape), label: relative(label) };
+  });
+  geometry.label.forEach((value, index) =>
+    expect(value).toBeCloseTo(geometry.shape[index], 5),
+  );
+  const radians = (angle * Math.PI) / 180;
+  const expected = [
+    Math.cos(radians) * scale,
+    Math.sin(radians) * scale,
+    -Math.sin(radians) * scale,
+    Math.cos(radians) * scale,
+  ];
+  expected.forEach((value, index) =>
+    expect(geometry.label[index]).toBeCloseTo(value, 5),
+  );
+}
+
+async function circleRadius(token: Locator) {
+  return token.evaluate((element) => {
+    const circle = element.querySelector<SVGCircleElement>(
+      "[data-token-glyph] circle",
+    )!;
+    const matrix = element
+      .closest("svg")!
+      .getScreenCTM()!
+      .inverse()
+      .multiply(circle.getScreenCTM()!);
+    return circle.r.baseVal.value * Math.hypot(matrix.a, matrix.b);
+  });
+}
+
+test("player lettering stays attached through shape, size, rotation, animation, and SVG export", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/");
+  const attacker = page.getByRole("img", { name: "attacker C", exact: true });
+  await expect(attacker).toBeVisible();
+  await expectChipTransform(
+    page.getByRole("img", { name: "defender 1", exact: true }).first(),
+    180,
+    1,
+  );
+  await expectChipTransform(
+    page.getByRole("img", { name: "goalkeeper GK" }),
+    180,
+    13 / 14,
+  );
+  await setRange(page.getByLabel("Player scale"), 1.5);
+  await attacker.click();
+  await setRange(page.getByLabel("Token size"), 28);
+  await page.getByLabel("Object rotation").fill("45");
+  for (const shape of ["circle", "triangle", "square"]) {
+    await page
+      .getByRole("button", { name: `Use ${shape}`, exact: true })
+      .click();
+    await expectChipTransform(attacker, 45, 3);
+  }
+  await page.getByRole("button", { name: "Add step", exact: true }).click();
+  await attacker.click();
+  await setRange(page.getByLabel("Token size"), 14);
+  await page.getByLabel("Object rotation").fill("135");
+  await page.getByLabel("Onion skin").check();
+  const copies = page.getByRole("img", { name: "attacker C", exact: true });
+  await expect(copies).toHaveCount(2);
+  await expectChipTransform(copies.first(), 45, 3);
+  await expectChipTransform(copies.last(), 135, 1.5);
+  await setRange(page.getByLabel("Animation timeline"), 750);
+  await expect(copies).toHaveCount(1);
+  await expectChipTransform(attacker, 90, 2.25);
+  await page.getByRole("button", { name: /^Export/ }).click();
+  const downloading = page.waitForEvent("download");
+  await page.getByRole("button", { name: /SVG snapshot/ }).click();
+  const download = await downloading;
+  const svg = await readFile((await download.path())!, "utf8");
+  const exported = await context.newPage();
+  await exported.setContent(svg);
+  await expectChipTransform(
+    exported.getByRole("img", { name: "attacker C", exact: true }),
+    90,
+    2.25,
+  );
+  await expect(exported.locator("[data-token-glyph][filter]")).toHaveCount(0);
+  await exported.screenshot({ path: "/tmp/handball-chip-labels.png" });
+  await exported.close();
+  await page.getByLabel("Close dialog").click();
+  await page.getByRole("button", { name: "Edit step", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("All changes saved");
+  await page.reload();
+  await expect(attacker).toBeVisible();
+  await expectChipTransform(attacker, 45, 3);
+});
 
 test("defenders and goalkeepers face attackers, rotate, and animate between steps", async ({
   page,
@@ -109,10 +222,7 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   await expect(page.getByLabel("Court floor color")).toHaveValue("#abcabc");
   await expect(page.getByLabel("Show grid", { exact: true })).toBeChecked();
   const attacker = page.getByRole("img", { name: "attacker A", exact: true });
-  await expect(attacker.locator("[data-token-glyph] circle")).toHaveAttribute(
-    "r",
-    "21",
-  );
+  expect(await circleRadius(attacker)).toBeCloseTo(21);
   await expect(
     page
       .getByRole("img", { name: "equipment ball" })
@@ -120,10 +230,7 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   ).toHaveAttribute("r", "6");
   await setRange(page.getByLabel("Court floor color"), "#eeddaa");
   await setRange(page.getByLabel("Player scale"), 0.75);
-  await expect(attacker.locator("[data-token-glyph] circle")).toHaveAttribute(
-    "r",
-    "10.5",
-  );
+  expect(await circleRadius(attacker)).toBeCloseTo(10.5);
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
   await expect(page.getByLabel("Court floor color")).toHaveValue("#eeddaa");
