@@ -112,6 +112,39 @@ export function CourtSettings({
           </label>
         ))}
       </div>
+      <div className="background-setting">
+        <label>
+          Canvas background
+          <select
+            aria-label="Canvas background"
+            value={config.background === "floor" ? "floor" : "custom"}
+            onChange={(e) =>
+              change({
+                background:
+                  e.target.value === "floor"
+                    ? "floor"
+                    : config.background === "floor"
+                      ? config.themeColors.floor
+                      : config.background,
+              })
+            }
+          >
+            <option value="floor">Same as floor</option>
+            <option value="custom">Custom color</option>
+          </select>
+        </label>
+        {config.background !== "floor" && (
+          <label>
+            <input
+              type="color"
+              aria-label="Canvas background color"
+              value={config.background}
+              onChange={(e) => change({ background: e.target.value })}
+            />
+            <span>background</span>
+          </label>
+        )}
+      </div>
       <label className="inline-label">
         Line weight
         <input

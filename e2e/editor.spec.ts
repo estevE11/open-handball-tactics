@@ -229,6 +229,8 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Template").selectOption("full");
   await setRange(dialog.getByLabel("Court floor color"), "#abcabc");
+  await dialog.getByLabel("Canvas background").selectOption("custom");
+  await setRange(dialog.getByLabel("Canvas background color"), "#d5e6f7");
   await setRange(dialog.getByLabel("Player scale"), 1.5);
   await setRange(dialog.getByLabel("Court line weight"), 3);
   await dialog.getByLabel("Show grid", { exact: true }).check();
@@ -246,6 +248,16 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   await dialog.getByRole("button", { name: "Create", exact: true }).click();
   await expect(page.getByLabel("Template")).toHaveValue("full");
   await expect(page.getByLabel("Court floor color")).toHaveValue("#abcabc");
+  await expect(
+    page.getByLabel("Canvas background", { exact: true }),
+  ).toHaveValue("custom");
+  await expect(page.getByLabel("Canvas background color")).toHaveValue(
+    "#d5e6f7",
+  );
+  await expect(page.locator(".canvas-area")).toHaveCSS(
+    "background-color",
+    "rgb(213, 230, 247)",
+  );
   await expect(page.getByLabel("Show grid", { exact: true })).toBeChecked();
   const attacker = page.getByRole("img", { name: "attacker A", exact: true });
   expect(await circleRadius(attacker)).toBeCloseTo(21);

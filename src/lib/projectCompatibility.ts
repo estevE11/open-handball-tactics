@@ -11,6 +11,7 @@ export function tokenRotation(token: TacticalToken) {
 // An explicit rotation marks a token created/edited with the new model.
 export function normalizeProject(source: DrillProject): DrillProject {
   const project = structuredClone(source);
+  project.courtConfig.background ??= "floor";
   for (const frame of project.keyframes)
     for (const token of frame.tokens) {
       if (token.rotation === undefined && token.role === "goalkeeper")

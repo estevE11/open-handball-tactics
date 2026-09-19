@@ -1065,6 +1065,26 @@ h1 {
   width: 33px;
   height: 26px;
 }
+.background-setting {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 2px 0 16px;
+}
+.background-setting > label:first-child {
+  flex: 1;
+}
+.background-setting > label:last-child {
+  align-items: center;
+  font-size: 8px;
+  text-transform: capitalize;
+  color: #9ea49f;
+  gap: 5px;
+}
+.background-setting input[type="color"] {
+  width: 33px;
+  height: 26px;
+}
 .inline-label {
   display: flex;
   flex-direction: row;

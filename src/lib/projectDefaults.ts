@@ -6,6 +6,7 @@ export const DEFAULT_COURT: CourtConfig = {
   type: "half",
   halfCourtDepth: "20",
   dimensions: { width: 20, height: 20 },
+  background: "floor",
   themeColors: { floor: "#e5eee9", area: "#c9ddd5", lines: "#ffffff" },
   lineWeight: 2,
   grid: false,

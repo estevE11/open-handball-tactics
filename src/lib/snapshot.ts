@@ -1,13 +1,17 @@
 import { dataUrl, download } from "./projectIo";
 
-export async function snapshot(format: "svg" | "png", title: string) {
+export async function snapshot(
+  format: "svg" | "png",
+  title: string,
+  background = "#fafaf8",
+) {
   const original = document.querySelector<SVGSVGElement>("#tactical-canvas");
   if (!original) return;
   const svg = original.cloneNode(true) as SVGSVGElement;
   svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   svg.setAttribute("width", String(original.viewBox.baseVal.width * 2));
   svg.setAttribute("height", String(original.viewBox.baseVal.height * 2));
-  svg.style.background = "#fafaf8";
+  svg.style.background = background;
   svg
     .querySelectorAll("[data-editor-only]")
     .forEach((element) => element.remove());
@@ -39,7 +43,7 @@ export async function snapshot(format: "svg" | "png", title: string) {
     canvas.height = image.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("PNG export is unavailable.");
-    ctx.fillStyle = "#fafaf8";
+    ctx.fillStyle = background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(image, 0, 0);
     const png = await new Promise<Blob>((resolve, reject) =>

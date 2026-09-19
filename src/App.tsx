@@ -617,7 +617,15 @@ export default function App() {
                 <div inert={board.playbackTime !== null}>
                   <Toolbar />
                 </div>
-                <div className="canvas-area">
+                <div
+                  className="canvas-area"
+                  style={{
+                    backgroundColor:
+                      project.courtConfig.background === "floor"
+                        ? project.courtConfig.themeColors.floor
+                        : project.courtConfig.background,
+                  }}
+                >
                   <div className="canvas-topline">
                     <span>
                       <span className="small-dot" />{" "}
@@ -901,7 +909,15 @@ export default function App() {
                     key={format}
                     disabled={busy}
                     onClick={() =>
-                      void run(() => snapshot(format, project.title))
+                      void run(() =>
+                        snapshot(
+                          format,
+                          project.title,
+                          project.courtConfig.background === "floor"
+                            ? project.courtConfig.themeColors.floor
+                            : project.courtConfig.background,
+                        ),
+                      )
                     }
                   >
                     <ArrowDownToLine />

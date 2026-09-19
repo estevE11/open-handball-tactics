@@ -37,6 +37,7 @@ export const courtConfigSchema = z.object({
     width: z.number().min(10).max(100),
     height: z.number().min(10).max(100),
   }),
+  background: z.union([z.literal("floor"), color]).default("floor"),
   themeColors: z.object({ floor: color, area: color, lines: color }),
   playerScale: z.number().min(0.5).max(2).optional(),
   lineWeight: z.number().min(1).max(5),
