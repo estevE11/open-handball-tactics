@@ -10,3 +10,10 @@ export function tokenLabelAngle(token: TacticalToken) {
     ((((tokenRotation(token) - facing + 180) % 360) + 360) % 360) - 180;
   return angle > 90 ? angle - 180 : angle < -90 ? angle + 180 : angle;
 }
+
+export function labelOutline(color: string) {
+  const r = parseInt(color.slice(1, 3), 16),
+    g = parseInt(color.slice(3, 5), 16),
+    b = parseInt(color.slice(5, 7), 16);
+  return r * 0.299 + g * 0.587 + b * 0.114 > 150 ? "#18212a" : "#ffffff";
+}

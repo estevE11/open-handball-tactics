@@ -1832,3 +1832,166 @@ h1 {
     font-size: 8px;
   }
 }
+
+/* Shared kit previews use the same SVG renderer as court players. */
+.kit-preview {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+.kit-team-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid #e1e5dd;
+  border-radius: 6px;
+  background: #fafbf8;
+  padding: 6px;
+  text-align: left;
+  margin-top: 8px;
+}
+.kit-team-button .kit-preview {
+  width: 38px;
+  height: 38px;
+}
+.kit-team-button > span {
+  flex: 1;
+  min-width: 0;
+}
+.kit-team-button strong,
+.kit-team-button small {
+  display: block;
+}
+.kit-team-button strong {
+  font-size: 11px;
+  font-weight: 500;
+}
+.kit-team-button small {
+  font-size: 10px;
+  color: #81878c;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.kit-menu-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0;
+}
+.kit-library h3 {
+  font-size: 12px;
+  margin: 22px 0 10px;
+}
+.kit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.kit-card {
+  border: 1px solid #dfe5dc;
+  background: #fafbf8;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.kit-card.active {
+  border-color: #77976a;
+  box-shadow: 0 0 0 1px #77976a;
+}
+.kit-use {
+  width: 100%;
+  min-height: 113px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  font-size: 11px;
+}
+.kit-use span {
+  overflow-wrap: anywhere;
+}
+.kit-edit {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 7px;
+  border: 0;
+  border-top: 1px solid #e1e5dd;
+  background: transparent;
+  color: #65745e;
+  font-size: 10px;
+}
+.kit-card button:hover,
+.kit-team-button:hover {
+  background: #ecf2e7;
+}
+.kit-editor-preview {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 18px;
+  background: #eef2ec;
+  border-radius: 7px;
+}
+.kit-editor-preview > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #687364;
+}
+.kit-editor-preview .kit-preview {
+  width: 96px;
+  height: 96px;
+}
+.kit-editor .two-cols {
+  margin-top: 0;
+}
+.kit-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.kit-colors label {
+  flex: 1;
+  min-width: 80px;
+}
+.kit-colors input[type="color"] {
+  width: 100%;
+  height: 36px;
+  padding: 3px;
+}
+.dark :is(.kit-team-button, .kit-card) {
+  background: #263026;
+  border-color: #485641;
+  color: #d6ded2;
+}
+.dark .kit-card.active {
+  border-color: #a5bf91;
+  box-shadow: 0 0 0 1px #a5bf91;
+}
+.dark :is(.kit-edit, .kit-team-button small) {
+  color: #b4c4a7;
+  border-color: #485641;
+}
+.dark .kit-editor-preview {
+  background: #29362b;
+}
+.dark .kit-editor-preview > div {
+  color: #b4c4a7;
+}
+.dark :is(.kit-card button:hover, .kit-team-button:hover) {
+  background: #34442e;
+}
+@media (max-width: 500px) {
+  .kit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

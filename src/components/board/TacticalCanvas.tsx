@@ -6,6 +6,7 @@ import { Arrow, ArrowHandles } from "./Arrow";
 import { Token } from "./Token";
 import { sampleProject } from "../../lib/animation";
 import { tokenRotation } from "../../lib/projectCompatibility";
+import { playerKit } from "../../lib/kits";
 import { courtSize, courtRotation } from "../../lib/courtGeometry";
 import {
   editableControls,
@@ -330,6 +331,7 @@ export function TacticalCanvas({
                 labels={config.showLabels}
                 playerScale={config.playerScale}
                 sceneRotation={sceneRotation}
+                kit={playerKit(project, token)}
                 image={token.assetId ? assetUrls[token.assetId] : undefined}
               />
             ))}
@@ -375,6 +377,7 @@ export function TacticalCanvas({
               }
               playerScale={config.playerScale}
               sceneRotation={sceneRotation}
+              kit={playerKit(project, token)}
               selected={selected === token.id}
               labels={config.showLabels}
               image={token.assetId ? assetUrls[token.assetId] : undefined}

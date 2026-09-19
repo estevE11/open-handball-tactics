@@ -1,5 +1,7 @@
 import { Circle, Triangle, Square, ImagePlus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
+import { PlayerKits } from "../kits/PlayerKits";
+import { playerKit } from "../../lib/kits";
 import { CourtSettings } from "./CourtSettings";
 import { usePreferencesStore } from "../../store/preferencesStore";
 import {
@@ -114,15 +116,21 @@ export function Inspector({
                   )}
                 </div>
               )}
-              <label className="inline-label">
-                Color
-                <input
-                  type="color"
-                  aria-label="Token color"
-                  value={token.color}
-                  onChange={(e) => updateToken({ color: e.target.value })}
-                />
-              </label>
+              {playerKit(project, token) ? (
+                <p className="muted">
+                  Colors follow the team kit. Edit it under Player kits.
+                </p>
+              ) : (
+                <label className="inline-label">
+                  Color
+                  <input
+                    type="color"
+                    aria-label="Token color"
+                    value={token.color}
+                    onChange={(e) => updateToken({ color: e.target.value })}
+                  />
+                </label>
+              )}
               <label className="inline-label">
                 Size
                 <input
@@ -311,6 +319,7 @@ export function Inspector({
           </p>
         )}
       </section>
+      <PlayerKits />
       <section className="inspector-section">
         <h3>Quick formations</h3>
         <p className="muted">Set your shape. Make it your own.</p>

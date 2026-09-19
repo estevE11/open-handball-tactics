@@ -1,7 +1,9 @@
 import { useId } from "react";
+import type { PlayerKit } from "../../types/kit";
+import { KitPattern } from "./KitPattern";
 import type { TacticalToken } from "../../types/project";
 import { tokenRotation } from "../../lib/projectCompatibility";
-import { tokenLabelAngle } from "../../lib/tokenLabels";
+import { tokenLabelAngle, labelOutline } from "../../lib/tokenLabels";
 import { ConeGlyph, LadderGlyph } from "./Equipment";
 
 export function Token({
@@ -13,18 +15,22 @@ export function Token({
   onRotate,
   playerScale = 1,
   sceneRotation = 0,
+  kit,
 }: {
   token: TacticalToken;
   selected?: boolean;
   labels?: boolean;
   playerScale?: number;
   sceneRotation?: number;
+  kit?: PlayerKit;
   image?: string;
   onPointerDown?: (event: React.PointerEvent) => void;
   onRotate?: (event: React.PointerEvent) => void;
 }) {
   const outlineId = useId();
   const isPlayer = t.role !== "equipment";
+  const kitId = `${outlineId}-kit`;
+  const fill = isPlayer && kit ? `url(#${kitId})` : t.color;
   // Shape and lettering share native coordinates, so every transform stays uniform.
   const r = isPlayer ? 14 : t.size;
   const contentScale = isPlayer ? (t.size / 14) * playerScale : 1;
@@ -39,6 +45,7 @@ export function Token({
       role="img"
       aria-label={`${t.role} ${t.label || t.equipment || ""}`}
       style={{ cursor: onPointerDown ? "grab" : undefined }}
+      data-kit-id={isPlayer ? kit?.id : undefined}
     >
       <g transform={`rotate(${rotation})`} data-token-body="true">
         {selected && (
@@ -88,6 +95,7 @@ export function Token({
           filter={selected ? `url(#${outlineId})` : undefined}
         >
           <g transform={`scale(${contentScale})`}>
+            {isPlayer && kit && <KitPattern kit={kit} id={kitId} />}
             {t.equipment === "image" ? (
               <image href={image} x={-r} y={-r} width={r * 2} height={r * 2} />
             ) : t.equipment === "cone" ? (
@@ -116,7 +124,7 @@ export function Token({
                 {t.shape === "triangle" ? (
                   <path
                     d={`M0 -${r + 2}L${r + 2} ${r - 1}H-${r + 2}Z`}
-                    fill={t.color}
+                    fill={fill}
                     stroke="white"
                     strokeWidth="1.5"
                     strokeLinejoin="round"
@@ -128,14 +136,14 @@ export function Token({
                     width={r * 2}
                     height={r * 2}
                     rx="4"
-                    fill={t.color}
+                    fill={fill}
                     stroke="white"
                     strokeWidth="1.5"
                   />
                 ) : (
                   <circle
                     r={r}
-                    fill={t.color}
+                    fill={fill}
                     stroke={t.equipment === "ball" ? "#4b514d" : "white"}
                     strokeWidth="1.5"
                   />
@@ -158,7 +166,14 @@ export function Token({
                 fontFamily="Arial, sans-serif"
                 fontSize={t.label.length > 2 ? 8 : 11}
                 fontWeight="700"
-                fill={t.role === "defender" ? "#563b1e" : "white"}
+                fill={
+                  kit?.labelColor ??
+                  (t.role === "defender" ? "#563b1e" : "white")
+                }
+                stroke={kit ? labelOutline(kit.labelColor) : undefined}
+                strokeWidth={kit ? 0.8 : undefined}
+                strokeLinejoin="round"
+                paintOrder="stroke"
                 pointerEvents="none"
               >
                 {t.label}
