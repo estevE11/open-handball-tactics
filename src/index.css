@@ -118,8 +118,35 @@ h3 {
   border-right: 1px solid #e5e5e7;
   background: #fbfbfc;
   height: 100vh;
-  position: sticky;
-  top: 0;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 50;
+  transform: translateX(-105%);
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms ease;
+  box-shadow: 12px 0 38px transparent;
+}
+.library-sidebar.open {
+  transform: translateX(0);
+  box-shadow: 12px 0 38px #0003;
+}
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: 0;
+  padding: 0;
+  background: rgb(22 29 27 / 38%);
+  animation: sidebar-scrim-in 220ms ease both;
+}
+@keyframes sidebar-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .brand {
   height: 88px;
@@ -509,7 +536,7 @@ h3 {
   background: #89a28c;
 }
 .drill-heading {
-  padding: 28px 31px 25px;
+  padding: 22px 31px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -531,7 +558,8 @@ h3 {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 9px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 h1 {
   font-size: 25px;
@@ -563,7 +591,8 @@ h1 {
   gap: 3px;
   font-size: 9px;
   color: #a1a5a5;
-  margin-left: 4px;
+  margin-left: 0;
+  white-space: nowrap;
 }
 .heading-actions {
   display: flex;
@@ -1229,7 +1258,9 @@ h1 {
   min-height: 300px;
   color: #829279;
 }
-.mobile-menu,
+.mobile-menu {
+  display: flex;
+}
 .mobile-settings {
   display: none;
 }
@@ -1256,7 +1287,7 @@ h1 {
 }
 @media (max-width: 1200px) {
   .library-sidebar {
-    width: 219px;
+    width: 260px;
   }
   .brand {
     padding: 0 15px;
@@ -1313,7 +1344,7 @@ h1 {
 }
 @media (max-width: 980px) {
   .library-sidebar {
-    width: 215px;
+    width: min(300px, 82vw);
   }
   .editor-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -1351,22 +1382,6 @@ h1 {
   }
 }
 @media (max-width: 700px) {
-  .library-sidebar {
-    display: none;
-  }
-  .library-sidebar.mobile-open {
-    display: flex;
-    position: fixed;
-    left: 0;
-    top: 59px;
-    height: calc(100dvh - 59px);
-    width: 254px;
-    z-index: 30;
-    box-shadow: 10px 10px 60px #0002;
-  }
-  .mobile-menu {
-    display: flex;
-  }
   .topbar {
     padding: 0 14px;
   }
@@ -1380,8 +1395,8 @@ h1 {
     font-size: 9px;
   }
   .drill-heading {
-    padding: 23px 15px 19px;
-    align-items: flex-start;
+    padding: 18px 15px 15px;
+    align-items: center;
   }
   .title-row h1 {
     font-size: 21px;
@@ -1394,7 +1409,8 @@ h1 {
   }
   .heading-actions {
     gap: 2px;
-    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
   .heading-actions .button {
     padding: 8px;

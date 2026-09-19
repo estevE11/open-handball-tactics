@@ -63,6 +63,7 @@ test("half court goal position persists per drill, in defaults, and in exports",
     buffer: file,
   });
   await expect(page.getByLabel("Goal position")).toHaveValue("bottom");
+  await page.getByLabel("Toggle library").click();
   await page
     .getByRole("button", { name: "New drill", exact: true })
     .first()

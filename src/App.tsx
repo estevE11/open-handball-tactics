@@ -121,6 +121,15 @@ export default function App() {
       setReady(true);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!sidebar) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSidebar(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [sidebar]);
   useEffect(() => {
     const status = () => setOffline(!navigator.onLine);
     window.addEventListener("online", status);
@@ -252,6 +261,7 @@ export default function App() {
         const next = createProject(name, parentId);
         await library.save(next);
         board.open(next);
+        setSidebar(false);
       }
       if (dialog?.type === "folder") {
         const next = await library.createFolder(name, parentId);
@@ -294,7 +304,11 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <aside className={`library-sidebar ${sidebar ? "mobile-open" : ""}`}>
+      <aside
+        id="library-sidebar"
+        className={`library-sidebar ${sidebar ? "open" : ""}`}
+        aria-hidden={!sidebar}
+      >
         <a className="brand" href="/" aria-label="Open Handball Board home">
           <img src="/icon.svg" alt="" />
           <div>
@@ -433,12 +447,21 @@ export default function App() {
           </div>
         </div>
       </aside>
+      {sidebar && (
+        <button
+          className="sidebar-scrim"
+          aria-label="Close library"
+          onClick={() => setSidebar(false)}
+        />
+      )}
       <main className="main-workspace">
         <header className="topbar">
           <div className="breadcrumb">
             <button
               className="icon-button mobile-menu"
               aria-label="Toggle library"
+              aria-expanded={sidebar}
+              aria-controls="library-sidebar"
               onClick={() => setSidebar(!sidebar)}
             >
               <Menu size={19} />
@@ -514,42 +537,30 @@ export default function App() {
         {project ? (
           <>
             <div className="drill-heading">
-              <div>
-                <div className="eyebrow">
-                  TACTICAL BOARD <span>•</span>{" "}
-                  {project.courtConfig.type === "full"
-                    ? "FULL COURT"
-                    : project.courtConfig.type === "half"
-                      ? "HALF COURT"
-                      : "PRACTICE AREA"}
-                </div>
-                <div className="title-row">
-                  <h1>{project.title}</h1>
-                  <button
-                    className="icon-button"
-                    aria-label="Drill details"
-                    onClick={() => setDialog({ type: "details" })}
-                  >
-                    <MoreHorizontal size={21} />
-                  </button>
-                </div>
-                <div className="drill-meta">
-                  {project.tags.map((tag) => (
-                    <span className="tag" key={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                  <span className="save-status" role="status">
-                    {board.saveStatus === "saved" && <Check size={12} />}{" "}
-                    {board.saveStatus === "saved"
-                      ? "All changes saved"
-                      : board.saveStatus === "saving"
-                        ? "Saving…"
-                        : "Save failed"}
+              <div className="title-row">
+                <h1>{project.title}</h1>
+                <button
+                  className="icon-button"
+                  aria-label="Drill details"
+                  onClick={() => setDialog({ type: "details" })}
+                >
+                  <MoreHorizontal size={21} />
+                </button>
+                {project.tags.map((tag) => (
+                  <span className="tag" key={tag}>
+                    {tag}
                   </span>
-                </div>
+                ))}
               </div>
               <div className="heading-actions">
+                <span className="save-status" role="status">
+                  {board.saveStatus === "saved" && <Check size={12} />}{" "}
+                  {board.saveStatus === "saved"
+                    ? "All changes saved"
+                    : board.saveStatus === "saving"
+                      ? "Saving…"
+                      : "Save failed"}
+                </span>
                 <button
                   className="button secondary duplicate-button"
                   disabled={busy}

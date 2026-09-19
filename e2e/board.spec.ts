@@ -87,6 +87,7 @@ test("nested folders, drill metadata, binary assets, import, and duplication", a
   await expect(
     page.getByRole("heading", { name: "Build the attack" }),
   ).toBeVisible();
+  await page.getByLabel("Toggle library").click();
   await page.getByLabel("Create folder").click();
   await page
     .getByRole("textbox", { name: "Name", exact: true })
@@ -134,13 +135,11 @@ test("nested folders, drill metadata, binary assets, import, and duplication", a
   const json = JSON.parse(backup.toString());
   expect(json.assets[0].data).toMatch(/^data:image\/png;base64,/);
   await page.getByLabel("Close dialog").click();
-  await page
-    .locator('input[type="file"][accept^=".hbd"]')
-    .setInputFiles({
-      name: "backup.hbd",
-      mimeType: "application/json",
-      buffer: backup,
-    });
+  await page.locator('input[type="file"][accept^=".hbd"]').setInputFiles({
+    name: "backup.hbd",
+    mimeType: "application/json",
+    buffer: backup,
+  });
   await expect(page.locator(".drill-card")).toHaveCount(3);
   await expect(page.locator("#tactical-canvas image")).toHaveCount(1);
   await page.getByRole("button", { name: "Duplicate", exact: true }).click();
@@ -166,5 +165,23 @@ test("mobile workspace stays within viewport", async ({ page }) => {
   await page.getByLabel("Toggle settings").click();
   await page.getByLabel("Toggle library").click();
   await expect(page.getByLabel("Create folder")).toBeVisible();
+  await expect(page.getByLabel("Close library")).toBeVisible();
+  await page.getByLabel("Close library").click();
+  await expect(page.getByLabel("Close library")).toHaveCount(0);
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
+});
+
+test("library opens as an overlay drawer on the workspace", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Build the attack" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Close library")).toHaveCount(0);
+  await page.getByLabel("Toggle library").click();
+  await expect(page.getByLabel("Close library")).toBeVisible();
+  await expect(page.locator(".sidebar-scrim")).toBeVisible();
+  await page.getByLabel("Close library").click();
+  await expect(page.getByLabel("Close library")).toHaveCount(0);
 });

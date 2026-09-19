@@ -228,6 +228,7 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   await dialog.getByRole("button", { name: "Save defaults" }).click();
   await expect(page.getByLabel("Template")).toHaveValue("half");
   await expect(page.getByLabel("Player scale")).toHaveValue("1");
+  await page.getByLabel("Toggle library").click();
   await page
     .getByRole("button", { name: "New drill", exact: true })
     .first()

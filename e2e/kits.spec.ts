@@ -92,6 +92,7 @@ test("kit library creates, edits, reuses and applies kits across roles, formatio
   await expect(
     court.locator('[aria-label^="defender"][data-kit-id]'),
   ).toHaveCount(6);
+  await page.getByLabel("Toggle library").click();
   await page
     .getByRole("button", { name: "New drill", exact: true })
     .first()
