@@ -9,16 +9,19 @@ export function Token({
   image,
   onPointerDown,
   onRotate,
+  playerScale = 1,
 }: {
   token: TacticalToken;
   selected?: boolean;
   labels?: boolean;
+  playerScale?: number;
   image?: string;
   onPointerDown?: (event: React.PointerEvent) => void;
   onRotate?: (event: React.PointerEvent) => void;
 }) {
   const outlineId = useId();
-  const r = t.size;
+  const scale = t.role === "equipment" ? 1 : playerScale;
+  const r = t.size * scale;
   const rotation = tokenRotation(t);
   return (
     <g
@@ -167,7 +170,7 @@ export function Token({
           textAnchor="middle"
           dominantBaseline="middle"
           fontFamily="Arial, sans-serif"
-          fontSize={t.label.length > 2 ? 8 : 11}
+          fontSize={(t.label.length > 2 ? 8 : 11) * scale}
           fontWeight="700"
           fill={t.role === "defender" ? "#563b1e" : "white"}
           pointerEvents="none"

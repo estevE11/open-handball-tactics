@@ -241,6 +241,7 @@ export function TacticalCanvas({
         <g opacity="0.2" pointerEvents="none">
           {project.keyframes[frameIndex - 1].tokens.map((t) => (
             <Token
+              playerScale={config.playerScale}
               key={t.id}
               token={t}
               image={t.assetId ? assetUrls[t.assetId] : undefined}
@@ -278,6 +279,7 @@ export function TacticalCanvas({
       )}
       {frame.tokens.map((t) => (
         <Token
+          playerScale={config.playerScale}
           key={t.id}
           token={
             gesture?.kind === "token" && gesture.id === t.id

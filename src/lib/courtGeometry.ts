@@ -31,7 +31,10 @@ export function fitProjectToCourt(project: DrillProject) {
       token.position = fitPoint(
         token.position,
         project.courtConfig,
-        token.size,
+        token.size *
+          (token.role === "equipment"
+            ? 1
+            : (project.courtConfig.playerScale ?? 1)),
       );
     for (const arrow of frame.arrows) {
       arrow.start = fitPoint(arrow.start, project.courtConfig);

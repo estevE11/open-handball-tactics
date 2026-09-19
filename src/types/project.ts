@@ -24,6 +24,20 @@ export const arrowSchema = z.object({
   control: point.optional(),
   color,
 });
+export const courtConfigSchema = z.object({
+  type: z.enum(["full", "half", "custom_box"]),
+  dimensions: z.object({
+    width: z.number().min(10).max(100),
+    height: z.number().min(10).max(100),
+  }),
+  themeColors: z.object({ floor: color, area: color, lines: color }),
+  playerScale: z.number().min(0.5).max(2).optional(),
+  lineWeight: z.number().min(1).max(5),
+  grid: z.boolean(),
+  showLabels: z.boolean(),
+  highlight: z.boolean(),
+});
+
 export const projectSchema = z.object({
   schemaVersion: z.literal(1),
   id: z.string(),
@@ -33,18 +47,7 @@ export const projectSchema = z.object({
   updatedAt: z.number(),
   tags: z.array(z.string().max(80)).max(50),
   description: z.string().max(10000).optional(),
-  courtConfig: z.object({
-    type: z.enum(["full", "half", "custom_box"]),
-    dimensions: z.object({
-      width: z.number().min(10).max(100),
-      height: z.number().min(10).max(100),
-    }),
-    themeColors: z.object({ floor: color, area: color, lines: color }),
-    lineWeight: z.number().min(1).max(5),
-    grid: z.boolean(),
-    showLabels: z.boolean(),
-    highlight: z.boolean(),
-  }),
+  courtConfig: courtConfigSchema,
   customAssets: z.array(
     z.object({ id: z.string(), name: z.string(), blobUri: z.string() }),
   ),
@@ -90,3 +93,5 @@ export type Tool =
   | "goal"
   | "ladder"
   | "text";
+
+export type CourtConfig = z.infer<typeof courtConfigSchema>;

@@ -1,5 +1,7 @@
 import { Circle, Triangle, Square, ImagePlus, Trash2 } from "lucide-react";
 import { useRef } from "react";
+import { CourtSettings } from "./CourtSettings";
+import { usePreferencesStore } from "../../store/preferencesStore";
 import { tokenRotation } from "../../lib/projectCompatibility";
 import { fitProjectToCourt, courtSize } from "../../lib/courtGeometry";
 import {
@@ -171,98 +173,29 @@ export function Inspector({
         </section>
       )}
       <section className="inspector-section">
-        <h3>Court</h3>
-        <label>
-          Template
-          <select
-            value={config.type}
-            onChange={(e) =>
-              edit((d) => {
-                d.courtConfig.type = e.target.value as typeof config.type;
-                d.courtConfig.dimensions = {
-                  width: 20,
-                  height: e.target.value === "full" ? 40 : 20,
-                };
-                fitProjectToCourt(d);
-              })
-            }
-          >
-            <option value="half">Half court · 20 × 20 m</option>
-            <option value="full">Full court · 40 × 20 m</option>
-            <option value="custom_box">Custom practice area</option>
-          </select>
-        </label>
-        {config.type === "custom_box" && (
-          <div className="two-cols">
-            {(["width", "height"] as const).map((axis) => (
-              <label key={axis}>
-                {axis} (m)
-                <input
-                  type="number"
-                  min="10"
-                  max="100"
-                  value={config.dimensions[axis]}
-                  onChange={(e) =>
-                    edit((d) => {
-                      d.courtConfig.dimensions[axis] = Math.max(
-                        10,
-                        Math.min(100, Number(e.target.value)),
-                      );
-                      fitProjectToCourt(d);
-                    })
-                  }
-                />
-              </label>
-            ))}
-          </div>
-        )}
-        <div className="color-row">
-          {(["floor", "area", "lines"] as const).map((key) => (
-            <label key={key}>
-              <input
-                type="color"
-                aria-label={`Court ${key} color`}
-                value={config.themeColors[key]}
-                onChange={(e) =>
-                  edit((d) => {
-                    d.courtConfig.themeColors[key] = e.target.value;
-                  })
-                }
-              />
-              <span>{key}</span>
-            </label>
-          ))}
-        </div>
-        <label className="inline-label">
-          Line weight
-          <input
-            type="range"
-            aria-label="Court line weight"
-            min="1"
-            max="5"
-            step=".5"
-            value={config.lineWeight}
-            onChange={(e) =>
-              edit((d) => {
-                d.courtConfig.lineWeight = Number(e.target.value);
-              })
-            }
-          />
-        </label>
-        {(["grid", "showLabels", "highlight"] as const).map((key, i) => (
-          <label className="toggle-row" key={key}>
-            {["Show grid", "Player labels", "Highlight key lines"][i]}
-            <input
-              type="checkbox"
-              checked={config[key]}
-              onChange={(e) =>
-                edit((d) => {
-                  d.courtConfig[key] = e.target.checked;
-                })
-              }
-            />
-          </label>
-        ))}
+        <h3>Court · this drill</h3>
+        <CourtSettings
+          config={config}
+          onChange={(next) =>
+            edit((d) => {
+              d.courtConfig = next;
+              fitProjectToCourt(d);
+            })
+          }
+        />
+        <button
+          className="text-button apply-defaults"
+          onClick={() =>
+            edit((d) => {
+              d.courtConfig = structuredClone(
+                usePreferencesStore.getState().courtDefaults,
+              );
+              fitProjectToCourt(d);
+            })
+          }
+        >
+          Apply workspace defaults
+        </button>
       </section>
       <section className="inspector-section">
         <h3>Quick formations</h3>

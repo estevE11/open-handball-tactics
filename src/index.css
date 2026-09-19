@@ -1501,3 +1501,39 @@ h1 {
 .tool-goalkeeper svg {
   transform: rotate(180deg);
 }
+
+.scale-control {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.scale-control span {
+  min-width: 30px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.inspector .scale-control input {
+  width: 65px;
+}
+.workspace-settings > .muted {
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+.workspace-settings .color-row {
+  justify-content: space-around;
+}
+.defaults-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+.apply-defaults {
+  font-size: 9px;
+  margin-top: 12px;
+}
+.dialog-error {
+  color: #ad483a;
+  font-size: 12px;
+  margin: 12px 0;
+}

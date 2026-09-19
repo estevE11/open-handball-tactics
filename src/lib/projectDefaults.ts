@@ -1,11 +1,24 @@
-import type { DrillProject } from "../types/project";
+import type { DrillProject, CourtConfig } from "../types/project";
 import { formation } from "./formations";
+import { fitProjectToCourt, courtSize } from "./courtGeometry";
+
+export const DEFAULT_COURT: CourtConfig = {
+  type: "half",
+  dimensions: { width: 20, height: 20 },
+  themeColors: { floor: "#e5eee9", area: "#c9ddd5", lines: "#ffffff" },
+  lineWeight: 2,
+  grid: false,
+  showLabels: true,
+  highlight: false,
+  playerScale: 1,
+};
 
 export function newProject(
   title = "Untitled drill",
   folderId: string | null = null,
+  courtConfig: CourtConfig = DEFAULT_COURT,
 ): DrillProject {
-  return {
+  const project: DrillProject = {
     schemaVersion: 1,
     id: crypto.randomUUID(),
     title,
@@ -14,15 +27,7 @@ export function newProject(
     updatedAt: Date.now(),
     tags: [],
     description: "",
-    courtConfig: {
-      type: "half",
-      dimensions: { width: 20, height: 20 },
-      themeColors: { floor: "#e5eee9", area: "#c9ddd5", lines: "#ffffff" },
-      lineWeight: 2,
-      grid: false,
-      showLabels: true,
-      highlight: false,
-    },
+    courtConfig: structuredClone(courtConfig),
     customAssets: [],
     keyframes: [
       {
@@ -57,4 +62,14 @@ export function newProject(
       },
     ],
   };
+  if (courtConfig.type === "custom_box") {
+    const { width, height } = courtSize(courtConfig);
+    for (const token of project.keyframes[0].tokens)
+      token.position = {
+        x: (token.position.x * width) / 400,
+        y: (token.position.y * height) / 400,
+      };
+  }
+  fitProjectToCourt(project);
+  return project;
 }

@@ -33,13 +33,23 @@ import { FolderTree } from "./components/library/FolderTree";
 import { TacticalCanvas } from "./components/board/TacticalCanvas";
 import { Toolbar } from "./components/app/Toolbar";
 import { PlaybackControls } from "./components/app/PlaybackControls";
+import { WorkspaceSettings } from "./components/app/WorkspaceSettings";
+import { usePreferencesStore } from "./store/preferencesStore";
 import { Inspector } from "./components/app/Inspector";
 import { Modal } from "./components/ui/Modal";
 import type { DrillProject, FolderNode, Point } from "./types/project";
 
 type Dialog =
-  | { type: "new" | "folder" | "details" | "export" | "help" }
+  | { type: "new" | "folder" | "details" | "export" | "help" | "preferences" }
   | { type: "manage"; folder: FolderNode };
+
+function createProject(title?: string, folderId: string | null = null) {
+  return newProject(
+    title,
+    folderId,
+    usePreferencesStore.getState().courtDefaults,
+  );
+}
 
 export default function App() {
   const board = useProjectStore();
@@ -90,7 +100,7 @@ export default function App() {
       try {
         let initial = await db.projects.orderBy("updatedAt").last();
         if (!initial) {
-          initial = newProject("Build the attack");
+          initial = createProject("Build the attack");
           initial.tags = ["Positional play", "First team"];
           initial.description =
             "Explore a 3:3 attack against a compact 6:0 defense. Move players, draw a trajectory, or choose a different formation.";
@@ -224,7 +234,7 @@ export default function App() {
     await library.deleteProject(project.id);
     let next = await db.projects.orderBy("updatedAt").last();
     if (!next) {
-      next = newProject();
+      next = createProject();
       await library.save(next);
     }
     board.open(next);
@@ -238,7 +248,7 @@ export default function App() {
     await run(async () => {
       await flushSaves();
       if (dialog?.type === "new") {
-        const next = newProject(name, parentId);
+        const next = createProject(name, parentId);
         await library.save(next);
         board.open(next);
       }
@@ -449,6 +459,14 @@ export default function App() {
                   ? "Ready offline"
                   : "Local workspace"}
             </span>
+            <button
+              className="icon-button"
+              aria-label="Workspace defaults"
+              title="Workspace defaults"
+              onClick={() => setDialog({ type: "preferences" })}
+            >
+              <Settings2 size={18} />
+            </button>
             <button
               className="icon-button"
               aria-label="Help"
@@ -751,7 +769,9 @@ export default function App() {
                     ? "Drill details"
                     : dialog.type === "export"
                       ? "Take your work with you"
-                      : "Your local workspace"
+                      : dialog.type === "preferences"
+                        ? "Workspace defaults"
+                        : "Your local workspace"
           }
           onClose={() => {
             if (!busy) setDialog(null);
@@ -761,6 +781,9 @@ export default function App() {
             <p className="dialog-error" role="alert">
               {notice}
             </p>
+          )}
+          {dialog.type === "preferences" && (
+            <WorkspaceSettings onClose={() => setDialog(null)} />
           )}
           {isForm && (
             <form onSubmit={submit}>
@@ -862,7 +885,7 @@ export default function App() {
                           if (project && !(await db.projects.get(project.id))) {
                             const next =
                               (await db.projects.orderBy("updatedAt").last()) ??
-                              newProject();
+                              createProject();
                             await library.save(next);
                             board.open(next);
                           }
