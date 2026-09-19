@@ -41,12 +41,14 @@ async function drag(
   if (release) await page.mouse.up();
 }
 
-for (const template of ["half", "full"] as const) {
+for (const template of ["half", "half-bottom", "full"] as const) {
   test(`${template} court: touching ball follows player, ball always drags freely, and carried movement survives steps and reload`, async ({
     page,
   }) => {
     const project = newProject("Ball carrying");
-    project.courtConfig.type = template;
+    project.courtConfig.type = template === "full" ? "full" : "half";
+    project.courtConfig.halfCourtEnd =
+      template === "half-bottom" ? "bottom" : "top";
     const tokens = project.keyframes[0].tokens;
     const player = tokens.find((token) => token.role === "attacker")!;
     const ball = tokens.find((token) => token.equipment === "ball")!;

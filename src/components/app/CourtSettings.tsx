@@ -32,6 +32,20 @@ export function CourtSettings({
           <option value="custom_box">Custom practice area</option>
         </select>
       </label>
+      {config.type === "half" && (
+        <label>
+          Goal position
+          <select
+            value={config.halfCourtEnd ?? "top"}
+            onChange={(e) =>
+              change({ halfCourtEnd: e.target.value as "top" | "bottom" })
+            }
+          >
+            <option value="top">Top · attacking view</option>
+            <option value="bottom">Bottom · defending view</option>
+          </select>
+        </label>
+      )}
       {config.type === "custom_box" && (
         <div className="two-cols">
           {(["width", "height"] as const).map((axis) => (

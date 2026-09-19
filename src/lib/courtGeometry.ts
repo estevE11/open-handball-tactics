@@ -1,5 +1,11 @@
 import type { DrillProject, Point } from "../types/project";
 
+// View rotation leaves saved coordinates, ball offsets, and animation intact.
+export function courtRotation(config: DrillProject["courtConfig"]) {
+  if (config.type === "full") return -90;
+  return config.type === "half" && config.halfCourtEnd === "bottom" ? 180 : 0;
+}
+
 export function courtSize(config: DrillProject["courtConfig"]) {
   return {
     width: config.type === "custom_box" ? config.dimensions.width * 20 : 400,

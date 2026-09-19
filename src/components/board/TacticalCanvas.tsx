@@ -6,7 +6,7 @@ import { Arrow, ArrowHandles } from "./Arrow";
 import { Token } from "./Token";
 import { sampleProject } from "../../lib/animation";
 import { tokenRotation } from "../../lib/projectCompatibility";
-import { courtSize } from "../../lib/courtGeometry";
+import { courtSize, courtRotation } from "../../lib/courtGeometry";
 import {
   editableControls,
   translateArrow,
@@ -61,6 +61,7 @@ export function TacticalCanvas({
       : sampleProject(project, playbackTime).frame;
   const config = project.courtConfig;
   const { width, height } = courtSize(config);
+  const sceneRotation = courtRotation(config);
   function point(event: { clientX: number; clientY: number }): Point {
     const matrix = scene.current?.getScreenCTM()?.inverse();
     const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(
@@ -312,7 +313,11 @@ export function TacticalCanvas({
         ref={scene}
         data-court-scene="true"
         transform={
-          config.type === "full" ? "translate(0 400) rotate(-90)" : undefined
+          sceneRotation === -90
+            ? "translate(0 400) rotate(-90)"
+            : sceneRotation === 180
+              ? "translate(400 400) rotate(180)"
+              : undefined
         }
       >
         <Court config={config} />

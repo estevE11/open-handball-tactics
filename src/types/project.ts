@@ -28,6 +28,7 @@ export const arrowSchema = z.object({
 });
 export const courtConfigSchema = z.object({
   type: z.enum(["full", "half", "custom_box"]),
+  halfCourtEnd: z.enum(["top", "bottom"]).optional(),
   dimensions: z.object({
     width: z.number().min(10).max(100),
     height: z.number().min(10).max(100),
