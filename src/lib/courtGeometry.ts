@@ -19,6 +19,23 @@ export function courtSize(config: DrillProject["courtConfig"]) {
   };
 }
 
+/**
+ * Returns the SVG viewport for the court scene.
+ *
+ * Defending half courts are rotated around the full-court center (400, 400).
+ * A compact half court therefore occupies the lower part of the source space
+ * after rotation, so the viewport needs to follow that offset.
+ */
+export function courtViewBox(config: DrillProject["courtConfig"]) {
+  const { width, height } = courtSize(config);
+  if (config.type === "full") return "-12 -12 824 424";
+  const top =
+    config.type === "half" && config.halfCourtEnd === "bottom"
+      ? 400 - height - 16
+      : -16;
+  return `-12 ${top} ${width + 24} ${height + 32}`;
+}
+
 export function fitPoint(
   point: Point,
   config: DrillProject["courtConfig"],

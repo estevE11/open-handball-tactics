@@ -7,7 +7,7 @@ import { Token } from "./Token";
 import { sampleProject } from "../../lib/animation";
 import { tokenRotation } from "../../lib/projectCompatibility";
 import { playerKit } from "../../lib/kits";
-import { courtSize, courtRotation } from "../../lib/courtGeometry";
+import { courtSize, courtRotation, courtViewBox } from "../../lib/courtGeometry";
 import {
   editableControls,
   translateArrow,
@@ -267,11 +267,7 @@ export function TacticalCanvas({
       id="tactical-canvas"
       ref={svg}
       className={`tactical-canvas ${tool !== "select" ? "drawing" : ""}`}
-      viewBox={
-        config.type === "full"
-          ? "-12 -12 824 424"
-          : `-12 -16 ${width + 24} ${height + 32}`
-      }
+      viewBox={courtViewBox(config)}
       aria-label="Interactive handball court"
       onPointerDown={down}
       onPointerMove={(e) => {

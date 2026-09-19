@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { newProject } from "./projectDefaults";
-import { courtSize, fitProjectToCourt } from "./courtGeometry";
+import { courtSize, courtViewBox, fitProjectToCourt } from "./courtGeometry";
 
 it("supports a compact 20 × 16 m half court", () => {
   const project = newProject();
@@ -8,6 +8,9 @@ it("supports a compact 20 × 16 m half court", () => {
   project.courtConfig.halfCourtDepth = "16";
   project.courtConfig.dimensions.height = 16;
   expect(courtSize(project.courtConfig)).toEqual({ width: 400, height: 320 });
+  expect(courtViewBox(project.courtConfig)).toBe("-12 -16 424 352");
+  project.courtConfig.halfCourtEnd = "bottom";
+  expect(courtViewBox(project.courtConfig)).toBe("-12 64 424 352");
 });
 
 it("keeps all steps and curved arrows editable after shrinking the court", () => {

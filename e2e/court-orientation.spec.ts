@@ -79,6 +79,17 @@ test("half court goal position persists per drill, in defaults, and in exports",
   );
 });
 
+test("compact defending view crops the unused end of the pitch", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const court = page.getByLabel("Interactive handball court");
+  await page.getByLabel("Court size").selectOption("16");
+  await expect(court).toHaveAttribute("viewBox", "-12 -16 424 352");
+  await page.getByLabel("Goal position").selectOption("bottom");
+  await expect(court).toHaveAttribute("viewBox", "-12 64 424 352");
+});
+
 for (const view of ["top", "bottom", "full"] as const) {
   test(`${view} view: labels stay readable and centered while triangles face the attack`, async ({
     page,
