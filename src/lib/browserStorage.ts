@@ -54,8 +54,12 @@ export class LibraryService {
       this.database.folders,
       async () => {
         await this.requireFolder(valid.folderId);
+        const previous = await this.database.projects.get(valid.id);
         await this.database.projects.put({ ...valid, updatedAt: Date.now() });
-        await this.syncTree();
+        // Editing a drill does not change folder membership. Avoid rebuilding
+        // the complete tree for every drag, label, or color update.
+        if (!previous || previous.folderId !== valid.folderId)
+          await this.syncTree();
       },
     );
   }

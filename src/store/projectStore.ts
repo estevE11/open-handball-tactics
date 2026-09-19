@@ -6,6 +6,8 @@ import { animationDuration, sampleProject } from "../lib/animation";
 
 // Serialize writes so an older save can never finish after a newer edit.
 let pending: Promise<void> = Promise.resolve();
+let queued: { project: DrillProject; revision: number } | null = null;
+let saving = false;
 let revision = 0;
 interface BoardState {
   project: DrillProject | null;
@@ -31,24 +33,32 @@ interface BoardState {
 }
 function persist(project: DrillProject) {
   const current = ++revision;
+  queued = { project, revision: current };
   useProjectStore.setState({ saveStatus: "saving", error: null });
-  pending = pending
-    .catch(() => {})
-    .then(() => library.save(project))
-    .then(() => {
-      if (revision === current)
-        useProjectStore.setState({ saveStatus: "saved" });
-    })
-    .catch((error) => {
-      if (revision === current)
-        useProjectStore.setState({
-          saveStatus: "error",
-          error: String(error instanceof Error ? error.message : error),
-        });
-    });
+  if (saving) return;
+  saving = true;
+  pending = (async () => {
+    while (queued) {
+      const next = queued;
+      queued = null;
+      try {
+        await library.save(next.project);
+        if (revision === next.revision && !queued)
+          useProjectStore.setState({ saveStatus: "saved" });
+      } catch (error) {
+        if (revision === next.revision && !queued)
+          useProjectStore.setState({
+            saveStatus: "error",
+            error: String(error instanceof Error ? error.message : error),
+          });
+      }
+    }
+    saving = false;
+  })();
 }
 export async function flushSaves() {
   await pending;
+  if (saving) await pending;
   if (useProjectStore.getState().saveStatus === "error")
     throw new Error(
       "Save failed. Export a backup or retry before leaving this drill.",

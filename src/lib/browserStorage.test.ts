@@ -26,6 +26,15 @@ describe("local library integrity", () => {
       (await database.projects.get(project.id))?.keyframes[0].tokens,
     ).toHaveLength(14);
   });
+  it("does not rebuild folder membership for ordinary project edits", async () => {
+    const folder = await service.createFolder("Defense", null);
+    const project = newProject("6:0", folder.id);
+    await service.save(project);
+    const rebuild = vi.spyOn(database.folders, "bulkPut").mockResolvedValue("");
+    await service.save({ ...project, title: "6:0 updated" });
+    expect(rebuild).not.toHaveBeenCalled();
+    rebuild.mockRestore();
+  });
   it("rejects cycles and leaves the tree unchanged", async () => {
     const parent = await service.createFolder("Parent", null);
     const child = await service.createFolder("Child", parent.id);

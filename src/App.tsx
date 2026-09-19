@@ -101,6 +101,8 @@ export default function App() {
     initialized.current = true;
     void (async () => {
       try {
+        await db.open();
+        void navigator.storage?.persist?.().catch(() => {});
         let initial = await db.projects.orderBy("updatedAt").last();
         if (!initial) {
           initial = createProject("Build the attack");
