@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import type { PlayerKit } from "../types/kit";
 import { normalizeProject } from "./projectCompatibility";
 import {
   projectSchema,
@@ -9,6 +10,7 @@ import {
 
 export class BoardDatabase extends Dexie {
   projects!: Table<DrillProject, string>;
+  kits!: Table<PlayerKit, string>;
   folders!: Table<FolderNode, string>;
   assets!: Table<StoredAsset, string>;
   constructor(name = "ohb.library.v1") {
@@ -18,6 +20,7 @@ export class BoardDatabase extends Dexie {
       folders: "id, parentId",
       assets: "id, createdAt",
     });
+    this.version(2).stores({ kits: "id, name" });
   }
 }
 export const db = new BoardDatabase();

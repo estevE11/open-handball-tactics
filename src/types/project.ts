@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { kitSchema } from "./kit";
 
 const point = z.object({ x: z.number().finite(), y: z.number().finite() });
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
@@ -51,6 +52,9 @@ export const projectSchema = z.object({
   tags: z.array(z.string().max(80)).max(50),
   description: z.string().max(10000).optional(),
   courtConfig: courtConfigSchema,
+  teamKits: z
+    .object({ attacker: kitSchema.optional(), defender: kitSchema.optional() })
+    .optional(),
   customAssets: z.array(
     z.object({ id: z.string(), name: z.string(), blobUri: z.string() }),
   ),
