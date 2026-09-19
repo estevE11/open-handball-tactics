@@ -162,6 +162,14 @@ test("arrows move as a whole and support draggable endpoints and multiple Bézie
   await page.mouse.up();
   await expect(line).not.toHaveAttribute("d", original!);
   await expect(court.getByLabel("Arrow start point")).toBeVisible();
+  await page.getByLabel("Arrowheads", { exact: true }).selectOption("both");
+  await expect(court.locator("[data-arrow-head]")).toHaveCount(2);
+  await page.getByLabel("Arrowheads", { exact: true }).selectOption("none");
+  await expect(court.locator("[data-arrow-head]")).toHaveCount(0);
+  await page.getByLabel("Arrowheads", { exact: true }).selectOption("start");
+  await expect(court.locator('[data-arrow-head="start"]')).toHaveCount(1);
+  await expect(court.locator('[data-arrow-head="end"]')).toHaveCount(0);
+  await page.getByLabel("Arrowheads", { exact: true }).selectOption("both");
   await page.getByRole("button", { name: "Add Bézier point" }).click();
   await page.getByRole("button", { name: "Add Bézier point" }).click();
   await expect(court.locator('[aria-label^="Bézier point"]')).toHaveCount(3);
@@ -193,4 +201,5 @@ test("arrows move as a whole and support draggable endpoints and multiple Bézie
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
   await expect(court.locator("[data-arrow-line]")).toHaveAttribute("d", curve!);
+  await expect(court.locator("[data-arrow-head]")).toHaveCount(2);
 });

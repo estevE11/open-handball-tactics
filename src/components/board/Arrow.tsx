@@ -16,6 +16,8 @@ export function Arrow({
 }) {
   const d = arrowPath(arrow);
   const color = selected ? "#2563eb" : arrow.color;
+  const heads = arrow.heads ?? "end";
+  const angles = arrowEndAngles(arrow);
   return (
     <g
       onPointerDown={onPointerDown}
@@ -40,15 +42,21 @@ export function Arrow({
         pointerEvents="none"
         data-arrow-line="true"
       />
-      <path
-        transform={`translate(${arrow.end.x} ${arrow.end.y}) rotate(${arrowEndAngles(arrow).end})`}
-        d={arrow.type === "screen" ? "M0 -9V9" : "M-9 -5L0 0L-9 5"}
-        fill="none"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-        pointerEvents="none"
-      />
+      {(["start", "end"] as const)
+        .filter((side) => heads === "both" || heads === side)
+        .map((side) => (
+          <path
+            key={side}
+            data-arrow-head={side}
+            transform={`translate(${arrow[side].x} ${arrow[side].y}) rotate(${angles[side]})`}
+            d={arrow.type === "screen" ? "M0 -9V9" : "M-9 -5L0 0L-9 5"}
+            fill="none"
+            stroke={color}
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            pointerEvents="none"
+          />
+        ))}
     </g>
   );
 }

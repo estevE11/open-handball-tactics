@@ -131,6 +131,27 @@ export function Inspector({
           )}
           {arrow && (
             <div className="arrow-settings">
+              <label>
+                Arrowheads
+                <select
+                  aria-label="Arrowheads"
+                  value={arrow.heads ?? "end"}
+                  onChange={(e) =>
+                    edit((d) => {
+                      const current = d.keyframes[frameIndex].arrows.find(
+                        (a) => a.id === selected,
+                      );
+                      if (current)
+                        current.heads = e.target.value as typeof current.heads;
+                    })
+                  }
+                >
+                  <option value="end">End only</option>
+                  <option value="start">Start only</option>
+                  <option value="both">Both ends</option>
+                  <option value="none">None</option>
+                </select>
+              </label>
               <p className="muted">
                 Drag the line to move it. Blue endpoints change its reach;
                 numbered handles shape the curve.
