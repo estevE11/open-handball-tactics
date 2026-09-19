@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { TacticalToken } from "../../types/project";
 import { tokenRotation } from "../../lib/projectCompatibility";
+import { ConeGlyph } from "./Equipment";
 
 export function Token({
   token: t,
@@ -80,6 +81,8 @@ export function Token({
         >
           {t.equipment === "image" ? (
             <image href={image} x={-r} y={-r} width={r * 2} height={r * 2} />
+          ) : t.equipment === "cone" ? (
+            <ConeGlyph size={r} color={t.color} />
           ) : t.equipment === "text" ? (
             <text
               textAnchor="middle"
