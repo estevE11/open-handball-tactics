@@ -327,7 +327,9 @@ export function TacticalCanvas({
               <Token
                 key={token.id}
                 token={token}
+                labels={config.showLabels}
                 playerScale={config.playerScale}
+                sceneRotation={sceneRotation}
                 image={token.assetId ? assetUrls[token.assetId] : undefined}
               />
             ))}
@@ -372,6 +374,7 @@ export function TacticalCanvas({
                     : token
               }
               playerScale={config.playerScale}
+              sceneRotation={sceneRotation}
               selected={selected === token.id}
               labels={config.showLabels}
               image={token.assetId ? assetUrls[token.assetId] : undefined}

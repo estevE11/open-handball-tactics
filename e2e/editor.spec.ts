@@ -32,6 +32,7 @@ async function expectChipTransform(
   token: Locator,
   angle: number,
   scale: number,
+  labelAngle = angle,
 ) {
   const geometry = await token.evaluate((element) => {
     const shape = element.querySelector<SVGGraphicsElement>(
@@ -46,21 +47,34 @@ async function expectChipTransform(
         .multiply(node.getScreenCTM()!);
       return [matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f];
     };
-    return { shape: relative(shape), label: relative(label) };
+    return {
+      shape: relative(shape),
+      label: relative(label),
+      triangle: shape.tagName === "path",
+    };
   });
-  geometry.label.forEach((value, index) =>
-    expect(value).toBeCloseTo(geometry.shape[index], 5),
-  );
-  const radians = (angle * Math.PI) / 180;
-  const expected = [
-    Math.cos(radians) * scale,
-    Math.sin(radians) * scale,
-    -Math.sin(radians) * scale,
-    Math.cos(radians) * scale,
-  ];
-  expected.forEach((value, index) =>
-    expect(geometry.label[index]).toBeCloseTo(value, 5),
-  );
+  for (const [matrix, degrees] of [
+    [geometry.shape, angle],
+    [geometry.label, labelAngle],
+  ] as const) {
+    const radians = (degrees * Math.PI) / 180;
+    const expected = [
+      Math.cos(radians) * scale,
+      Math.sin(radians) * scale,
+      -Math.sin(radians) * scale,
+      Math.cos(radians) * scale,
+    ];
+    expected.forEach((value, index) =>
+      expect(matrix[index]).toBeCloseTo(value, 5),
+    );
+  }
+  // The triangle's lettering is centered at its centroid, within the shared scale.
+  expect(
+    Math.hypot(
+      geometry.label[4] - geometry.shape[4],
+      geometry.label[5] - geometry.shape[5],
+    ),
+  ).toBeCloseTo(geometry.triangle ? (scale * 10) / 3 : 0, 5);
 }
 
 async function circleRadius(token: Locator) {
@@ -88,11 +102,13 @@ test("player lettering stays attached through shape, size, rotation, animation, 
     page.getByRole("img", { name: "defender 1", exact: true }).first(),
     180,
     1,
+    0,
   );
   await expectChipTransform(
     page.getByRole("img", { name: "goalkeeper GK" }),
     180,
     13 / 14,
+    0,
   );
   await setRange(page.getByLabel("Player scale"), 1.5);
   await attacker.click();
@@ -112,7 +128,7 @@ test("player lettering stays attached through shape, size, rotation, animation, 
   const copies = page.getByRole("img", { name: "attacker C", exact: true });
   await expect(copies).toHaveCount(2);
   await expectChipTransform(copies.first(), 45, 3);
-  await expectChipTransform(copies.last(), 135, 1.5);
+  await expectChipTransform(copies.last(), 135, 1.5, -45);
   await setRange(page.getByLabel("Animation timeline"), 750);
   await expect(copies).toHaveCount(1);
   await expectChipTransform(attacker, 90, 2.25);
@@ -257,7 +273,7 @@ test("full court is horizontal with court-relative dragging, arrows, steps, and 
   await page.getByLabel("Template").selectOption("full");
   await expect(court).toHaveAttribute("viewBox", "-25 -22 850 444");
   await expect(attacker).toHaveAttribute("transform", original!);
-  await expectChipTransform(attacker, -90, 1);
+  await expectChipTransform(attacker, -90, 1, 0);
   const start = await courtPoint(court, 200, 286);
   // Use the token's actual center, independent of selection handles.
   const center = await attacker.evaluate((element) => {
@@ -293,7 +309,7 @@ test("full court is horizontal with court-relative dragging, arrows, steps, and 
     page.getByRole("img", { name: "attacker C", exact: true }),
   ).toHaveCount(2);
   await setRange(page.getByLabel("Animation timeline"), 750);
-  await expectChipTransform(attacker, -90, 1);
+  await expectChipTransform(attacker, -90, 1, 0);
   await page.screenshot({
     path: "/tmp/handball-horizontal.png",
     fullPage: true,
@@ -312,6 +328,7 @@ test("full court is horizontal with court-relative dragging, arrows, steps, and 
     exported.getByRole("img", { name: "attacker C", exact: true }),
     -90,
     1,
+    0,
   );
   await exported.close();
   await page.getByLabel("Close dialog").click();

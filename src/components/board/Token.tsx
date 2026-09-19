@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { TacticalToken } from "../../types/project";
 import { tokenRotation } from "../../lib/projectCompatibility";
+import { tokenLabelAngle } from "../../lib/tokenLabels";
 import { ConeGlyph, LadderGlyph } from "./Equipment";
 
 export function Token({
@@ -11,11 +12,13 @@ export function Token({
   onPointerDown,
   onRotate,
   playerScale = 1,
+  sceneRotation = 0,
 }: {
   token: TacticalToken;
   selected?: boolean;
   labels?: boolean;
   playerScale?: number;
+  sceneRotation?: number;
   image?: string;
   onPointerDown?: (event: React.PointerEvent) => void;
   onRotate?: (event: React.PointerEvent) => void;
@@ -150,7 +153,8 @@ export function Token({
             {!t.equipment && labels && (
               <text
                 textAnchor="middle"
-                dominantBaseline="middle"
+                dominantBaseline="central"
+                transform={`translate(0 ${t.shape === "triangle" ? 10 / 3 : 0}) rotate(${tokenLabelAngle(t) - rotation - sceneRotation})`}
                 fontFamily="Arial, sans-serif"
                 fontSize={t.label.length > 2 ? 8 : 11}
                 fontWeight="700"
