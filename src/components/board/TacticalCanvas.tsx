@@ -12,6 +12,7 @@ import {
   translateArrow,
   withControls,
 } from "../../lib/arrowGeometry";
+import { carriedBalls, dragTokenPositions } from "../../lib/ballCarry";
 
 type Gesture = {
   kind:
@@ -29,6 +30,7 @@ type Gesture = {
   rotation?: number;
   index?: number;
   originalArrow?: TacticalArrow;
+  ballIds?: string[];
 };
 export function TacticalCanvas({
   assetUrls,
@@ -94,6 +96,10 @@ export function TacticalCanvas({
           ? tokenRotation(frame.tokens.find((t) => t.id === id)!)
           : undefined,
       originalArrow: frame.arrows.find((a) => a.id === id),
+      ballIds:
+        kind === "token"
+          ? carriedBalls(frame.tokens, id, config.playerScale)
+          : [],
     });
   }
   function previewArrow(arrow: TacticalArrow): TacticalArrow {
@@ -189,6 +195,16 @@ export function TacticalCanvas({
     setTool("select");
     setSelected(token.id);
   }
+  const dragPositions =
+    gesture?.kind === "token"
+      ? dragTokenPositions(
+          frame.tokens,
+          gesture.id,
+          gesture.point,
+          gesture.ballIds ?? [],
+          { width, height },
+        )
+      : new Map<string, Point>();
   function finish() {
     if (!gesture) return;
     if (
@@ -210,16 +226,17 @@ export function TacticalCanvas({
       });
     } else if (gesture.kind === "token") {
       const original = frame.tokens.find((t) => t.id === gesture.id);
+      const next = dragPositions.get(gesture.id);
       if (
         original &&
-        (original.position.x !== gesture.point.x ||
-          original.position.y !== gesture.point.y)
+        next &&
+        (original.position.x !== next.x || original.position.y !== next.y)
       )
         edit((d) => {
-          const token = d.keyframes[frameIndex].tokens.find(
-            (t) => t.id === gesture.id,
-          );
-          if (token) token.position = gesture.point;
+          for (const token of d.keyframes[frameIndex].tokens) {
+            const position = dragPositions.get(token.id);
+            if (position) token.position = position;
+          }
         });
     } else if (gesture.kind === "rotate") {
       const original = frame.tokens.find((t) => t.id === gesture.id);
@@ -334,37 +351,37 @@ export function TacticalCanvas({
             }}
           />
         )}
-        {frame.tokens.map((token) => (
-          <Token
-            key={token.id}
-            token={
-              gesture?.id === token.id
-                ? {
-                    ...token,
-                    ...(gesture.kind === "token"
-                      ? { position: gesture.point }
-                      : gesture.kind === "rotate"
-                        ? { rotation: gesture.rotation }
-                        : {}),
-                  }
-                : token
-            }
-            playerScale={config.playerScale}
-            selected={selected === token.id}
-            labels={config.showLabels}
-            image={token.assetId ? assetUrls[token.assetId] : undefined}
-            onPointerDown={
-              playbackTime === null
-                ? (e) => begin(e, "token", token.id, token.position)
-                : undefined
-            }
-            onRotate={
-              playbackTime === null
-                ? (e) => begin(e, "rotate", token.id)
-                : undefined
-            }
-          />
-        ))}
+        {[...frame.tokens]
+          .sort(
+            (a, b) =>
+              Number(a.equipment === "ball") - Number(b.equipment === "ball"),
+          )
+          .map((token) => (
+            <Token
+              key={token.id}
+              token={
+                dragPositions.has(token.id)
+                  ? { ...token, position: dragPositions.get(token.id)! }
+                  : gesture?.id === token.id && gesture.kind === "rotate"
+                    ? { ...token, rotation: gesture.rotation }
+                    : token
+              }
+              playerScale={config.playerScale}
+              selected={selected === token.id}
+              labels={config.showLabels}
+              image={token.assetId ? assetUrls[token.assetId] : undefined}
+              onPointerDown={
+                playbackTime === null
+                  ? (e) => begin(e, "token", token.id, token.position)
+                  : undefined
+              }
+              onRotate={
+                playbackTime === null
+                  ? (e) => begin(e, "rotate", token.id)
+                  : undefined
+              }
+            />
+          ))}
         {selectedArrow && playbackTime === null && (
           <ArrowHandles
             arrow={previewArrow(selectedArrow)}
