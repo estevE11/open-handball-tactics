@@ -50,6 +50,7 @@ export function TacticalCanvas({
     playbackTime,
   } = useProjectStore();
   const svg = useRef<SVGSVGElement>(null);
+  const scene = useRef<SVGGElement>(null);
   const [gesture, setGesture] = useState<Gesture | null>(null);
   if (!project) return null;
   const frame =
@@ -59,7 +60,7 @@ export function TacticalCanvas({
   const config = project.courtConfig;
   const { width, height } = courtSize(config);
   function point(event: { clientX: number; clientY: number }): Point {
-    const matrix = svg.current?.getScreenCTM()?.inverse();
+    const matrix = scene.current?.getScreenCTM()?.inverse();
     const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(
       matrix,
     );
@@ -247,7 +248,11 @@ export function TacticalCanvas({
       id="tactical-canvas"
       ref={svg}
       className={`tactical-canvas ${tool !== "select" ? "drawing" : ""}`}
-      viewBox={`-22 -25 ${width + 44} ${height + 50}`}
+      viewBox={
+        config.type === "full"
+          ? "-25 -22 850 444"
+          : `-22 -25 ${width + 44} ${height + 50}`
+      }
       aria-label="Interactive handball court"
       onPointerDown={down}
       onPointerMove={(e) => {
@@ -285,81 +290,90 @@ export function TacticalCanvas({
         if (id && playbackTime === null) onAssetDrop(id, point(e));
       }}
     >
-      <Court config={config} />
-      {onion && frameIndex > 0 && playbackTime === null && (
-        <g opacity=".2" pointerEvents="none">
-          {project.keyframes[frameIndex - 1].tokens.map((token) => (
-            <Token
-              key={token.id}
-              token={token}
-              playerScale={config.playerScale}
-              image={token.assetId ? assetUrls[token.assetId] : undefined}
-            />
-          ))}
-        </g>
-      )}
-      {frame.arrows.map((arrow) => (
-        <Arrow
-          key={arrow.id}
-          arrow={previewArrow(arrow)}
-          selected={selected === arrow.id}
-          onPointerDown={
-            tool === "select" && playbackTime === null
-              ? (e) => begin(e, "move-arrow", arrow.id)
-              : undefined
-          }
-        />
-      ))}
-      {gesture?.kind === "draw-arrow" && (
-        <Arrow
-          arrow={{
-            id: gesture.id,
-            start: gesture.start,
-            end: gesture.point,
-            type: tool as TacticalArrow["type"],
-            color: "#46564d",
-          }}
-        />
-      )}
-      {frame.tokens.map((token) => (
-        <Token
-          key={token.id}
-          token={
-            gesture?.id === token.id
-              ? {
-                  ...token,
-                  ...(gesture.kind === "token"
-                    ? { position: gesture.point }
-                    : gesture.kind === "rotate"
-                      ? { rotation: gesture.rotation }
-                      : {}),
-                }
-              : token
-          }
-          playerScale={config.playerScale}
-          selected={selected === token.id}
-          labels={config.showLabels}
-          image={token.assetId ? assetUrls[token.assetId] : undefined}
-          onPointerDown={
-            playbackTime === null
-              ? (e) => begin(e, "token", token.id, token.position)
-              : undefined
-          }
-          onRotate={
-            playbackTime === null
-              ? (e) => begin(e, "rotate", token.id)
-              : undefined
-          }
-        />
-      ))}
-      {selectedArrow && playbackTime === null && (
-        <ArrowHandles
-          arrow={previewArrow(selectedArrow)}
-          onHandle={(e, kind, origin, index) =>
-            begin(e, kind, selectedArrow.id, origin, index)
-          }
-        />
-      )}
+      {/* Rotate the entire scene; saved coordinates and animation stay court-relative. */}
+      <g
+        ref={scene}
+        data-court-scene="true"
+        transform={
+          config.type === "full" ? "translate(0 400) rotate(-90)" : undefined
+        }
+      >
+        <Court config={config} />
+        {onion && frameIndex > 0 && playbackTime === null && (
+          <g opacity=".2" pointerEvents="none">
+            {project.keyframes[frameIndex - 1].tokens.map((token) => (
+              <Token
+                key={token.id}
+                token={token}
+                playerScale={config.playerScale}
+                image={token.assetId ? assetUrls[token.assetId] : undefined}
+              />
+            ))}
+          </g>
+        )}
+        {frame.arrows.map((arrow) => (
+          <Arrow
+            key={arrow.id}
+            arrow={previewArrow(arrow)}
+            selected={selected === arrow.id}
+            onPointerDown={
+              tool === "select" && playbackTime === null
+                ? (e) => begin(e, "move-arrow", arrow.id)
+                : undefined
+            }
+          />
+        ))}
+        {gesture?.kind === "draw-arrow" && (
+          <Arrow
+            arrow={{
+              id: gesture.id,
+              start: gesture.start,
+              end: gesture.point,
+              type: tool as TacticalArrow["type"],
+              color: "#46564d",
+            }}
+          />
+        )}
+        {frame.tokens.map((token) => (
+          <Token
+            key={token.id}
+            token={
+              gesture?.id === token.id
+                ? {
+                    ...token,
+                    ...(gesture.kind === "token"
+                      ? { position: gesture.point }
+                      : gesture.kind === "rotate"
+                        ? { rotation: gesture.rotation }
+                        : {}),
+                  }
+                : token
+            }
+            playerScale={config.playerScale}
+            selected={selected === token.id}
+            labels={config.showLabels}
+            image={token.assetId ? assetUrls[token.assetId] : undefined}
+            onPointerDown={
+              playbackTime === null
+                ? (e) => begin(e, "token", token.id, token.position)
+                : undefined
+            }
+            onRotate={
+              playbackTime === null
+                ? (e) => begin(e, "rotate", token.id)
+                : undefined
+            }
+          />
+        ))}
+        {selectedArrow && playbackTime === null && (
+          <ArrowHandles
+            arrow={previewArrow(selectedArrow)}
+            onHandle={(e, kind, origin, index) =>
+              begin(e, kind, selectedArrow.id, origin, index)
+            }
+          />
+        )}
+      </g>
     </svg>
   );
 }

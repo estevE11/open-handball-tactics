@@ -5,7 +5,9 @@ async function courtPoint(court: Locator, x: number, y: number) {
   return court.evaluate(
     (element, point) => {
       const p = new DOMPoint(point.x, point.y).matrixTransform(
-        (element as SVGSVGElement).getScreenCTM()!,
+        element
+          .querySelector<SVGGElement>("[data-court-scene]")!
+          .getScreenCTM()!,
       );
       return { x: p.x, y: p.y };
     },
@@ -241,6 +243,86 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   await page.getByRole("button", { name: "Apply workspace defaults" }).click();
   await expect(page.getByLabel("Court floor color")).toHaveValue("#abcabc");
   await expect(page.getByLabel("Player scale")).toHaveValue("1.5");
+});
+
+test("full court is horizontal with court-relative dragging, arrows, steps, and export", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/");
+  const court = page.getByLabel("Interactive handball court");
+  const attacker = page.getByRole("img", { name: "attacker C", exact: true });
+  await expect(attacker).toBeVisible();
+  const original = await attacker.getAttribute("transform");
+  await page.getByLabel("Template").selectOption("full");
+  await expect(court).toHaveAttribute("viewBox", "-25 -22 850 444");
+  await expect(attacker).toHaveAttribute("transform", original!);
+  await expectChipTransform(attacker, -90, 1);
+  const start = await courtPoint(court, 200, 286);
+  // Use the token's actual center, independent of selection handles.
+  const center = await attacker.evaluate((element) => {
+    const p = new DOMPoint().matrixTransform(
+      (element as SVGGraphicsElement).getScreenCTM()!,
+    );
+    return { x: p.x, y: p.y };
+  });
+  const target = await courtPoint(court, 240, 650);
+  await page.mouse.move(center.x, center.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 5 });
+  await page.mouse.up();
+  const position = await attacker.evaluate((element) => {
+    const matrix = (
+      element as SVGGraphicsElement
+    ).transform.baseVal.consolidate()!.matrix;
+    return { x: matrix.e, y: matrix.f };
+  });
+  expect(position.x).toBeCloseTo(240, 3);
+  expect(position.y).toBeCloseTo(650, 3);
+  await page.getByRole("button", { name: "Pass arrow", exact: true }).click();
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 5 });
+  await page.mouse.up();
+  const arrow = court.locator("[data-arrow-line]");
+  await expect(arrow).toHaveCount(1);
+  const path = await arrow.getAttribute("d");
+  await page.getByRole("button", { name: "Add step", exact: true }).click();
+  await page.getByLabel("Onion skin").check();
+  await expect(
+    page.getByRole("img", { name: "attacker C", exact: true }),
+  ).toHaveCount(2);
+  await setRange(page.getByLabel("Animation timeline"), 750);
+  await expectChipTransform(attacker, -90, 1);
+  await page.screenshot({
+    path: "/tmp/handball-horizontal.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: /^Export/ }).click();
+  const downloading = page.waitForEvent("download");
+  await page.getByRole("button", { name: /SVG snapshot/ }).click();
+  const download = await downloading;
+  const exported = await context.newPage();
+  await exported.setContent(await readFile((await download.path())!, "utf8"));
+  const svg = exported.locator("svg");
+  expect(Number(await svg.getAttribute("width"))).toBeGreaterThan(
+    Number(await svg.getAttribute("height")),
+  );
+  await expectChipTransform(
+    exported.getByRole("img", { name: "attacker C", exact: true }),
+    -90,
+    1,
+  );
+  await exported.close();
+  await page.getByLabel("Close dialog").click();
+  await page.getByRole("button", { name: "Edit step", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("All changes saved");
+  await page.reload();
+  await expect(court).toHaveAttribute("viewBox", "-25 -22 850 444");
+  await expect(arrow).toHaveAttribute("d", path!);
+  await page.getByLabel("Template").selectOption("half");
+  await expect(court).toHaveAttribute("viewBox", "-22 -25 444 450");
+  await expectChipTransform(attacker, 0, 1);
 });
 
 test("arrows move as a whole and support draggable endpoints and multiple Bézier points", async ({

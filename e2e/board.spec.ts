@@ -41,7 +41,7 @@ test("formations, dragging, arrows, undo, steps, exports, and offline reload", a
   await page.getByText("Step 2", { exact: true }).first().click();
   await page.getByLabel("Onion skin").check();
   await page.getByLabel("Template").selectOption("full");
-  await expect(court).toHaveAttribute("viewBox", "-22 -25 444 850");
+  await expect(court).toHaveAttribute("viewBox", "-25 -22 850 444");
   await page.getByLabel("Template").selectOption("half");
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
