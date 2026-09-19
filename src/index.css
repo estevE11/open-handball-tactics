@@ -681,7 +681,7 @@ h1 {
   flex-direction: column;
 }
 .pane-switch-row {
-  min-height: 30px;
+  min-height: 22px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -691,7 +691,7 @@ h1 {
   background: transparent;
   color: #87958a;
   font-size: 9px;
-  padding: 5px 2px;
+  padding: 2px;
 }
 .pane-switch:hover {
   color: #4d6953;
@@ -796,66 +796,6 @@ h1 {
 }
 .tactical-canvas.drawing {
   cursor: crosshair;
-}
-.court-legend {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  font-size: 9px;
-  color: #919993;
-  margin-top: 7px;
-}
-.court-legend > span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.legend-circle {
-  width: 7px;
-  height: 7px;
-  background: #73a0c0;
-  border-radius: 50%;
-}
-.legend-triangle {
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-bottom: 7px solid #d6aa6b;
-}
-.legend-square {
-  height: 7px;
-  width: 7px;
-  background: #97aa91;
-  border-radius: 1px;
-}
-.board-hint {
-  flex-shrink: 0;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 8px;
-  color: #a4aaa6;
-  padding: 0 11px;
-  border: 1px solid #e1e3e2;
-  border-top: 0;
-  border-radius: 0 0 7px 7px;
-  background: #fcfcfb;
-}
-.board-hint > span:first-child {
-  margin-right: auto;
-}
-.board-hint kbd {
-  font-size: 8px;
-  font-family: inherit;
-  background: #f0f1ed;
-  border: 1px solid #e7e9e3;
-  border-radius: 3px;
-  padding: 1px 4px;
-}
-.board-hint kbd:not(:first-child) {
-  margin-left: 5px;
 }
 .steps-panel {
   margin-top: 19px;
@@ -1514,10 +1454,6 @@ h1 {
   .preset-grid button {
     padding: 5px 8px;
   }
-  .board-hint > kbd,
-  .board-hint > span:not(:first-child) {
-    display: none;
-  }
   .topbar-actions .duplicate-button {
     display: none;
   }
@@ -1645,9 +1581,6 @@ h1 {
     height: auto;
     min-height: 0;
   }
-  .board-hint {
-    font-size: 7px;
-  }
   .steps-title {
     padding: 11px;
   }
@@ -1656,9 +1589,6 @@ h1 {
   }
   .workspace-footer {
     padding: 12px 15px;
-  }
-  .court-legend {
-    gap: 14px;
   }
   .drill-meta {
     max-width: 235px;
@@ -1717,12 +1647,6 @@ h1 {
   max-width: 70px;
   padding: 5px;
   margin-left: auto;
-}
-.legend-triangle {
-  transform: rotate(180deg);
-}
-.legend-goalkeeper {
-  border-bottom-color: #879a85;
 }
 .tool-defender svg,
 .tool-goalkeeper svg {
@@ -2022,7 +1946,7 @@ h1 {
 .dark :is(.danger, .dialog-error) {
   color: #efa79d;
 }
-.dark :is(.step-item, .board-hint) {
+.dark .step-item {
   background: #202923;
   border-color: #3b493a;
   color: #a4b29b;
@@ -2039,7 +1963,7 @@ h1 {
 .dark :is(.step-select, .step-item.active .step-select) {
   color: #c6d7b8;
 }
-.dark :is(.step-number, .board-hint kbd) {
+.dark .step-number {
   color: #c6d7b8;
   background: #35452e;
   border-color: #4d6042;

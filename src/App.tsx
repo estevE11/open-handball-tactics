@@ -633,35 +633,6 @@ export default function App() {
                     onAssetDrop={addAsset}
                     onion={onion}
                   />
-                  <div className="court-legend">
-                    <span>
-                      <i className="legend-circle" />
-                      Attackers
-                    </span>
-                    <span>
-                      <i className="legend-triangle" />
-                      Defenders
-                    </span>
-                    <span>
-                      <i className="legend-triangle legend-goalkeeper" />
-                      Goalkeeper
-                    </span>
-                  </div>
-                </div>
-                <div className="board-hint">
-                  <span>
-                    {board.tool === "select"
-                      ? "Drag players or arrows to move · Select to rotate or reshape"
-                      : ["run", "pass", "dribble", "screen"].includes(
-                            board.tool,
-                          )
-                        ? "Drag on the court to draw a trajectory"
-                        : "Click the court to place your object"}
-                  </span>
-                  <kbd>V</kbd>
-                  <span>Select</span>
-                  <kbd>⌘ Z</kbd>
-                  <span>Undo</span>
                 </div>
               </div>
               <div
