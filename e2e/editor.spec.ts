@@ -245,3 +245,42 @@ test("training equipment has distinct proportions and supports rotation", async 
   await expect(court.locator('[data-equipment="cone"]')).toHaveCount(1);
   await expect(court.locator('[data-equipment="ladder"]')).toHaveCount(1);
 });
+
+test("dark mode persists and leaves the canvas pixels unchanged", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Build the attack" }),
+  ).toBeVisible();
+  const court = page.getByLabel("Interactive handball court");
+  const lightCanvas = await court.screenshot();
+  await page.getByRole("button", { name: "Switch to dark mode" }).click();
+  await expect(page.locator("html")).toHaveClass("dark");
+  expect(await court.screenshot()).toEqual(lightCanvas);
+  await expect(page.locator(".topbar")).toHaveCSS(
+    "background-color",
+    "rgb(32, 38, 40)",
+  );
+  await page.screenshot({ path: "/tmp/handball-dark.png", fullPage: true });
+  await page.reload();
+  await expect(page.locator("html")).toHaveClass("dark");
+  await page.getByLabel("Workspace defaults", { exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByLabel("Interface theme")
+    .selectOption("system");
+  await expect(page.locator("html")).not.toHaveClass("dark");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.locator("html")).toHaveClass("dark");
+  await page.getByLabel("Close dialog").click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
+  await page.screenshot({
+    path: "/tmp/handball-dark-mobile.png",
+    fullPage: true,
+  });
+});

@@ -5,12 +5,35 @@ import { CourtSettings } from "./CourtSettings";
 import { DEFAULT_COURT } from "../../lib/projectDefaults";
 
 export function WorkspaceSettings({ onClose }: { onClose: () => void }) {
-  const { courtDefaults, setCourtDefaults } = usePreferencesStore();
+  const { courtDefaults, setCourtDefaults, theme, setTheme } =
+    usePreferencesStore();
   const project = useProjectStore((state) => state.project);
   const [draft, setDraft] = useState(() => structuredClone(courtDefaults));
   const [error, setError] = useState<string | null>(null);
   return (
     <div className="workspace-settings">
+      <label className="theme-preference">
+        Appearance
+        <select
+          aria-label="Interface theme"
+          value={theme}
+          onChange={(e) => {
+            try {
+              setTheme(e.target.value as typeof theme);
+            } catch (error) {
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Could not save appearance.",
+              );
+            }
+          }}
+        >
+          <option value="system">Follow system</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
       <p className="muted">
         Your defaults for new drills on this browser. Each drill can override
         every setting below.

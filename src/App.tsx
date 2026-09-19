@@ -34,6 +34,7 @@ import { TacticalCanvas } from "./components/board/TacticalCanvas";
 import { Toolbar } from "./components/app/Toolbar";
 import { PlaybackControls } from "./components/app/PlaybackControls";
 import { WorkspaceSettings } from "./components/app/WorkspaceSettings";
+import { ThemeToggle } from "./components/app/ThemeToggle";
 import { usePreferencesStore } from "./store/preferencesStore";
 import { Inspector } from "./components/app/Inspector";
 import { Modal } from "./components/ui/Modal";
@@ -451,6 +452,7 @@ export default function App() {
             </strong>
           </div>
           <div className="topbar-actions">
+            <ThemeToggle onError={setNotice} />
             <span className="offline-status">
               <span />
               {offline
