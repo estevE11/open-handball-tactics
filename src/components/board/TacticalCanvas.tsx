@@ -170,7 +170,9 @@ export function TacticalCanvas({
           : "circle",
       rotation: role === "defender" || role === "goalkeeper" ? 180 : 0,
       color:
-        tool === "ladder"
+        tool === "ball"
+          ? "#f6f1e7"
+          : tool === "ladder"
           ? "#e9b54c"
           : tool === "cone"
             ? "#e87935"

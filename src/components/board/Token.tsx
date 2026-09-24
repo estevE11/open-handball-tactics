@@ -32,7 +32,12 @@ export function Token({
   const isPlayer = t.role !== "equipment";
   const kitId = `${outlineId}-kit`;
   const shapeId = `${outlineId}-shape`;
-  const fill = isPlayer && kit ? `url(#${kitId})` : t.color;
+  const fill =
+    t.equipment === "ball"
+      ? "#f6f1e7"
+      : isPlayer && kit
+        ? `url(#${kitId})`
+        : t.color;
   // Shape and lettering share native coordinates, so every transform stays uniform.
   const r = isPlayer ? 14 : t.size;
   const contentScale = isPlayer ? (t.size / 14) * playerScale : 1;

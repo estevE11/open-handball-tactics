@@ -313,10 +313,10 @@ export default function App() {
         className={`library-sidebar ${sidebar ? "open" : ""}`}
         aria-hidden={!sidebar}
       >
-        <a className="brand" href="/" aria-label="Open Handball Board home">
+        <a className="brand" href="/" aria-label="Open Handball Tactics home">
           <img src="/icon.svg" alt="" />
           <div>
-            Open Handball<span>BOARD</span>
+            Open Handball<span>TACTICS</span>
           </div>
           <span className="version">BETA</span>
         </a>
@@ -712,7 +712,7 @@ export default function App() {
         )}
         <footer className="workspace-footer">
           <span>
-            OPEN HANDBALL BOARD <span className="footer-version">v0.2</span>
+            OPEN HANDBALL TACTICS <span className="footer-version">v0.2</span>
           </span>
           <span>Your ideas. Your court.</span>
           <span>
@@ -939,7 +939,7 @@ export default function App() {
             <div className="help-content">
               <p>
                 Drills and images live in this browser on this device. After the
-                first online visit, the board works offline. Nothing you draw is
+                first online visit, the tactics workspace works offline. Nothing you draw is
                 uploaded.
               </p>
               <p>

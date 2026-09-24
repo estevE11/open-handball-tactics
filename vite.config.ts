@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: "prompt",
       includeAssets: ["icon.svg", "icon-192.png", "icon-512.png"],
       manifest: {
-        name: "Open Handball Board",
-        short_name: "Handball Board",
+        name: "Open Handball Tactics",
+        short_name: "Handball Tactics",
         description: "Local-first handball tactics and drill library",
         theme_color: "#18181b",
         background_color: "#fafafa",

@@ -89,7 +89,7 @@ export function Inspector({
   return (
     <aside className="inspector">
       <div className="panel-title">
-        Board settings <span className="tiny-label">LIVE</span>
+        Tactics settings <span className="tiny-label">LIVE</span>
       </div>
       {(token || arrow) && (
         <section className="inspector-section selected-panel">

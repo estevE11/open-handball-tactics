@@ -1,6 +1,6 @@
-# Open Handball Board
+# Open Handball Tactics
 
-A local-first handball tactics board in the [Open Handball](https://github.com/estevE11/open-handball-video) ecosystem. Plan drills, arrange players, draw trajectories, and keep a reusable library entirely in your browser.
+A local-first handball tactics workspace in the [Open Handball](https://github.com/estevE11/open-handball-video) ecosystem. Plan drills, arrange players, draw trajectories, and keep a reusable library entirely in your browser.
 
 **Web app:** https://open-handball-tactics.vercel.app
 
