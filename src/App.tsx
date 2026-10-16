@@ -998,8 +998,9 @@ export default function App() {
               </button>
               <p className="muted">
                 PNG, SVG, editable .hbd, animated GIF, and video exports are
-                available. Use Copy GIF for quick pasting; some apps paste a
-                still image, so Download or Share preserves animation. PDF drill
+                available. For WhatsApp Web, use WhatsApp MP4 and attach the video
+                using Photos &amp; videos. Copy image may paste a still preview;
+                GIF animation support depends on the receiving app. PDF drill
                 sheets are planned for a later release.
               </p>
             </div>

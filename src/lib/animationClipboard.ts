@@ -13,7 +13,7 @@ export async function copyAnimationGif(
 ): Promise<"gif" | "html"> {
   if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined")
     throw new Error(
-      "This browser cannot copy images. Use Download GIF or Share GIF.",
+      "This browser cannot copy images. Use Download GIF, or MP4 for WhatsApp Web.",
     );
   if (result.extension !== "gif" || !result.gifDataUrl)
     throw new Error("Generate a GIF first.");

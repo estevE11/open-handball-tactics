@@ -138,7 +138,7 @@ test("GIF export contains moving frames, copies a rich image, preserves the dril
   expect(decoded.count).toBe(9);
   expect(decoded.changed).toBeGreaterThan(200);
   expect(Math.max(decoded.width, decoded.height)).toBe(720);
-  await page.getByRole("button", { name: "Copy GIF", exact: true }).click();
+  await page.getByRole("button", { name: /^Copy (GIF|image)$/ }).click();
   await expect(section.getByRole("status")).toContainText(/Copied|copied/);
   const clipboard = await page.evaluate(async () => {
     const [item] = await navigator.clipboard.read();
@@ -174,7 +174,7 @@ test("GIF export contains moving frames, copies a rich image, preserves the dril
       },
     }),
   );
-  await page.getByRole("button", { name: "Copy GIF", exact: true }).click();
+  await page.getByRole("button", { name: /^Copy (GIF|image)$/ }).click();
   await expect(section.getByRole("alert")).toContainText("blocked");
   await expect(
     page.getByRole("button", { name: "Download GIF", exact: true }),
@@ -268,7 +268,7 @@ test("closing a GIF export cancels work and the export dialog fits on mobile", a
     .getByRole("button", { name: "GIF animation", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Copy GIF", exact: true }),
+    page.getByRole("button", { name: /^Copy (GIF|image)$/ }),
   ).toBeVisible({ timeout: 20000 });
   const box = (await page.getByRole("dialog").boundingBox())!;
   expect(box.x).toBeGreaterThanOrEqual(0);
@@ -308,8 +308,55 @@ test("GIF encoding works offline and remains available without video support", a
     .getByRole("button", { name: "GIF animation", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Copy GIF", exact: true }),
+    page.getByRole("button", { name: /^Copy (GIF|image)$/ }),
   ).toBeVisible({ timeout: 20000 });
   const gif = await downloadBytes(page, "Download GIF");
   expect(gif.bytes.subarray(0, 6).toString()).toBe("GIF89a");
+});
+
+test("WhatsApp export downloads an H.264 MP4 and reuses the finished video", async ({
+  page,
+}) => {
+  await movingDrill(page);
+  await page.getByRole("button", { name: /^Export/ }).click();
+  const button = page.getByRole("button", {
+    name: "WhatsApp MP4",
+    exact: true,
+  });
+  test.skip(
+    await button.isDisabled(),
+    "Browser has no native H.264 MP4 encoder",
+  );
+  const video = await downloadBytes(page, "WhatsApp MP4");
+  expect(video.name).toMatch(/\.mp4$/);
+  expect(video.bytes.subarray(4, 8).toString()).toBe("ftyp");
+  expect(video.bytes.includes(Buffer.from("avc1"))).toBe(true);
+  await expect(
+    page.getByLabel("Drill video preview", { exact: true }),
+  ).toBeVisible();
+  const section = page.getByRole("region", { name: "Animated export" });
+  await expect(section.getByRole("status")).toContainText("Photos & videos");
+  const again = await downloadBytes(page, "WhatsApp MP4");
+  expect(again.bytes.equals(video.bytes)).toBe(true);
+});
+
+test("WhatsApp MP4 requires explicit H.264 support even when generic MP4 is reported", async ({
+  page,
+}) => {
+  await movingDrill(page);
+  await page.evaluate(() => {
+    const supported = MediaRecorder.isTypeSupported.bind(MediaRecorder);
+    MediaRecorder.isTypeSupported = (type) =>
+      type === "video/mp4" || (!type.startsWith("video/mp4") && supported(type));
+  });
+  await page.getByRole("button", { name: /^Export/ }).click();
+  await expect(
+    page.getByRole("button", { name: "WhatsApp MP4", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: /^Video animation/ }),
+  ).toBeEnabled();
+  await expect(
+    page.getByRole("region", { name: "Animated export" }),
+  ).toContainText("MP4 recording is unavailable here");
 });

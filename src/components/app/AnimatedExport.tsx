@@ -43,13 +43,16 @@ export function AnimatedExport({
   );
   const result = format ? results[format] : undefined;
   const video = videoMimeType();
+  const whatsappVideo = video?.startsWith("video/mp4") ?? false;
   const recording = progress !== null;
 
-  async function generate(next: AnimationFormat) {
+  async function generate(
+    next: AnimationFormat,
+  ): Promise<ReadyAnimation | undefined> {
     setFormat(next);
     setMessage("");
     setError("");
-    if (results[next]) return;
+    if (results[next]) return results[next];
     const controller = new AbortController();
     operation.current = controller;
     setProgress(0);
@@ -65,7 +68,9 @@ export function AnimatedExport({
       if (controller.signal.aborted) return;
       const url = URL.createObjectURL(output.blob);
       objectUrls.current.push(url);
-      setResults((current) => ({ ...current, [next]: { ...output, url } }));
+      const ready = { ...output, url };
+      setResults((current) => ({ ...current, [next]: ready }));
+      return ready;
     } catch (error) {
       if (!controller.signal.aborted)
         setError(
@@ -75,6 +80,21 @@ export function AnimatedExport({
       if (operation.current === controller && !controller.signal.aborted)
         setProgress(null);
     }
+  }
+  async function downloadWhatsAppVideo() {
+    if (!whatsappVideo) return;
+    const output = await generate("video");
+    if (!output) return;
+    if (output.extension !== "mp4") {
+      setError(
+        "This browser could not create an MP4. Try an updated Chrome or Safari.",
+      );
+      return;
+    }
+    download(output.blob, `${project.title}.mp4`);
+    setMessage(
+      "MP4 downloaded. In WhatsApp Web, attach it using Photos & videos to send the movement as a video.",
+    );
   }
   function cancel() {
     operation.current?.abort();
@@ -90,18 +110,18 @@ export function AnimatedExport({
       const copied = await copyAnimationGif(result);
       setMessage(
         copied === "gif"
-          ? "GIF copied. Paste to share."
-          : "Copied as a rich image. Some apps paste a still image; Download GIF or Share GIF keeps the animation.",
+          ? "GIF copied. Animation depends on the receiving app. Use WhatsApp MP4 for WhatsApp Web."
+          : "Image copied. Some apps paste a still image. Use WhatsApp MP4 to send the movement on WhatsApp Web.",
       );
     } catch {
       setError(
-        "Clipboard access is unavailable or was blocked. Use Download GIF or Share GIF.",
+        "Clipboard access is unavailable or was blocked. Download the file instead; use MP4 for WhatsApp Web.",
       );
     }
   }
   const file = result
     ? new File([result.blob], `${project.title}.${result.extension}`, {
-        type: result.blob.type,
+        type: result.blob.type.split(";")[0],
       })
     : null;
   const canShare = !!file && !!navigator.canShare?.({ files: [file] });
@@ -127,6 +147,18 @@ export function AnimatedExport({
       </p>
       <div className="animated-export-choices">
         <button
+          className="button primary"
+          disabled={recording || !whatsappVideo}
+          title={
+            whatsappVideo
+              ? "Download an H.264 MP4 for WhatsApp Web"
+              : "MP4 recording is unavailable in this browser. Try an updated Chrome or Safari."
+          }
+          onClick={() => void downloadWhatsAppVideo()}
+        >
+          <ArrowDownToLine size={16} /> WhatsApp MP4
+        </button>
+        <button
           className="button secondary"
           disabled={recording}
           aria-pressed={format === "gif"}
@@ -149,6 +181,13 @@ export function AnimatedExport({
           <small>{video?.startsWith("video/mp4") ? "MP4" : "WebM"}</small>
         </button>
       </div>
+      <p className="animation-clipboard-note">
+        For WhatsApp Web, download MP4 and attach it using Photos &amp; videos.
+        It sends as a video. Pasting or uploading a GIF may produce a still
+        image.
+        {!whatsappVideo &&
+          " MP4 recording is unavailable here; try an updated Chrome or Safari."}
+      </p>
       {recording && (
         <div className="animation-export-progress">
           <progress
@@ -188,7 +227,8 @@ export function AnimatedExport({
                 className="button secondary"
                 onClick={() => void copyGif()}
               >
-                <Copy size={15} /> Copy GIF
+                <Copy size={15} />{" "}
+                {nativeGifClipboard() ? "Copy GIF" : "Copy image"}
               </button>
             )}
             {canShare && (
@@ -210,9 +250,9 @@ export function AnimatedExport({
           )}
           {result.extension === "gif" && !nativeGifClipboard() && (
             <p className="animation-clipboard-note">
-              Copy GIF uses the rich-image clipboard in this browser. Some apps
-              paste only a still image. Download or Share the GIF to preserve
-              animation.
+              Copy image includes a PNG preview and an embedded GIF. The
+              receiving app decides whether it accepts animation; WhatsApp Web
+              may use only the still preview. Use WhatsApp MP4 for that app.
             </p>
           )}
         </div>
