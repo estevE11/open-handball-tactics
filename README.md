@@ -32,15 +32,20 @@ For environments without Chrome, run `npx playwright install chromium` and `CI=1
 - Defense presets: 6:0, 5:1, 3:2:1, 4:2, 3:3. Offense presets: 3:3 and 2:4. Attackers use `F` (left wing), `E` (pivot), `D` (right wing), with `A` (left back), `B` (center back), `C` (right back). In 2:4, `B` advances to a second pivot alongside `E`. Applying a formation replaces only that role's players in the current step.
 - Running, passing, dribbling, and screen/block trajectories. Drag the line to move the complete path, or drag its endpoints and numbered Bézier handles. Add/remove up to 12 control points. Choose end-only, start-only, double-ended, or headless paths in the inspector; screen paths use T-bar markers. Select a trajectory and use **Line color** to recolor its path and heads, including while selected; colors are saved with the step and included in exports.
 - Balls touching a player travel with it when dragged, preserving their exact offset. Dragging a ball always moves it independently; dropping it against a player makes it ready to carry again. Contact follows chip shape, rotation, and scale, and carried movement supports undo, saved steps, and animation.
+- **Voronoi mode:** toggle the hexagon directly left of Undo/Redo to show each player's nearest-player territory, bounded by the court. Regions use each team's primary kit color (or its player color) at 0.3 fill opacity, with borders around every cell. The goalkeeper belongs to the defending team; equipment is ignored. Regions follow live dragging, undo/redo, steps, and animation, and the active overlay is included in PNG/SVG snapshots.
+- **Freehand drawing (B):** left-drag to draw corrected, smooth curves; right-click or right-drag to erase entire strokes. Choose color, thickness, opacity, and smoothing in the left panel. Draw across the entire canvas, including outside the court; court edits preserve those strokes and snapshots expand to include them. **Erase whole strokes (E)** also works with touch; **Clear drawing** clears only the current step's drawings. Drawing, erasing, and clearing support undo/redo. Drawings copy into new steps and persist in saved drills, `.hbd` backups, and PNG/SVG snapshots. Native Pointer Events accept mouse, touch, and stylus input, including coalesced pen samples where available and pen barrel/eraser buttons exposed by the browser. **Pen only** ignores fingers/palms. Apple Pencil and OnePlus Stylo 2 should work where their browser exposes pen input; physical-device testing is still needed, and hardware-specific gestures are not mapped.
 - Multiple balls, compact striped training cones, mini-goals, eight-rung agility ladders, text, and uploaded image markers. Equipment supports rotation. Click an image or drag it from the asset manager to place it.
 - Selection follows the object's silhouette with a small gap, including rotated tokens and equipment. Selection handles and outlines are excluded from exports.
 - Nested folders with create, rename, move, duplicate, and recursive delete. Drill create, rename, move, duplicate, delete, tags, notes, and search by title/tag/folder path. The library stays out of the way until opened as an animated drawer over the workspace. Open folder management using its ellipsis; drill management uses the ellipsis beside its title.
 - Autosave with visible pending/error states, retry, bounded undo/redo, editable keyframe steps, and previous-step onion skinning. Copy a step, move or rotate the same players, and use Play or the timeline scrubber to preview movement and shortest-arc rotation. Each step's duration controls its transition to the next step; previewing never changes the saved frames.
+- The toolbar sits directly beneath the top bar. Pen options use a left panel, keeping the full canvas height; app version and privacy information live in **Help (?)**.
 - Saved Light, Dark, and Follow system appearance settings. Dark mode changes the workspace UI while leaving the main canvas and exported images unchanged.
 - Portable `.hbd` import/export embeds binary assets and gives imports new identifiers. PNG/SVG snapshots include uploaded images.
+- **Animated export:** open Export, choose **GIF animation** or **Video animation**, then download, copy, or share the prepared result without re-encoding. GIFs loop all steps at up to 20 fps with a one-second final pause; very long drills reduce frame rate while preserving timing. Video records in real time as MP4 where supported, with WebM as the fallback. Output uses a 720px longest edge, retains kits, images, rotations, drawings outside the court, and the active Voronoi overlay, and leaves editing/playback unchanged. GIF encoding runs locally in a bundled worker, including offline. Export can be canceled or closed.
+- **Copy GIF:** writes native GIF data where the browser supports it; otherwise copies an HTML image containing the animated GIF plus a PNG preview. The receiving app decides whether it pastes animation or a still image. **Download GIF** and **Share GIF** (where native file sharing is available) preserve the animation. Clipboard denial keeps the download ready.
 - Installable PWA with bundled icons and a precached application shell. New versions prompt for an update after pending saves complete.
 
-**Planned:** WebM/GIF animation export and multi-thumbnail PDF drill sheets.
+**Planned:** Multi-thumbnail PDF drill sheets.
 
 ## Architecture
 
@@ -56,12 +61,16 @@ src/
     browserStorage.ts    Dexie schema and transactional library service
     animation.ts         Position, rotation, and path interpolation
     arrowGeometry.ts     Path translation and multi-bend Bézier geometry
+    drawingGeometry.ts   Freehand smoothing and whole-stroke eraser geometry
     preferences.ts       Validated browser-local court defaults and theme
     projectCompatibility.ts  Additive compatibility for older saved drills
     formations.ts        Handball-specific formation coordinates and labels
     projectDefaults.ts   Serializable project construction
     projectIo.ts         Validated .hbd import/export with embedded images
-    snapshot.ts          PNG and SVG snapshot export
+    snapshot.ts          Shared SVG serialization and PNG/SVG snapshot export
+    animationExport.ts   GIF worker encoding and browser-native video recording
+    animationRenderer.tsx  Reuses the board renderer without changing editor state
+    animationClipboard.ts  Native GIF or HTML/PNG clipboard sharing
   store/projectStore.ts  Editing, history, serialized autosave, save errors
   store/preferencesStore.ts  Workspace defaults and appearance
   types/project.ts       Versioned Zod schemas and inferred TypeScript types

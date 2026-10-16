@@ -1,13 +1,24 @@
 import { useRef, useState } from "react";
 import { useProjectStore } from "../../store/projectStore";
-import type { Point, TacticalArrow, TacticalToken } from "../../types/project";
+import type {
+  DrillProject,
+  Point,
+  TacticalArrow,
+  TacticalToken,
+} from "../../types/project";
 import { Court } from "./Court";
 import { Arrow, ArrowHandles } from "./Arrow";
 import { Token } from "./Token";
+import { DrawingLayer } from "./DrawingLayer";
+import { Voronoi } from "./Voronoi";
 import { sampleProject } from "../../lib/animation";
 import { tokenRotation } from "../../lib/projectCompatibility";
 import { playerKit } from "../../lib/kits";
-import { courtSize, courtRotation, courtViewBox } from "../../lib/courtGeometry";
+import {
+  courtSize,
+  courtRotation,
+  courtViewBox,
+} from "../../lib/courtGeometry";
 import {
   editableControls,
   translateArrow,
@@ -37,21 +48,29 @@ export function TacticalCanvas({
   assetUrls,
   onAssetDrop,
   onion,
+  renderScene,
 }: {
   assetUrls: Record<string, string>;
   onAssetDrop: (id: string, point: Point) => void;
   onion: boolean;
+  renderScene?: { project: DrillProject; time: number; voronoi: boolean };
 }) {
   const {
-    project,
+    project: storedProject,
     frameIndex,
-    tool,
-    selected,
+    tool: storedTool,
+    selected: storedSelected,
     edit,
     setSelected,
     setTool,
-    playbackTime,
+    playbackTime: storedPlaybackTime,
+    voronoi: storedVoronoi,
   } = useProjectStore();
+  const project = renderScene?.project ?? storedProject;
+  const playbackTime = renderScene?.time ?? storedPlaybackTime;
+  const voronoi = renderScene?.voronoi ?? storedVoronoi;
+  const tool = renderScene ? "select" : storedTool;
+  const selected = renderScene ? null : storedSelected;
   const svg = useRef<SVGSVGElement>(null);
   const scene = useRef<SVGGElement>(null);
   const [gesture, setGesture] = useState<Gesture | null>(null);
@@ -63,11 +82,19 @@ export function TacticalCanvas({
   const config = project.courtConfig;
   const { width, height } = courtSize(config);
   const sceneRotation = courtRotation(config);
-  function point(event: { clientX: number; clientY: number }): Point {
+  function drawingPoint(event: { clientX: number; clientY: number }): Point {
+    const bounds = svg.current!.getBoundingClientRect();
     const matrix = scene.current?.getScreenCTM()?.inverse();
-    const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(
-      matrix,
-    );
+    // Ink can use the SVG's letterboxed space around the court. Capture keeps
+    // strokes continuous at the edges, but never extends them into the UI.
+    const p = new DOMPoint(
+      Math.max(bounds.left, Math.min(bounds.right, event.clientX)),
+      Math.max(bounds.top, Math.min(bounds.bottom, event.clientY)),
+    ).matrixTransform(matrix);
+    return { x: p.x, y: p.y };
+  }
+  function point(event: { clientX: number; clientY: number }): Point {
+    const p = drawingPoint(event);
     return {
       x: Math.max(0, Math.min(width, p.x)),
       y: Math.max(0, Math.min(height, p.y)),
@@ -127,6 +154,7 @@ export function TacticalCanvas({
   }
   function down(event: React.PointerEvent) {
     if (event.button !== 0 || playbackTime !== null) return;
+    if (tool === "draw" || tool === "erase") return;
     const p = point(event);
     if (tool === "select") {
       setSelected(null);
@@ -173,24 +201,18 @@ export function TacticalCanvas({
         tool === "ball"
           ? "#f6f1e7"
           : tool === "ladder"
-          ? "#e9b54c"
-          : tool === "cone"
-            ? "#e87935"
-            : tool === "defender"
-              ? "#eaa958"
-              : tool === "goalkeeper"
-                ? "#879a85"
-                : tool === "attacker"
-                  ? "#4f8cba"
-                  : "#46564d",
+            ? "#e9b54c"
+            : tool === "cone"
+              ? "#e87935"
+              : tool === "defender"
+                ? "#eaa958"
+                : tool === "goalkeeper"
+                  ? "#879a85"
+                  : tool === "attacker"
+                    ? "#4f8cba"
+                    : "#46564d",
       size:
-        tool === "ball"
-          ? 6
-          : tool === "cone"
-            ? 10
-            : tool === "ladder"
-              ? 22
-              : 14,
+        tool === "ball" ? 6 : tool === "cone" ? 5 : tool === "ladder" ? 22 : 14,
       position: p,
     };
     edit((d) => {
@@ -209,6 +231,13 @@ export function TacticalCanvas({
           { width, height },
         )
       : new Map<string, Point>();
+  const previewTokens = frame.tokens.map((token) =>
+    dragPositions.has(token.id)
+      ? { ...token, position: dragPositions.get(token.id)! }
+      : gesture?.id === token.id && gesture.kind === "rotate"
+        ? { ...token, rotation: gesture.rotation }
+        : token,
+  );
   function finish() {
     if (!gesture) return;
     if (
@@ -266,7 +295,7 @@ export function TacticalCanvas({
   const selectedArrow = frame.arrows.find((arrow) => arrow.id === selected);
   return (
     <svg
-      id="tactical-canvas"
+      id={renderScene ? undefined : "tactical-canvas"}
       ref={svg}
       className={`tactical-canvas ${tool !== "select" ? "drawing" : ""}`}
       viewBox={courtViewBox(config)}
@@ -320,6 +349,14 @@ export function TacticalCanvas({
         }
       >
         <Court config={config} />
+        {voronoi && (
+          <Voronoi
+            tokens={previewTokens}
+            project={project}
+            width={width}
+            height={height}
+          />
+        )}
         {onion && frameIndex > 0 && playbackTime === null && (
           <g opacity=".2" pointerEvents="none">
             {project.keyframes[frameIndex - 1].tokens.map((token) => (
@@ -357,7 +394,7 @@ export function TacticalCanvas({
             }}
           />
         )}
-        {[...frame.tokens]
+        {[...previewTokens]
           .sort(
             (a, b) =>
               Number(a.equipment === "ball") - Number(b.equipment === "ball"),
@@ -365,13 +402,7 @@ export function TacticalCanvas({
           .map((token) => (
             <Token
               key={token.id}
-              token={
-                dragPositions.has(token.id)
-                  ? { ...token, position: dragPositions.get(token.id)! }
-                  : gesture?.id === token.id && gesture.kind === "rotate"
-                    ? { ...token, rotation: gesture.rotation }
-                    : token
-              }
+              token={token}
               playerScale={config.playerScale}
               sceneRotation={sceneRotation}
               kit={playerKit(project, token)}
@@ -398,6 +429,14 @@ export function TacticalCanvas({
             }
           />
         )}
+        <DrawingLayer
+          key={`${project.id}:${frame.id}:${tool}:${playbackTime === null}:${width}:${height}:${sceneRotation}`}
+          strokes={frame.drawings ?? []}
+          point={drawingPoint}
+          active={
+            (tool === "draw" || tool === "erase") && playbackTime === null
+          }
+        />
       </g>
     </svg>
   );

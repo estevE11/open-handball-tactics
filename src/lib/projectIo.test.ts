@@ -89,3 +89,24 @@ it("rolls back imported blobs if the destination folder does not exist", async (
   expect(await db.assets.count()).toBe(0);
   expect(await db.projects.count()).toBe(0);
 });
+it("preserves drawings on import and accepts older projects without them", async () => {
+  const project = newProject();
+  const legacy = await importProject(backup(project), null);
+  expect(legacy.keyframes[0].drawings).toBeUndefined();
+  project.keyframes[0].drawings = [
+    {
+      id: "stroke",
+      points: [
+        { x: 10, y: 20 },
+        { x: 30, y: 40 },
+      ],
+      color: "#ff0000",
+      width: 4,
+      opacity: 0.5,
+    },
+  ];
+  const imported = await importProject(backup(project), null);
+  expect(imported.keyframes[0].drawings).toEqual(project.keyframes[0].drawings);
+  project.keyframes[0].drawings[0].width = -1;
+  await expect(importProject(backup(project), null)).rejects.toThrow();
+});

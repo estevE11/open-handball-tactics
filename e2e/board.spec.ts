@@ -39,7 +39,7 @@ test("formations, dragging, arrows, undo, steps, exports, and offline reload", a
   await expect(court.locator('path[stroke-dasharray="7 6"]')).toHaveCount(1);
   await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
-  await page.getByText("Step 2", { exact: true }).first().click();
+  await page.getByRole("button", { name: /02 Step 2/ }).click();
   await page.getByLabel("Onion skin").check();
   await page.getByRole("tab", { name: "Editor", exact: true }).click();
   await page.getByLabel("Template").selectOption("full");
@@ -204,7 +204,7 @@ test("editor and animation panes share the right panel", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Add step", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Switch to editor pane" }).click();
+  await page.getByRole("tab", { name: "Editor", exact: true }).click();
   await expect(
     page.getByRole("tab", { name: "Editor", exact: true }),
   ).toHaveAttribute("aria-selected", "true");

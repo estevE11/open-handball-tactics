@@ -17,6 +17,16 @@ interface BoardState {
   setPlayback: (time: number, playing?: boolean) => void;
   stopPlayback: () => void;
   tool: Tool;
+  voronoi: boolean;
+  setVoronoi: (enabled: boolean) => void;
+  drawing: {
+    color: string;
+    width: number;
+    opacity: number;
+    smoothing: number;
+    penOnly: boolean;
+  };
+  setDrawing: (settings: Partial<BoardState["drawing"]>) => void;
   selected: string | null;
   past: DrillProject[];
   future: DrillProject[];
@@ -90,6 +100,17 @@ export const useProjectStore = create<BoardState>((set, get) => ({
     });
   },
   tool: "select",
+  voronoi: false,
+  setVoronoi: (voronoi) => set({ voronoi }),
+  drawing: {
+    color: "#46564d",
+    width: 3,
+    opacity: 1,
+    smoothing: 0.5,
+    penOnly: false,
+  },
+  setDrawing: (settings) =>
+    set((state) => ({ drawing: { ...state.drawing, ...settings } })),
   selected: null,
   past: [],
   future: [],

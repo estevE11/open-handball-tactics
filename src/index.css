@@ -666,7 +666,7 @@ h1 {
   background: #f0f2ef;
 }
 .editor-layout {
-  padding: 0 31px 22px;
+  padding: 0 31px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 226px;
   gap: 20px;
@@ -680,26 +680,16 @@ h1 {
   display: flex;
   flex-direction: column;
 }
-.pane-switch-row {
-  min-height: 22px;
+.board-stage {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-.pane-switch {
-  border: 0;
-  background: transparent;
-  color: #87958a;
-  font-size: 9px;
-  padding: 2px;
-}
-.pane-switch:hover {
-  color: #4d6953;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
 }
 .toolbar {
   height: 49px;
   border: 1px solid #e1e3e2;
-  border-radius: 8px 8px 0 0;
+  border-radius: 0;
   display: flex;
   align-items: center;
   padding: 0 7px;
@@ -751,12 +741,57 @@ h1 {
 .history {
   margin-left: auto;
 }
+.tool.clear-drawing {
+  display: flex;
+  width: auto;
+  padding: 0 8px;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.drawing-options {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 150px;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 18px;
+  padding: 16px 12px;
+  border: 1px solid #e1e3e2;
+  border-top: 0;
+  border-right: 0;
+  background: #fff;
+}
+.drawing-options label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.drawing-options input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+.drawing-value {
+  color: #46564d;
+  font-variant-numeric: tabular-nums;
+}
+.drawing-options .pen-only {
+  display: flex;
+  flex-direction: row;
+}
+.drawing-hint {
+  color: #72767b;
+  font-size: 11px;
+  line-height: 1.5;
+}
 .canvas-area {
   background: #f3f4f0;
   border: 1px solid #e1e3e2;
   border-top: 0;
   position: relative;
-  padding: 12px 14px 10px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -766,7 +801,12 @@ h1 {
   overflow: hidden;
 }
 .canvas-topline {
-  width: 100%;
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  z-index: 1;
+  pointer-events: none;
   display: flex;
   justify-content: space-between;
   font-size: 9px;
@@ -785,7 +825,10 @@ h1 {
   border-radius: 50%;
 }
 .tactical-canvas {
-  flex: 1;
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  overflow: hidden;
   min-height: 0;
   width: 100%;
   max-height: 100%;
@@ -1252,34 +1295,19 @@ h1 {
   gap: 8px;
   margin-top: 12px;
 }
-.workspace-footer {
-  margin-top: auto;
-  border-top: 1px solid #e8e9e6;
-  padding: 12px 31px;
-  display: flex;
-  justify-content: space-between;
-  color: #b0b4af;
-  font-size: 8px;
-  letter-spacing: 0.5px;
+.help-about {
+  margin-bottom: 16px;
 }
-.workspace-footer > span {
+.help-about strong span {
+  color: #87958a;
+  font-size: 11px;
+  font-weight: 400;
+}
+.help-about p {
   display: flex;
   align-items: center;
-  gap: 5px;
-}
-.workspace-footer > span:first-child {
-  letter-spacing: 1px;
-  font-size: 7px;
-}
-.footer-version {
-  letter-spacing: 0;
-  margin-left: 3px;
-  font-size: 8px;
-}
-.workspace-footer > span:nth-child(2) {
-  font-size: 9px;
-  letter-spacing: 0.1px;
-  color: #9ca79a;
+  gap: 6px;
+  margin: 6px 0;
 }
 .modal {
   width: 430px;
@@ -1290,6 +1318,63 @@ h1 {
   box-shadow: 0 20px 80px #0002;
   background: #fdfefd;
   color: #343a32;
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+.animated-export {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #e1e4dc;
+}
+.animated-export h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.animated-export-choices,
+.animation-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.animated-export-choices small {
+  font-size: 9px;
+  opacity: 0.7;
+}
+.animation-export-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 11px;
+}
+.animation-export-progress progress {
+  width: 100%;
+  accent-color: #697e72;
+}
+.animation-export-result {
+  margin-top: 16px;
+}
+.animation-export-result :is(img, video) {
+  margin-top: 12px;
+  width: 100%;
+  max-height: 230px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #e5eee9;
+}
+.animation-clipboard-note,
+.animation-export-message {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #72767b;
+}
+.dark .animated-export {
+  border-color: #353f3d;
+}
+.dark :is(.animation-clipboard-note, .animation-export-message) {
+  color: #bac8c0;
 }
 .modal::backdrop {
   background: #1c281d55;
@@ -1440,7 +1525,7 @@ h1 {
     max-width: 119px;
   }
   .editor-layout {
-    padding: 0 20px 20px;
+    padding: 0 20px;
     gap: 14px;
     grid-template-columns: minmax(0, 1fr) 205px;
   }
@@ -1465,7 +1550,6 @@ h1 {
     width: 16px;
   }
   .canvas-area {
-    padding: 8px 6px;
     height: auto;
   }
   .inspector-section {
@@ -1519,11 +1603,18 @@ h1 {
   .title-row h1 {
     font-size: 23px;
   }
-  .workspace-footer > span:nth-child(2) {
-    display: none;
-  }
 }
 @media (max-width: 700px) {
+  .drawing-options {
+    flex-basis: 104px;
+    padding: 12px 8px;
+    gap: 14px;
+  }
+  .drawing-options label,
+  .drawing-hint {
+    font-size: 10px;
+  }
+
   .topbar {
     padding: 0 14px;
     gap: 7px;
@@ -1588,7 +1679,7 @@ h1 {
     display: none;
   }
   .editor-layout {
-    padding: 0 6px 12px;
+    padding: 0 6px;
   }
   .toolbar {
     height: 47px;
@@ -1606,9 +1697,6 @@ h1 {
   }
   .steps-panel {
     margin-top: 13px;
-  }
-  .workspace-footer {
-    padding: 12px 15px;
   }
   .drill-meta {
     max-width: 235px;
@@ -1749,6 +1837,7 @@ h1 {
     .library-sidebar,
     .topbar,
     .toolbar,
+    .drawing-options,
     .inspector,
     .steps-panel,
     .pane-tabs,
@@ -1757,6 +1846,9 @@ h1 {
   ) {
   background: #202628;
   border-color: #353f3d;
+}
+.dark .drawing-options :is(label, .drawing-value, .drawing-hint) {
+  color: #bac8c0;
 }
 .dark
   :is(
@@ -1768,7 +1860,6 @@ h1 {
     .pane-tabs,
     .animation-panel-heading,
     .onion-toggle,
-    .workspace-footer,
     .tool-group
   ) {
   border-color: #353f3d;
@@ -1816,7 +1907,6 @@ h1 {
     .steps-title > span,
     .steps-title label,
     .onion-toggle,
-    .pane-switch,
     .playback-time,
     .export-options small
   ) {
@@ -1830,8 +1920,6 @@ h1 {
     .ecosystem a,
     .folder-select small,
     .all-drills small,
-    .workspace-footer,
-    .workspace-footer > span:nth-child(2),
     .asset-upload small
   ) {
   color: #91a096;

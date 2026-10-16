@@ -24,6 +24,18 @@ it("keeps all steps and curved arrows editable after shrinking the court", () =>
     control: { x: 390, y: 799 },
     color: "#000000",
   });
+  project.keyframes[1].drawings = [
+    {
+      id: "outside-court",
+      color: "#000000",
+      width: 3,
+      opacity: 1,
+      points: [
+        { x: -100, y: -100 },
+        { x: 600, y: 900 },
+      ],
+    },
+  ];
   project.courtConfig.type = "custom_box";
   project.courtConfig.dimensions = { width: 10, height: 10 };
   fitProjectToCourt(project);
@@ -33,4 +45,8 @@ it("keeps all steps and curved arrows editable after shrinking the court", () =>
       expect(token.position.y).toBeLessThanOrEqual(200 - token.size);
     }
   expect(project.keyframes[1].arrows[0].control).toEqual({ x: 200, y: 200 });
+  expect(project.keyframes[1].drawings[0].points).toEqual([
+    { x: -100, y: -100 },
+    { x: 600, y: 900 },
+  ]);
 });

@@ -31,7 +31,9 @@ import { useAssetUrls } from "./hooks/useAssetUrls";
 import { FolderTree } from "./components/library/FolderTree";
 import { TacticalCanvas } from "./components/board/TacticalCanvas";
 import { Toolbar } from "./components/app/Toolbar";
+import { DrawingOptions } from "./components/app/DrawingOptions";
 import { AnimationPanel } from "./components/app/AnimationPanel";
+import { AnimatedExport } from "./components/app/AnimatedExport";
 import { WorkspaceSettings } from "./components/app/WorkspaceSettings";
 import { ThemeToggle } from "./components/app/ThemeToggle";
 import { usePreferencesStore } from "./store/preferencesStore";
@@ -163,6 +165,10 @@ export default function App() {
       }
       if (event.key.toLowerCase() === "v" || event.key === "Escape")
         state.setTool("select");
+      if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+        if (event.key.toLowerCase() === "b") state.setTool("draw");
+        if (event.key.toLowerCase() === "e") state.setTool("erase");
+      }
       if (
         (event.key === "Delete" || event.key === "Backspace") &&
         state.selected
@@ -601,48 +607,38 @@ export default function App() {
           <>
             <div className="editor-layout">
               <div className="board-column">
-                <div className="pane-switch-row">
-                  <button
-                    className="pane-switch"
-                    onClick={() =>
-                      setActivePane((pane) =>
-                        pane === "editor" ? "animation" : "editor",
-                      )
-                    }
-                  >
-                    Switch to {activePane === "editor" ? "animation" : "editor"}{" "}
-                    pane
-                  </button>
-                </div>
                 <div inert={board.playbackTime !== null}>
                   <Toolbar />
                 </div>
-                <div
-                  className="canvas-area"
-                  style={{
-                    backgroundColor:
-                      project.courtConfig.background === "floor"
-                        ? project.courtConfig.themeColors.floor
-                        : project.courtConfig.background,
-                  }}
-                >
-                  <div className="canvas-topline">
-                    <span>
-                      <span className="small-dot" />{" "}
-                      {project.keyframes[frameIndex].name}
-                    </span>
-                    <span>
-                      {project.courtConfig.type === "full"
-                        ? "40 × 20"
-                        : `${project.courtConfig.dimensions.width} × ${project.courtConfig.dimensions.height}`}{" "}
-                      m
-                    </span>
+                <div className="board-stage">
+                  <DrawingOptions />
+                  <div
+                    className="canvas-area"
+                    style={{
+                      backgroundColor:
+                        project.courtConfig.background === "floor"
+                          ? project.courtConfig.themeColors.floor
+                          : project.courtConfig.background,
+                    }}
+                  >
+                    <div className="canvas-topline">
+                      <span>
+                        <span className="small-dot" />{" "}
+                        {project.keyframes[frameIndex].name}
+                      </span>
+                      <span>
+                        {project.courtConfig.type === "full"
+                          ? "40 × 20"
+                          : `${project.courtConfig.dimensions.width} × ${project.courtConfig.dimensions.height}`}{" "}
+                        m
+                      </span>
+                    </div>
+                    <TacticalCanvas
+                      assetUrls={urls}
+                      onAssetDrop={addAsset}
+                      onion={onion}
+                    />
                   </div>
-                  <TacticalCanvas
-                    assetUrls={urls}
-                    onAssetDrop={addAsset}
-                    onion={onion}
-                  />
                 </div>
               </div>
               <div
@@ -710,15 +706,6 @@ export default function App() {
             )}
           </div>
         )}
-        <footer className="workspace-footer">
-          <span>
-            OPEN HANDBALL TACTICS <span className="footer-version">v0.2</span>
-          </span>
-          <span>Your ideas. Your court.</span>
-          <span>
-            <ShieldCheck size={12} /> Private by design
-          </span>
-        </footer>
       </main>
       <input
         ref={input}
@@ -890,6 +877,11 @@ export default function App() {
               <p className="muted">
                 Portable files, ready for your next training session.
               </p>
+              <AnimatedExport
+                project={project}
+                assetUrls={urls}
+                voronoi={board.voronoi}
+              />
               <div className="export-options">
                 <button
                   disabled={busy}
@@ -937,10 +929,19 @@ export default function App() {
           )}
           {dialog.type === "help" && (
             <div className="help-content">
+              <div className="help-about">
+                <strong>
+                  Open Handball Tactics <span>v0.2</span>
+                </strong>
+                <p>Your ideas. Your court.</p>
+                <p>
+                  <ShieldCheck size={14} /> Private by design
+                </p>
+              </div>
               <p>
                 Drills and images live in this browser on this device. After the
-                first online visit, the tactics workspace works offline. Nothing you draw is
-                uploaded.
+                first online visit, the tactics workspace works offline. Nothing
+                you draw is uploaded.
               </p>
               <p>
                 Use the tools to add players and equipment. Drag to move them,
@@ -950,11 +951,23 @@ export default function App() {
                 arrowheads and lets you add or remove bends.
               </p>
               <p>
+                Choose the pencil (B) to draw anywhere on the canvas. Pen
+                options appear on the left. Right-click or drag to erase whole
+                strokes, or choose the eraser (E) on a tablet. Clear drawing
+                removes this step's drawings; Undo restores them. Pen only
+                ignores fingers while you draw with a stylus.
+              </p>
+              <p>
                 Rotate a selected object with its round handle or the angle
                 input. Hold Shift while dragging the handle to snap to 15°. Use
                 Add step to copy your positions, then move or rotate players in
                 the new step. Play or scrub the timeline to preview their
                 movement and rotation. Choose Edit step to resume editing.
+              </p>
+              <p>
+                Voronoi mode, just left of Undo/Redo, shows the spaces closest
+                to each player in their team's color. The goalkeeper counts with
+                defense. Regions update as players move or animate.
               </p>
               <p>
                 Workspace defaults in the top bar save your preferred court
@@ -984,9 +997,10 @@ export default function App() {
                 <ShieldCheck size={15} /> Request persistent storage
               </button>
               <p className="muted">
-                PNG, SVG, and editable .hbd exports are available. GIF/WebM
-                animation exports and PDF drill sheets are planned for a later
-                release.
+                PNG, SVG, editable .hbd, animated GIF, and video exports are
+                available. Use Copy GIF for quick pasting; some apps paste a
+                still image, so Download or Share preserves animation. PDF drill
+                sheets are planned for a later release.
               </p>
             </div>
           )}

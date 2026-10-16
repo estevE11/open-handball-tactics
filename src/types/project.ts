@@ -29,6 +29,13 @@ export const arrowSchema = z.object({
   heads: z.enum(["end", "start", "both", "none"]).optional(),
   color,
 });
+export const drawingSchema = z.object({
+  id: z.string(),
+  points: z.array(point).min(1).max(10000),
+  color,
+  width: z.number().min(1).max(12),
+  opacity: z.number().min(0.1).max(1),
+});
 export const courtConfigSchema = z.object({
   type: z.enum(["full", "half", "custom_box"]),
   halfCourtEnd: z.enum(["top", "bottom"]).optional(),
@@ -70,6 +77,7 @@ export const projectSchema = z.object({
         duration: z.number().min(100).max(30000),
         tokens: z.array(tokenSchema).max(500),
         arrows: z.array(arrowSchema).max(500),
+        drawings: z.array(drawingSchema).max(500).optional(),
       }),
     )
     .min(1)
@@ -78,6 +86,7 @@ export const projectSchema = z.object({
 export type Point = z.infer<typeof point>;
 export type TacticalToken = z.infer<typeof tokenSchema>;
 export type TacticalArrow = z.infer<typeof arrowSchema>;
+export type DrawingStroke = z.infer<typeof drawingSchema>;
 export type DrillProject = z.infer<typeof projectSchema>;
 export type Keyframe = DrillProject["keyframes"][number];
 export interface FolderNode {
@@ -95,6 +104,8 @@ export interface StoredAsset {
 }
 export type Tool =
   | "select"
+  | "draw"
+  | "erase"
   | TacticalArrow["type"]
   | "attacker"
   | "defender"

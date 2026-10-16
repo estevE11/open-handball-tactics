@@ -1,16 +1,43 @@
 import { dataUrl, download } from "./projectIo";
 
-export async function snapshot(
-  format: "svg" | "png",
-  title: string,
+export async function snapshotSource(
+  original: SVGSVGElement,
   background = "#fafaf8",
+  bounds?: { x: number; y: number; width: number; height: number },
 ) {
-  const original = document.querySelector<SVGSVGElement>("#tactical-canvas");
-  if (!original) return;
   const svg = original.cloneNode(true) as SVGSVGElement;
   svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  svg.setAttribute("width", String(original.viewBox.baseVal.width * 2));
-  svg.setAttribute("height", String(original.viewBox.baseVal.height * 2));
+  const view = bounds ?? original.viewBox.baseVal;
+  let left = view.x,
+    top = view.y,
+    right = view.x + view.width,
+    bottom = view.y + view.height;
+  const inverse = original.getScreenCTM()!.inverse();
+  // Court snapshots also include ink placed in the surrounding canvas space,
+  // even if a later window resize hides that ink in the editor.
+  for (const stroke of original.querySelectorAll<SVGGraphicsElement>(
+    "[data-drawing-stroke]",
+  )) {
+    if (bounds || stroke.closest("[data-editor-only]")) continue;
+    const box = stroke.getBBox();
+    const matrix = inverse.multiply(stroke.getScreenCTM()!);
+    const padding = Number(stroke.getAttribute("stroke-width") ?? 0) / 2 + 4;
+    for (const point of [
+      new DOMPoint(box.x - padding, box.y - padding),
+      new DOMPoint(box.x + box.width + padding, box.y - padding),
+      new DOMPoint(box.x - padding, box.y + box.height + padding),
+      new DOMPoint(box.x + box.width + padding, box.y + box.height + padding),
+    ]) {
+      const p = point.matrixTransform(matrix);
+      left = Math.min(left, p.x);
+      top = Math.min(top, p.y);
+      right = Math.max(right, p.x);
+      bottom = Math.max(bottom, p.y);
+    }
+  }
+  svg.setAttribute("viewBox", `${left} ${top} ${right - left} ${bottom - top}`);
+  svg.setAttribute("width", String((right - left) * 2));
+  svg.setAttribute("height", String((bottom - top) * 2));
   svg.style.background = background;
   svg
     .querySelectorAll("[data-editor-only]")
@@ -29,6 +56,17 @@ export async function snapshot(
   const blob = new Blob([new XMLSerializer().serializeToString(svg)], {
     type: "image/svg+xml",
   });
+  return { blob, width: right - left, height: bottom - top };
+}
+
+export async function snapshot(
+  format: "svg" | "png",
+  title: string,
+  background = "#fafaf8",
+) {
+  const original = document.querySelector<SVGSVGElement>("#tactical-canvas");
+  if (!original) return;
+  const { blob } = await snapshotSource(original, background);
   if (format === "svg") {
     download(blob, `${title}.svg`);
     return;
