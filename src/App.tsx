@@ -13,6 +13,8 @@ import {
   FolderPlus,
   HardDrive,
   Menu,
+  Maximize,
+  Minimize,
   MoreHorizontal,
   Plus,
   Search,
@@ -28,9 +30,11 @@ import { snapshot } from "./lib/snapshot";
 import { fitPoint } from "./lib/courtGeometry";
 import { flushSaves, useProjectStore } from "./store/projectStore";
 import { useAssetUrls } from "./hooks/useAssetUrls";
+import { useFullscreenWorkspace } from "./hooks/useFullscreenWorkspace";
 import { FolderTree } from "./components/library/FolderTree";
 import { TacticalCanvas } from "./components/board/TacticalCanvas";
 import { Toolbar } from "./components/app/Toolbar";
+import { FullscreenPanel } from "./components/app/FullscreenPanel";
 import { DrawingOptions } from "./components/app/DrawingOptions";
 import { AnimationPanel } from "./components/app/AnimationPanel";
 import { AnimatedExport } from "./components/app/AnimatedExport";
@@ -54,6 +58,8 @@ function createProject(title?: string, folderId: string | null = null) {
 }
 
 export default function App() {
+  const { fullscreen, enterFullscreen, exitFullscreen } =
+    useFullscreenWorkspace();
   const board = useProjectStore();
   const { project, frameIndex, edit } = board;
   const projects =
@@ -77,12 +83,17 @@ export default function App() {
   const [settings, setSettings] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
   const input = useRef<HTMLInputElement>(null);
+  const fullscreenExit = useRef<HTMLButtonElement>(null);
   const initialized = useRef(false);
   const {
     offlineReady: [offlineReady],
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW();
+
+  useEffect(() => {
+    if (fullscreen) fullscreenExit.current?.focus({ preventScroll: true });
+  }, [fullscreen]);
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -313,7 +324,7 @@ export default function App() {
   );
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${fullscreen ? "is-fullscreen" : ""}`}>
       <aside
         id="library-sidebar"
         className={`library-sidebar ${sidebar ? "open" : ""}`}
@@ -506,6 +517,17 @@ export default function App() {
           <div className="topbar-actions">
             {project && (
               <>
+                <button
+                  className="icon-button"
+                  aria-label="Enter fullscreen"
+                  title="Fullscreen court"
+                  onClick={() => {
+                    setSidebar(false);
+                    enterFullscreen();
+                  }}
+                >
+                  <Maximize size={18} />
+                </button>
                 <span className="save-status" role="status">
                   {board.saveStatus === "saved" && <Check size={12} />}{" "}
                   {board.saveStatus === "saved"
@@ -605,13 +627,41 @@ export default function App() {
         )}
         {project ? (
           <>
-            <div className="editor-layout">
+            <div
+              className={`editor-layout ${fullscreen ? "fullscreen-workspace" : ""}`}
+              data-court-layout={
+                project.courtConfig.type === "full" ? "full" : "half"
+              }
+            >
+              {fullscreen && (
+                <button
+                  ref={fullscreenExit}
+                  className="fullscreen-exit icon-button"
+                  aria-label="Exit fullscreen"
+                  title="Exit fullscreen (Esc)"
+                  onClick={exitFullscreen}
+                >
+                  <Minimize size={18} />
+                </button>
+              )}
               <div className="board-column">
-                <div inert={board.playbackTime !== null}>
-                  <Toolbar />
-                </div>
+                <FullscreenPanel
+                  enabled={fullscreen}
+                  name="Tools"
+                  edge={project.courtConfig.type === "full" ? "top" : "left"}
+                >
+                  <div inert={board.playbackTime !== null}>
+                    <Toolbar
+                      orientation={
+                        fullscreen && project.courtConfig.type !== "full"
+                          ? "vertical"
+                          : "horizontal"
+                      }
+                    />
+                  </div>
+                </FullscreenPanel>
                 <div className="board-stage">
-                  <DrawingOptions />
+                  {!fullscreen && <DrawingOptions />}
                   <div
                     className="canvas-area"
                     style={{
@@ -641,52 +691,59 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div
-                className={`inspector-wrap ${settings ? "mobile-open" : ""}`}
+              <FullscreenPanel
+                enabled={fullscreen}
+                name="Properties"
+                edge={project.courtConfig.type === "full" ? "bottom" : "right"}
               >
                 <div
-                  className="pane-tabs"
-                  role="tablist"
-                  aria-label="Workspace pane"
+                  className={`inspector-wrap ${settings ? "mobile-open" : ""}`}
                 >
-                  <button
-                    role="tab"
-                    aria-selected={activePane === "editor"}
-                    className={activePane === "editor" ? "active" : ""}
-                    onClick={() => setActivePane("editor")}
-                  >
-                    Editor
-                  </button>
-                  <button
-                    role="tab"
-                    aria-selected={activePane === "animation"}
-                    className={activePane === "animation" ? "active" : ""}
-                    onClick={() => setActivePane("animation")}
-                  >
-                    Animation
-                  </button>
-                </div>
-                {activePane === "editor" ? (
                   <div
-                    className="editor-pane"
-                    inert={board.playbackTime !== null}
+                    className="pane-tabs"
+                    role="tablist"
+                    aria-label="Workspace pane"
                   >
-                    <Inspector
-                      assets={assets}
-                      urls={urls}
-                      upload={(file) =>
-                        void run(() => library.uploadAsset(file))
-                      }
-                      addAsset={addAsset}
-                      removeAsset={(id) =>
-                        void run(() => library.deleteAsset(id))
-                      }
-                    />
+                    <button
+                      role="tab"
+                      aria-selected={activePane === "editor"}
+                      className={activePane === "editor" ? "active" : ""}
+                      onClick={() => setActivePane("editor")}
+                    >
+                      Editor
+                    </button>
+                    <button
+                      role="tab"
+                      aria-selected={activePane === "animation"}
+                      className={activePane === "animation" ? "active" : ""}
+                      onClick={() => setActivePane("animation")}
+                    >
+                      Animation
+                    </button>
                   </div>
-                ) : (
-                  <AnimationPanel onion={onion} setOnion={setOnion} />
-                )}
-              </div>
+                  {activePane === "editor" ? (
+                    <div
+                      className="editor-pane"
+                      inert={board.playbackTime !== null}
+                    >
+                      {fullscreen && <DrawingOptions />}
+                      <Inspector
+                        assets={assets}
+                        urls={urls}
+                        upload={(file) =>
+                          void run(() => library.uploadAsset(file))
+                        }
+                        addAsset={addAsset}
+                        removeAsset={(id) =>
+                          void run(() => library.deleteAsset(id))
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <AnimationPanel onion={onion} setOnion={setOnion} />
+                  )}
+                </div>
+              </FullscreenPanel>
             </div>
           </>
         ) : (
@@ -951,11 +1008,20 @@ export default function App() {
                 arrowheads and lets you add or remove bends.
               </p>
               <p>
+                Use Fullscreen to fill the screen with the court. Half courts
+                have tools on the left and properties on the right; full courts
+                have tools above and properties below. Hide either panel with
+                its arrow and reopen it from the edge of the screen. Panels
+                overlap the court without resizing it. Press Escape or the exit
+                button to return to the workspace.
+              </p>
+              <p>
                 Choose the pencil (B) to draw anywhere on the canvas. Pen
-                options appear on the left. Right-click or drag to erase whole
-                strokes, or choose the eraser (E) on a tablet. Clear drawing
-                removes this step's drawings; Undo restores them. Pen only
-                ignores fingers while you draw with a stylus.
+                options appear on the left, or in Properties in fullscreen.
+                Right-click or drag to erase whole strokes, or choose the eraser
+                (E) on a tablet. Clear drawing removes this step's drawings;
+                Undo restores them. Pen only ignores fingers while you draw with
+                a stylus.
               </p>
               <p>
                 Rotate a selected object with its round handle or the angle
@@ -998,10 +1064,10 @@ export default function App() {
               </button>
               <p className="muted">
                 PNG, SVG, editable .hbd, animated GIF, and video exports are
-                available. For WhatsApp Web, use WhatsApp MP4 and attach the video
-                using Photos &amp; videos. Copy image may paste a still preview;
-                GIF animation support depends on the receiving app. PDF drill
-                sheets are planned for a later release.
+                available. For WhatsApp Web, use WhatsApp MP4 and attach the
+                video using Photos &amp; videos. Copy image may paste a still
+                preview; GIF animation support depends on the receiving app. PDF
+                drill sheets are planned for a later release.
               </p>
             </div>
           )}

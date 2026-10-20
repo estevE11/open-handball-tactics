@@ -46,7 +46,11 @@ const groups: { tool: Tool; label: string; icon: typeof Circle }[][] = [
     { tool: "text", label: "Text note", icon: Type },
   ],
 ];
-export function Toolbar() {
+export function Toolbar({
+  orientation = "horizontal",
+}: {
+  orientation?: "horizontal" | "vertical";
+}) {
   const {
     tool,
     setTool,
@@ -63,7 +67,12 @@ export function Toolbar() {
   const strokeCount = project?.keyframes[frameIndex].drawings?.length ?? 0;
   return (
     <>
-      <div className="toolbar" role="toolbar" aria-label="Drawing tools">
+      <div
+        className="toolbar"
+        role="toolbar"
+        aria-label="Drawing tools"
+        aria-orientation={orientation}
+      >
         {groups.map((group, index) => (
           <div className="tool-group" key={index}>
             {group.map(({ tool: value, label, icon: Icon }) => (
