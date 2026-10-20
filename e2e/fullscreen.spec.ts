@@ -244,3 +244,74 @@ test("a denied native fullscreen request still opens the viewport layout", async
   await page.keyboard.press("Escape");
   await expect(page.locator(".topbar")).toBeVisible();
 });
+
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 844, height: 390 },
+  { width: 390, height: 844 },
+]) {
+  test(`${viewport.width}px bottom panel is compact with horizontally scrolling animation steps`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await useViewportFullscreen(page);
+    await page.goto("/");
+    await page
+      .getByRole("button", { name: "Enter fullscreen", exact: true })
+      .click();
+    await page.getByLabel("Template").selectOption("full");
+    const before = await courtGeometry(page);
+    const panel = page.getByRole("region", {
+      name: "Properties panel",
+      exact: true,
+    });
+    expect((await panel.boundingBox())!.height).toBeLessThanOrEqual(220);
+    await page.screenshot({
+      path: `test-results/compact-properties-${viewport.width}.png`,
+    });
+    await page.getByRole("tab", { name: "Animation", exact: true }).click();
+    const add = page.getByRole("button", { name: "Add step", exact: true });
+    for (let i = 0; i < 8; i++) await add.click();
+    expect((await panel.boundingBox())!.height).toBeLessThanOrEqual(140);
+    const list = page.locator(".fullscreen-properties .steps-list");
+    const steps = list.locator(".step-item");
+    const boxes = await steps.evaluateAll((items) =>
+      items.map((item) => {
+        const box = item.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      }),
+    );
+    expect(boxes).toHaveLength(9);
+    for (let i = 1; i < boxes.length; i++) {
+      expect(boxes[i].y).toBeCloseTo(boxes[0].y);
+      expect(boxes[i].x).toBeGreaterThanOrEqual(
+        boxes[i - 1].x + boxes[i - 1].width,
+      );
+    }
+    const overflow = await list.evaluate((element) => ({
+      width: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      height: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+    }));
+    expect(overflow.scrollWidth).toBeGreaterThan(overflow.width);
+    expect(overflow.scrollHeight).toBeLessThanOrEqual(overflow.height);
+    await page.getByRole("button", { name: /01 Starting positions/ }).click();
+    await expect(steps.first()).toHaveClass(/active/);
+    await page.getByLabel("Transition duration in seconds").fill("0.5");
+    await page.getByLabel("Onion skin").check();
+    await expect(page.getByLabel("Onion skin")).toBeChecked();
+    await page.getByLabel("Animation timeline").scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: `test-results/compact-animation-${viewport.width}.png`,
+    });
+    expect(await courtGeometry(page)).toEqual(before);
+    await page
+      .getByRole("button", { name: "Hide properties", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Show properties", exact: true })
+      .click();
+    expect(await courtGeometry(page)).toEqual(before);
+  });
+}

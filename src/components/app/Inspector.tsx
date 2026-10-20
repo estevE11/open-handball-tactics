@@ -329,7 +329,7 @@ export function Inspector({
           </button>
         </section>
       )}
-      <section className="inspector-section">
+      <section className="inspector-section court-panel">
         <h3>Court · this drill</h3>
         <CourtSettings
           config={config}
