@@ -4,52 +4,58 @@ import {
   type BrowserContext,
   type WebSocketRoute,
 } from "@playwright/test";
+import { generate, parser, type Packet } from "mqtt-packet";
 
 // Exercise real WebRTC data channels between isolated browser profiles. Only
-// public Nostr discovery is replaced with an in-memory relay for reliable CI.
+// public MQTT discovery is replaced with an in-memory broker for reliable CI.
 function discoveryRelay() {
-  type Event = {
-    id: string;
-    kind: number;
-    tags: string[][];
-    created_at: number;
-  };
-  type Filter = { kinds: number[]; "#x": string[]; since: number };
-  const sockets = new Map<WebSocketRoute, Map<string, Filter>>();
-  const events = new Map<string, Event>();
-  function matches(event: Event, filter: Filter) {
-    return (
-      filter.kinds.includes(event.kind) &&
-      event.created_at >= filter.since &&
-      event.tags.some(
-        ([tag, value]) => tag === "x" && filter["#x"].includes(value),
-      )
-    );
-  }
+  const sockets = new Map<WebSocketRoute, Set<string>>();
   return async (context: BrowserContext) =>
     context.routeWebSocket(/wss:\/\//, (socket) => {
-      const subscriptions = new Map<string, Filter>();
+      const subscriptions = new Set<string>();
       sockets.set(socket, subscriptions);
       socket.onClose(() => sockets.delete(socket));
-      socket.onMessage((data) => {
-        const [kind, id, filter] = JSON.parse(String(data));
-        if (kind === "REQ") {
-          subscriptions.set(id, filter);
-          for (const event of events.values())
-            if (matches(event, filter))
-              socket.send(JSON.stringify(["EVENT", id, event]));
-          socket.send(JSON.stringify(["EOSE", id]));
-        } else if (kind === "CLOSE") subscriptions.delete(id);
-        else if (kind === "EVENT") {
-          const event = id as Event;
-          events.set(event.id, event);
-          socket.send(JSON.stringify(["OK", event.id, true, ""]));
-          for (const [peer, filters] of sockets)
-            for (const [sub, filter] of filters)
-              if (matches(event, filter))
-                peer.send(JSON.stringify(["EVENT", sub, event]));
-        }
+      const reader = parser();
+      reader.on("packet", (packet: Packet) => {
+        if (packet.cmd === "connect")
+          socket.send(
+            generate({ cmd: "connack", returnCode: 0, sessionPresent: false }),
+          );
+        else if (packet.cmd === "subscribe") {
+          packet.subscriptions.forEach(({ topic }) => subscriptions.add(topic));
+          socket.send(
+            generate({
+              cmd: "suback",
+              messageId: packet.messageId,
+              granted: packet.subscriptions.map(() => 0),
+            }),
+          );
+        } else if (packet.cmd === "unsubscribe") {
+          packet.unsubscriptions.forEach((topic) =>
+            subscriptions.delete(topic),
+          );
+          socket.send(
+            generate({ cmd: "unsuback", messageId: packet.messageId }),
+          );
+        } else if (packet.cmd === "publish") {
+          for (const [peer, topics] of sockets)
+            if (topics.has(packet.topic))
+              peer.send(
+                generate({
+                  cmd: "publish",
+                  topic: packet.topic,
+                  payload: packet.payload,
+                  qos: 0,
+                  dup: false,
+                  retain: false,
+                }),
+              );
+        } else if (packet.cmd === "pingreq")
+          socket.send(generate({ cmd: "pingresp" }));
       });
+      socket.onMessage((data) =>
+        reader.parse(Buffer.isBuffer(data) ? data : Buffer.from(data)),
+      );
     });
 }
 
@@ -85,6 +91,12 @@ test("shared link syncs edits, live gestures, settings, assets, undo and rejoini
       .getByLabel("Room link", { exact: true })
       .inputValue();
     expect(link).toMatch(/#room=.+&key=/);
+    await host
+      .getByRole("button", { name: "Retry connection", exact: true })
+      .click();
+    await expect(host.getByLabel("Room link", { exact: true })).toHaveValue(
+      link,
+    );
     await host.getByLabel("Close dialog").click();
     await expect(host.getByRole("dialog")).not.toBeVisible();
     await guest.goto(link);
@@ -203,7 +215,7 @@ test("shared link syncs edits, live gestures, settings, assets, undo and rejoini
     ).toBeVisible();
     await expect(
       guest.getByRole("button", { name: "Live collaboration", exact: true }),
-    ).toContainText("Live · 1");
+    ).toContainText("Room · 1");
     await guest.reload();
     await expect(guest.locator(".room-waiting")).toHaveCount(0);
     await expect(
@@ -229,13 +241,25 @@ test("shared link syncs edits, live gestures, settings, assets, undo and rejoini
 test("an unavailable room waits without exposing or replacing the local drill", async ({
   page,
 }) => {
-  await page.routeWebSocket(/wss:\/\//, () => {});
+  await page.routeWebSocket(/wss:\/\//, (socket) =>
+    socket.close({ code: 1013, reason: "Simulated unavailable discovery" }),
+  );
   await page.goto(
     "/#room=79995cac-f895-4c0c-856a-a3942234a209&key=567088cc-1c0c-4d18-9a8d-4ec19ac6205e",
   );
   await expect(
     page.getByRole("heading", { name: "Joining live room…" }),
   ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Peer discovery services could not be reached. Check your internet connection and retry.",
+      { exact: true },
+    ),
+  ).toBeVisible({ timeout: 20000 });
+  await page
+    .getByRole("button", { name: "Retry connection", exact: true })
+    .click();
+  await expect(page).toHaveURL(/#room=79995cac/);
   await page.getByRole("button", { name: "Cancel joining" }).click();
   await expect(
     page.getByRole("heading", { name: "Build the attack" }),
@@ -243,7 +267,7 @@ test("an unavailable room waits without exposing or replacing the local drill", 
   await expect(page).not.toHaveURL(/#room=/);
 });
 
-test("public discovery connects independent browser profiles", async ({
+test("public discovery connects separate browser processes despite a failed broker and clock skew", async ({
   browser,
 }) => {
   test.skip(
@@ -252,7 +276,21 @@ test("public discovery connects independent browser profiles", async ({
   );
   test.setTimeout(65000);
   const hostContext = await browser.newContext({ serviceWorkers: "block" });
-  const guestContext = await browser.newContext({ serviceWorkers: "block" });
+  const remoteBrowser = await browser
+    .browserType()
+    .launch({ channel: process.env.CI ? undefined : "chrome" });
+  const guestContext = await remoteBrowser.newContext({
+    serviceWorkers: "block",
+    baseURL: test.info().project.use.baseURL,
+  });
+  await guestContext.addInitScript(() => {
+    const now = Date.now.bind(Date);
+    Date.now = () => now() + 120000;
+  });
+  await guestContext.routeWebSocket(
+    "wss://broker.emqx.io:8084/mqtt",
+    (socket) => socket.close({ code: 1013, reason: "Simulated broker outage" }),
+  );
   try {
     const host = await hostContext.newPage(),
       guest = await guestContext.newPage();
@@ -271,8 +309,14 @@ test("public discovery connects independent browser profiles", async ({
       guest.getByRole("button", { name: "Live collaboration", exact: true }),
     ).toContainText("Live · 2", { timeout: 55000 });
     await expect(guest.locator(".room-waiting")).toHaveCount(0);
+    await host.getByLabel("Close dialog").click();
+    await host.getByLabel("Template").selectOption("full");
+    await expect(
+      guest.getByLabel("Interactive handball court"),
+    ).toHaveAttribute("viewBox", "-12 -12 824 424");
   } finally {
     await hostContext.close();
     await guestContext.close();
+    await remoteBrowser.close();
   }
 });

@@ -1,6 +1,6 @@
 import * as Y from "yjs";
 import { z } from "zod";
-import type { Room } from "trystero";
+import type { Room } from "@trystero-p2p/mqtt";
 import { liveQuery } from "dexie";
 import { db } from "./browserStorage";
 import { patchShared, readShared } from "./sharedDocument";
@@ -135,6 +135,7 @@ export async function leaveRoom() {
     status: "local",
     synced: false,
     error: null,
+    connectionHint: null,
     peers: {},
     canUndo: false,
     canRedo: false,
@@ -148,6 +149,23 @@ export async function leaveRoom() {
   }
   useProjectStore.setState({ past: [], future: [] });
   await cleanup;
+}
+
+export async function retryRoom() {
+  const credentials = roomFromHash();
+  if (!credentials) return;
+  const generation = ++sessionGeneration;
+  const previous = session;
+  session = null;
+  setSharedHistory(null);
+  useCollaborationStore.setState({
+    status: "connecting",
+    error: null,
+    connectionHint: null,
+    peers: {},
+  });
+  await previous?.leave();
+  if (generation === sessionGeneration) await connectRoom(credentials);
 }
 
 export async function connectRoom(
@@ -181,6 +199,7 @@ export async function connectRoom(
     status: "connecting",
     synced: !!shared,
     error: null,
+    connectionHint: null,
     peers: {},
   });
   const fail = (error: unknown) => {
@@ -189,8 +208,10 @@ export async function connectRoom(
         error: error instanceof Error ? error.message : String(error),
       });
   };
+  let discoverySockets: () => Record<string, WebSocket>;
   try {
-    const { joinRoom } = await import("trystero");
+    const { joinRoom, getRelaySockets } = await import("@trystero-p2p/mqtt");
+    discoverySockets = getRelaySockets;
     if (generation !== sessionGeneration) {
       doc.destroy();
       return;
@@ -200,20 +221,38 @@ export async function connectRoom(
         appId: "open-handball-tactics-v1",
         password: credentials.key,
         maxReceiveBytes: 16 * 1024 * 1024,
+        // Independent public MQTT brokers, without Nostr's timestamp filters or
+        // ephemeral-event restrictions. Discovery carries encrypted SDP only.
+        relayConfig: {
+          urls: [
+            "wss://broker.emqx.io:8084/mqtt",
+            "wss://public:public@public.cloud.shiftr.io",
+            "wss://broker.hivemq.com:8884/mqtt",
+            "wss://test.mosquitto.org:8081/mqtt",
+          ],
+        },
       },
       credentials.id,
       {
-        onJoinError: () =>
+        onJoinError: ({ error }) =>
           fail(
             new Error(
-              "A peer could not connect. Check your internet connection or try another network.",
+              /exchanging SDP/.test(error)
+                ? "The browsers found each other, but could not connect directly. Retry the connection; this network may block peer-to-peer traffic."
+                : /password/.test(error)
+                  ? "The room link could not be verified. Ask the other coach for the complete link."
+                  : "A peer could not finish connecting. Retry the connection and make sure both browsers have updated the app.",
             ),
           ),
       },
     );
   } catch (error) {
     doc.destroy();
-    useCollaborationStore.setState({ status: "waiting" });
+    useCollaborationStore.setState({
+      status: "waiting",
+      error:
+        "Could not start the connection. Check your internet connection and retry.",
+    });
     throw error;
   }
   const updates = room.makeAction<Uint8Array>("doc-v1");
@@ -455,7 +494,11 @@ export async function connectRoom(
   room.onPeerJoin = (id) => {
     if (closed) return;
     peers.add(id);
-    useCollaborationStore.setState({ status: "connected", error: null });
+    useCollaborationStore.setState({
+      status: "connected",
+      error: null,
+      connectionHint: null,
+    });
     void sync.send(Y.encodeStateVector(doc), { target: id }).catch(fail);
     sendPresence({}, true);
     void requestAssets().catch(fail);
@@ -526,7 +569,18 @@ export async function connectRoom(
     requested.clear();
     void requestAssets().catch(fail);
   });
+  const started = performance.now();
   const heartbeat = setInterval(() => {
+    if (!peers.size && performance.now() - started >= 15000) {
+      const reachable = Object.values(discoverySockets()).some(
+        (socket) => socket.readyState === WebSocket.OPEN,
+      );
+      useCollaborationStore.setState({
+        connectionHint: reachable
+          ? "Still waiting for another coach. Keep the link open in both browsers and accept any app update, then retry the connection."
+          : "Peer discovery services could not be reached. Check your internet connection and retry.",
+      });
+    }
     sendPresence({}, true);
     for (const [id, time] of lastSeen)
       if (Date.now() - time > 15000) {

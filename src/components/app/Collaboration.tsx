@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, Copy, LogOut, Share2, Users } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { useCollaborationStore } from "../../store/collaborationStore";
-import { createRoom, leaveRoom } from "../../lib/collaboration";
+import { createRoom, leaveRoom, retryRoom } from "../../lib/collaboration";
 
 export function Collaboration() {
   const state = useCollaborationStore();
@@ -31,7 +31,7 @@ export function Collaboration() {
         {state.roomId ? <Users size={15} /> : <Share2 size={15} />}
         <span>
           {state.roomId
-            ? `Live · ${Object.keys(state.peers).length + 1}`
+            ? `${state.status === "connected" ? "Live" : "Room"} · ${Object.keys(state.peers).length + 1}`
             : "Share"}
         </span>
       </button>
@@ -71,6 +71,20 @@ export function Collaboration() {
                     ? "Waiting for other coaches. Share the link to invite them."
                     : "Looking for a coach with this room open…"}
               </p>
+              {state.connectionHint && (
+                <p className="muted" aria-live="polite">
+                  {state.connectionHint}
+                </p>
+              )}
+              {state.status !== "connected" && (
+                <button
+                  className="button secondary"
+                  disabled={busy}
+                  onClick={() => void run(retryRoom)}
+                >
+                  Retry connection
+                </button>
+              )}
               <label>
                 Room link
                 <input

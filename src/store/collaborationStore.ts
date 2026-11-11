@@ -22,6 +22,7 @@ interface CollaborationState {
   status: "local" | "connecting" | "waiting" | "connected";
   synced: boolean;
   error: string | null;
+  connectionHint: string | null;
   peers: Record<string, LivePresence>;
   name: string;
   color: string;
@@ -36,6 +37,7 @@ export const useCollaborationStore = create<CollaborationState>(() => ({
   status: "local",
   synced: false,
   error: null,
+  connectionHint: null,
   peers: {},
   name: `Coach ${Math.floor(Math.random() * 900 + 100)}`,
   color: ["#2563eb", "#b45309", "#9333ea", "#047857"][

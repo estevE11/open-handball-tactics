@@ -48,6 +48,10 @@
   padding: 30px;
   text-align: center;
 }
+.app-update {
+  position: relative;
+  z-index: 61;
+}
 @media (max-width: 600px) {
   .collaboration-button {
     padding: 7px;

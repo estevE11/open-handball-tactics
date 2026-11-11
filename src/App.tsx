@@ -44,7 +44,12 @@ import { usePreferencesStore } from "./store/preferencesStore";
 import { Inspector } from "./components/app/Inspector";
 import { Modal } from "./components/ui/Modal";
 import { Collaboration } from "./components/app/Collaboration";
-import { connectRoom, leaveRoom, roomFromHash } from "./lib/collaboration";
+import {
+  connectRoom,
+  leaveRoom,
+  retryRoom,
+  roomFromHash,
+} from "./lib/collaboration";
 import { useCollaborationStore } from "./store/collaborationStore";
 import type { DrillProject, FolderNode, Point } from "./types/project";
 
@@ -84,6 +89,7 @@ export default function App() {
     roomId,
     synced,
     error: roomError,
+    connectionHint,
   } = useCollaborationStore();
   const setOnion = (onion: boolean) =>
     useCollaborationStore.setState({ onion });
@@ -620,8 +626,16 @@ export default function App() {
               <h2>Joining live room…</h2>
               <p>
                 {roomError ??
+                  connectionHint ??
                   "Keep a coach who has this room open online. Your local library is safe while we connect."}
               </p>
+              <button
+                className="button secondary"
+                disabled={busy}
+                onClick={() => void run(retryRoom)}
+              >
+                Retry connection
+              </button>
               <button
                 className="button secondary"
                 onClick={() => void run(leaveRoom)}
@@ -650,7 +664,7 @@ export default function App() {
           </div>
         )}
         {needRefresh && (
-          <div className="notice">
+          <div className="notice app-update">
             An update is ready.
             <button
               onClick={() =>
