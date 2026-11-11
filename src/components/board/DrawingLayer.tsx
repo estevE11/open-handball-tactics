@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useProjectStore } from "../../store/projectStore";
 import type { DrawingStroke, Point } from "../../types/project";
+import { publishPresence } from "../../lib/collaboration";
 import {
   appendDrawingPoint,
   drawingHit,
@@ -95,6 +96,7 @@ export function DrawingLayer({
   useEffect(
     () => () => {
       if (tick.current !== null) cancelAnimationFrame(tick.current);
+      publishPresence({ stroke: undefined, erased: undefined }, true);
     },
     [],
   );
@@ -110,6 +112,10 @@ export function DrawingLayer({
           : null,
         erased: [...(current?.erased ?? [])],
       });
+      publishPresence({
+        stroke: current?.stroke ?? undefined,
+        erased: [...(current?.erased ?? [])],
+      });
     });
   }
   function reset() {
@@ -117,6 +123,7 @@ export function DrawingLayer({
     if (tick.current !== null) cancelAnimationFrame(tick.current);
     tick.current = null;
     setPreview({ stroke: null, erased: [] });
+    publishPresence({ stroke: undefined, erased: undefined }, true);
   }
   function erase(current: InkGesture, p: Point, radius: number) {
     for (const { stroke, polyline } of current.traces) {

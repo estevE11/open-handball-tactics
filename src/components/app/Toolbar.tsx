@@ -19,6 +19,7 @@ import {
   Hexagon,
 } from "lucide-react";
 import { useProjectStore } from "../../store/projectStore";
+import { useCollaborationStore } from "../../store/collaborationStore";
 import type { Tool } from "../../types/project";
 
 const groups: { tool: Tool; label: string; icon: typeof Circle }[][] = [
@@ -64,6 +65,7 @@ export function Toolbar({
     voronoi,
     setVoronoi,
   } = useProjectStore();
+  const { roomId, canUndo, canRedo } = useCollaborationStore();
   const strokeCount = project?.keyframes[frameIndex].drawings?.length ?? 0;
   return (
     <>
@@ -119,7 +121,7 @@ export function Toolbar({
             className="tool"
             aria-label="Undo"
             title="Undo (⌘Z)"
-            disabled={!past.length}
+            disabled={roomId ? !canUndo : !past.length}
             onClick={undo}
           >
             <Undo2 size={17} />
@@ -128,7 +130,7 @@ export function Toolbar({
             className="tool"
             aria-label="Redo"
             title="Redo (⌘⇧Z)"
-            disabled={!future.length}
+            disabled={roomId ? !canRedo : !future.length}
             onClick={redo}
           >
             <Redo2 size={17} />

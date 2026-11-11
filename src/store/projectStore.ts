@@ -9,6 +9,10 @@ let pending: Promise<void> = Promise.resolve();
 let queued: { project: DrillProject; revision: number } | null = null;
 let saving = false;
 let revision = 0;
+let sharedHistory: { undo: () => void; redo: () => void } | null = null;
+export function setSharedHistory(history: typeof sharedHistory) {
+  sharedHistory = history;
+}
 interface BoardState {
   project: DrillProject | null;
   frameIndex: number;
@@ -40,6 +44,7 @@ interface BoardState {
   setSelected: (id: string | null) => void;
   setFrame: (index: number) => void;
   retry: () => void;
+  receive: (project: DrillProject) => void;
 }
 function persist(project: DrillProject) {
   const current = ++revision;
@@ -144,6 +149,10 @@ export const useProjectStore = create<BoardState>((set, get) => ({
     persist(project);
   },
   undo: () => {
+    if (sharedHistory) {
+      sharedHistory.undo();
+      return;
+    }
     const state = get();
     const project = state.past.at(-1);
     if (!project || !state.project) return;
@@ -159,6 +168,10 @@ export const useProjectStore = create<BoardState>((set, get) => ({
     persist(project);
   },
   redo: () => {
+    if (sharedHistory) {
+      sharedHistory.redo();
+      return;
+    }
     const state = get();
     const project = state.future[0];
     if (!project || !state.project) return;
@@ -180,5 +193,17 @@ export const useProjectStore = create<BoardState>((set, get) => ({
   retry: () => {
     const project = get().project;
     if (project) persist(project);
+  },
+  receive: (project) => {
+    const state = get();
+    const frameId = state.project?.keyframes[state.frameIndex]?.id;
+    set({
+      project: normalizeProject(project),
+      frameIndex: Math.max(
+        0,
+        project.keyframes.findIndex((f) => f.id === frameId),
+      ),
+    });
+    persist(project);
   },
 }));

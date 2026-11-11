@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useProjectStore } from "../../store/projectStore";
 import type {
   DrillProject,
@@ -25,6 +25,9 @@ import {
   withControls,
 } from "../../lib/arrowGeometry";
 import { carriedBalls, dragTokenPositions } from "../../lib/ballCarry";
+import { useCollaborationStore } from "../../store/collaborationStore";
+import { publishPresence } from "../../lib/collaboration";
+import { RemotePresence } from "./RemotePresence";
 
 type Gesture = {
   kind:
@@ -74,6 +77,17 @@ export function TacticalCanvas({
   const svg = useRef<SVGSVGElement>(null);
   const scene = useRef<SVGGElement>(null);
   const [gesture, setGesture] = useState<Gesture | null>(null);
+  const peers = useCollaborationStore((s) => s.peers);
+  useEffect(
+    () => () => {
+      if (!renderScene)
+        publishPresence(
+          { tokens: undefined, arrow: undefined, cursor: null },
+          true,
+        );
+    },
+    [renderScene],
+  );
   if (!project) return null;
   const frame =
     playbackTime === null
@@ -131,23 +145,23 @@ export function TacticalCanvas({
           : [],
     });
   }
-  function previewArrow(arrow: TacticalArrow): TacticalArrow {
-    if (!gesture || gesture.id !== arrow.id) return arrow;
-    const original = gesture.originalArrow ?? arrow;
-    if (gesture.kind === "move-arrow")
+  function previewArrow(arrow: TacticalArrow, active = gesture): TacticalArrow {
+    if (!active || active.id !== arrow.id) return arrow;
+    const original = active.originalArrow ?? arrow;
+    if (active.kind === "move-arrow")
       return translateArrow(
         original,
         {
-          x: gesture.point.x - gesture.start.x,
-          y: gesture.point.y - gesture.start.y,
+          x: active.point.x - active.start.x,
+          y: active.point.y - active.start.y,
         },
         { width, height },
       );
-    if (gesture.kind === "start" || gesture.kind === "end")
-      return { ...original, [gesture.kind]: gesture.point };
-    if (gesture.kind === "control") {
+    if (active.kind === "start" || active.kind === "end")
+      return { ...original, [active.kind]: active.point };
+    if (active.kind === "control") {
       const controls = [...editableControls(original)];
-      controls[gesture.index ?? 0] = gesture.point;
+      controls[active.index ?? 0] = active.point;
       return withControls(original, controls);
     }
     return arrow;
@@ -236,8 +250,49 @@ export function TacticalCanvas({
       ? { ...token, position: dragPositions.get(token.id)! }
       : gesture?.id === token.id && gesture.kind === "rotate"
         ? { ...token, rotation: gesture.rotation }
-        : token,
+        : !renderScene && playbackTime === null
+          ? (Object.values(peers)
+              .filter((p) => p.frameId === frame.id)
+              .flatMap((p) => p.tokens ?? [])
+              .find((t) => t.id === token.id) ?? token)
+          : token,
   );
+  function sendGesture(active: Gesture) {
+    const positions =
+      active.kind === "token"
+        ? dragTokenPositions(
+            frame.tokens,
+            active.id,
+            active.point,
+            active.ballIds ?? [],
+            { width, height },
+          )
+        : new Map<string, Point>();
+    const tokens = frame.tokens.flatMap((token) =>
+      positions.has(token.id)
+        ? [{ ...token, position: positions.get(token.id)! }]
+        : active.kind === "rotate" && token.id === active.id
+          ? [{ ...token, rotation: active.rotation }]
+          : [],
+    );
+    const arrow =
+      active.kind === "draw-arrow"
+        ? {
+            id: active.id,
+            type: tool as TacticalArrow["type"],
+            start: active.start,
+            end: active.point,
+            color: "#46564d",
+          }
+        : active.originalArrow
+          ? previewArrow(active.originalArrow, active)
+          : undefined;
+    publishPresence({ tokens, arrow });
+  }
+  function clearGesture() {
+    setGesture(null);
+    publishPresence({ tokens: undefined, arrow: undefined }, true);
+  }
   function finish() {
     if (!gesture) return;
     if (
@@ -290,7 +345,7 @@ export function TacticalCanvas({
           if (index !== -1) d.keyframes[frameIndex].arrows[index] = next;
         });
     }
-    setGesture(null);
+    clearGesture();
   }
   const selectedArrow = frame.arrows.find((arrow) => arrow.id === selected);
   return (
@@ -301,6 +356,12 @@ export function TacticalCanvas({
       viewBox={courtViewBox(config)}
       aria-label="Interactive handball court"
       onPointerDown={down}
+      onPointerMoveCapture={(e) => {
+        if (!renderScene) publishPresence({ cursor: drawingPoint(e) });
+      }}
+      onPointerLeave={() => {
+        if (!renderScene) publishPresence({ cursor: null }, true);
+      }}
       onPointerMove={(e) => {
         if (!gesture) return;
         const p = point(e);
@@ -313,22 +374,26 @@ export function TacticalCanvas({
               Math.PI +
               450) %
             360;
-          setGesture({
+          const next = {
             ...gesture,
             rotation: e.shiftKey ? Math.round(angle / 15) * 15 : angle,
-          });
+          };
+          setGesture(next);
+          sendGesture(next);
           return;
         }
-        setGesture({
+        const next = {
           ...gesture,
           point: {
             x: Math.max(0, Math.min(width, p.x + (gesture.offset?.x ?? 0))),
             y: Math.max(0, Math.min(height, p.y + (gesture.offset?.y ?? 0))),
           },
-        });
+        };
+        setGesture(next);
+        sendGesture(next);
       }}
       onPointerUp={finish}
-      onPointerCancel={() => setGesture(null)}
+      onPointerCancel={clearGesture}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         e.preventDefault();
@@ -372,17 +437,26 @@ export function TacticalCanvas({
             ))}
           </g>
         )}
-        {frame.arrows.map((arrow) => (
-          <Arrow
-            key={arrow.id}
-            arrow={previewArrow(arrow)}
-            onPointerDown={
-              tool === "select" && playbackTime === null
-                ? (e) => begin(e, "move-arrow", arrow.id)
-                : undefined
-            }
-          />
-        ))}
+        {frame.arrows
+          .filter(
+            (arrow) =>
+              renderScene ||
+              !Object.values(peers).some(
+                (peer) =>
+                  peer.frameId === frame.id && peer.arrow?.id === arrow.id,
+              ),
+          )
+          .map((arrow) => (
+            <Arrow
+              key={arrow.id}
+              arrow={previewArrow(arrow)}
+              onPointerDown={
+                tool === "select" && playbackTime === null
+                  ? (e) => begin(e, "move-arrow", arrow.id)
+                  : undefined
+              }
+            />
+          ))}
         {gesture?.kind === "draw-arrow" && (
           <Arrow
             arrow={{
@@ -431,12 +505,22 @@ export function TacticalCanvas({
         )}
         <DrawingLayer
           key={`${project.id}:${frame.id}:${tool}:${playbackTime === null}:${width}:${height}:${sceneRotation}`}
-          strokes={frame.drawings ?? []}
+          strokes={(frame.drawings ?? []).filter(
+            (stroke) =>
+              renderScene ||
+              !Object.values(peers).some(
+                (peer) =>
+                  peer.frameId === frame.id && peer.erased?.includes(stroke.id),
+              ),
+          )}
           point={drawingPoint}
           active={
             (tool === "draw" || tool === "erase") && playbackTime === null
           }
         />
+        {!renderScene && (
+          <RemotePresence frameId={frame.id} sceneRotation={sceneRotation} />
+        )}
       </g>
     </svg>
   );

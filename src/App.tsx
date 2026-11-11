@@ -43,6 +43,9 @@ import { ThemeToggle } from "./components/app/ThemeToggle";
 import { usePreferencesStore } from "./store/preferencesStore";
 import { Inspector } from "./components/app/Inspector";
 import { Modal } from "./components/ui/Modal";
+import { Collaboration } from "./components/app/Collaboration";
+import { connectRoom, leaveRoom, roomFromHash } from "./lib/collaboration";
+import { useCollaborationStore } from "./store/collaborationStore";
 import type { DrillProject, FolderNode, Point } from "./types/project";
 
 type Dialog =
@@ -75,10 +78,17 @@ export default function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
-  const [onion, setOnion] = useState(false);
-  const [activePane, setActivePane] = useState<"editor" | "animation">(
-    "editor",
-  );
+  const {
+    onion,
+    activePane,
+    roomId,
+    synced,
+    error: roomError,
+  } = useCollaborationStore();
+  const setOnion = (onion: boolean) =>
+    useCollaborationStore.setState({ onion });
+  const setActivePane = (activePane: "editor" | "animation") =>
+    useCollaborationStore.setState({ activePane });
   const [sidebar, setSidebar] = useState(false);
   const [settings, setSettings] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
@@ -130,9 +140,11 @@ export default function App() {
           });
         }
         useProjectStore.getState().open(initial);
+        const room = roomFromHash();
+        if (room) await connectRoom(room);
       } catch (error) {
         setNotice(
-          `Could not open local storage: ${error instanceof Error ? error.message : error}`,
+          `Could not open workspace: ${error instanceof Error ? error.message : error}`,
         );
       }
       setReady(true);
@@ -147,6 +159,17 @@ export default function App() {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [sidebar]);
+  useEffect(() => {
+    const joinFromLink = () => {
+      const room = roomFromHash();
+      if (room?.id === useCollaborationStore.getState().roomId) return;
+      void (room ? connectRoom(room) : leaveRoom()).catch((error) => {
+        setNotice(error instanceof Error ? error.message : String(error));
+      });
+    };
+    window.addEventListener("hashchange", joinFromLink);
+    return () => window.removeEventListener("hashchange", joinFromLink);
+  }, []);
   useEffect(() => {
     const status = () => setOffline(!navigator.onLine);
     window.addEventListener("online", status);
@@ -291,18 +314,16 @@ export default function App() {
       if (dialog?.type === "manage")
         await library.updateFolder(dialog.folder.id, name, parentId);
       if (dialog?.type === "details" && project) {
-        const next = {
-          ...project,
-          title: name,
-          folderId: parentId,
-          tags: String(form.get("tags") ?? "")
+        edit((draft) => {
+          draft.title = name;
+          draft.folderId = parentId;
+          draft.tags = String(form.get("tags") ?? "")
             .split(",")
             .map((s) => s.trim())
-            .filter(Boolean),
-          description: String(form.get("description") ?? ""),
-        };
-        await library.save(next);
-        board.open(next);
+            .filter(Boolean);
+          draft.description = String(form.get("description") ?? "");
+        });
+        await flushSaves();
       }
       setDialog(null);
     });
@@ -517,6 +538,7 @@ export default function App() {
           <div className="topbar-actions">
             {project && (
               <>
+                <Collaboration />
                 <button
                   className="icon-button"
                   aria-label="Enter fullscreen"
@@ -592,6 +614,23 @@ export default function App() {
             </button>
           </div>
         </header>
+        {roomId && !synced && (
+          <div className="room-waiting">
+            <div>
+              <h2>Joining live room…</h2>
+              <p>
+                {roomError ??
+                  "Keep a coach who has this room open online. Your local library is safe while we connect."}
+              </p>
+              <button
+                className="button secondary"
+                onClick={() => void run(leaveRoom)}
+              >
+                Cancel joining
+              </button>
+            </div>
+          </div>
+        )}
         {notice && (
           <div className="notice" role="alert">
             {notice}
@@ -684,6 +723,7 @@ export default function App() {
                       </span>
                     </div>
                     <TacticalCanvas
+                      key={`${project.id}:${project.keyframes[frameIndex].id}`}
                       assetUrls={urls}
                       onAssetDrop={addAsset}
                       onion={onion}
@@ -997,8 +1037,10 @@ export default function App() {
               </div>
               <p>
                 Drills and images live in this browser on this device. After the
-                first online visit, the tactics workspace works offline. Nothing
-                you draw is uploaded.
+                first online visit, the tactics workspace works offline. In a
+                live room, the shared drill, images, settings, and cursors go
+                directly to the other coaches through encrypted peer
+                connections.
               </p>
               <p>
                 Use the tools to add players and equipment. Drag to move them,

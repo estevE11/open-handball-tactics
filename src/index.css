@@ -2,6 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
+.collaboration-button {
+  white-space: nowrap;
+}
+.collaboration-button.is-live {
+  color: #047857;
+  border-color: #8db9a4;
+}
+.room-connection {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #e8f3ec;
+  color: #195c3b;
+}
+.room-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0;
+}
+.room-members span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.room-members i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.room-footnote {
+  margin-top: 20px;
+  font-size: 11px;
+}
+.room-waiting {
+  position: fixed;
+  inset: 65px 0 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: var(--workspace-bg, #fafafa);
+}
+.room-waiting > div {
+  max-width: 460px;
+  padding: 30px;
+  text-align: center;
+}
+@media (max-width: 600px) {
+  .collaboration-button {
+    padding: 7px;
+  }
+  .collaboration-button span {
+    display: none;
+  }
+}
+
 :root {
   font-family:
     Inter,

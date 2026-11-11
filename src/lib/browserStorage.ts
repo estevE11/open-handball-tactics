@@ -13,6 +13,7 @@ export class BoardDatabase extends Dexie {
   kits!: Table<PlayerKit, string>;
   folders!: Table<FolderNode, string>;
   assets!: Table<StoredAsset, string>;
+  rooms!: Table<{ id: string; update: Uint8Array }, string>;
   constructor(name = "ohb.library.v1") {
     super(name);
     this.version(1).stores({
@@ -21,6 +22,7 @@ export class BoardDatabase extends Dexie {
       assets: "id, createdAt",
     });
     this.version(2).stores({ kits: "id, name" });
+    this.version(3).stores({ rooms: "id" });
   }
 }
 export const db = new BoardDatabase();

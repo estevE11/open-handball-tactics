@@ -22,6 +22,7 @@ For environments without Chrome, run `npx playwright install chromium` and `CI=1
 
 ## Features · v0.2
 
+- **Live collaboration:** choose **Share → Create live room**, copy the link, and send it to other coaches. Everyone can edit; names, live court cursors, player/arrow drags, ink and erasing previews appear as they happen. Drill contents (including uploaded images, kits, steps and coaching notes), court settings, workspace defaults, theme, drawing settings, Voronoi, onion skin, active step/pane, and playback controls are shared. Tools and object selection stay personal so people can work independently. A room starts with a copy of your drill; leaving keeps a local copy. Opening another drill leaves the room.
 - React 19, TypeScript, Vite, Tailwind CSS, Lucide, and Zustand, following Open Handball Video's `components/app`, `components/ui`, `lib`, `hooks`, `store`, and `types` separation.
 - Native SVG tactical engine with pointer capture, scalable court coordinates, drag positioning, and editable quadratic Bézier trajectories. SVG keeps the foundation lightweight and supports self-contained vector export without an additional rendering framework.
 - Horizontal full court (40 × 20 m), half court with the goal at the top (attacking view) or bottom (defending view), a compact 20 × 16 m half-court option, and configurable rectangular practice areas. Floor/goal-area/line colors, canvas background (custom or matching the floor), line weights, grid, player labels, and boundary highlights are editable. Courts include goal areas, dashed 9 m lines, 7 m marks, 4 m goalkeeper marks, and substitution marks.
@@ -82,13 +83,25 @@ vite.config.ts           Vite + PWA precaching and web app manifest
 vercel.json              Static hosting and service-worker cache headers
 ```
 
-The database is `ohb.library.v1`, schema version 1. Separate `projects`, `folders`, and `assets` tables keep canvas JSON independent of binary images. Project and folder mutations update both sides of tree membership in one transaction. Folder moves reject cycles; subtree duplication creates independent IDs; subtree deletion removes its drills atomically. `parentId` and `folderId` are authoritative; the service synchronizes the schema's `childrenFolderIds` and `drillIds` lists.
+The database is `ohb.library.v1`, database version 3 (project file schema remains version 1). Separate `projects`, `folders`, `kits`, `assets`, and `rooms` tables keep canvas JSON, binary images, and cached collaborative documents independent. Project and folder mutations update both sides of tree membership in one transaction. Folder moves reject cycles; subtree duplication creates independent IDs; subtree deletion removes its drills atomically. `parentId` and `folderId` are authoritative; the service synchronizes the schema's `childrenFolderIds` and `drillIds` lists.
 
 Small workspace preferences use the `ohb.preferences.v1` localStorage key; drill-specific court settings stay in IndexedDB and portable `.hbd` exports. Missing preferences use built-in defaults. Legacy projects without orientation receive forward-facing defenders and triangle goalkeepers when opened; explicit orientations remain intact. Legacy single-control-point arrows remain supported. New orientation, control-point, arrowhead, and scale fields are additive to project schema version 1.
 
 Image blobs belong to the reusable asset library. Deleting a drill retains its images so other drills and duplicates remain valid. Explicit asset deletion is blocked while any drill references that asset. Runtime `blob:` URLs are revoked when their owning subscription changes or unmounts; persisted references use `asset:<id>`. Images are limited to 10 MiB and PNG, JPEG, WebP, or GIF. Imports validate the full model, embedded asset references, and format version before an atomic transaction.
 
-Autosave writes are serialized. Drag previews stay in component state; pointer release creates one history entry and one save. Failed writes preserve the in-memory project, show an error, and allow retry or `.hbd` export. Pending/failed saves trigger the browser's leave-page protection. Use one editing tab per drill; collaborative conflict resolution is not implemented.
+Autosave writes are serialized. Drag previews stay in component state and are broadcast as ephemeral presence in live rooms; pointer release commits the edit. Failed writes preserve the in-memory project, show an error, and allow retry or `.hbd` export. Pending/failed saves trigger the browser's leave-page protection. Use live room links when editing together; ordinary local drills do not synchronize between tabs.
+
+## Peer-to-peer rooms
+
+Rooms use [Trystero](https://github.com/dmotz/trystero) for WebRTC discovery through public Nostr relays and [Yjs](https://github.com/yjs/yjs) for conflict-safe state. No application backend, relay deployment, credentials, account, or environment variables are required. Discovery services carry encrypted connection setup; drill updates, images, and presence travel over encrypted WebRTC data channels. The unguessable room ID and secret live in the URL fragment, which is not sent to the static hosting server. Anyone with the complete link has editing access.
+
+Fields and entities merge independently, preserving simultaneous moves of different players and concurrent additions. Concurrent changes to the same field resolve deterministically. Deleting an entity takes precedence over concurrent field edits. Ordered point arrays and tags are atomic values. Room undo/redo tracks your own changes and retains other coaches' edits. Playback runs on each browser's animation clock after shared commands; synchronization is approximate rather than frame-locked.
+
+Keep at least one participant online for a new browser to receive the drill. Each browser caches the room document and its received images in IndexedDB, so an existing participant can reopen the same link after everyone disconnects and make the room available again. A link alone cannot recover a room after all participant copies have been cleared. Local libraries, folders, unused assets, saved kit libraries, fullscreen and panel visibility are personal. Shared workspace defaults and theme apply for the room session; personal stored preferences remain available after a reload outside the room.
+
+Public discovery services and STUN are external dependencies with no uptime guarantee. Restrictive NATs, VPNs, firewalls and school/club networks may prevent direct WebRTC connections. No TURN relay is configured, so connectivity across every network is not guaranteed. Rooms are intended for small coaching groups using a peer mesh. Browser tests exercise actual WebRTC between isolated profiles with a deterministic discovery relay; they do not depend on public relay uptime.
+
+To check the public services from your current network after building, run `PUBLIC_DISCOVERY=1 npm run test:e2e -- e2e/collaboration.spec.ts -g "public discovery"`.
 
 ## Offline and data ownership
 
