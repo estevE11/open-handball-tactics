@@ -38,9 +38,7 @@ export function Collaboration() {
       {open && (
         <Modal
           title={state.roomId ? "Live room" : "Collaborate live"}
-          onClose={() => {
-            if (!busy) setOpen(false);
-          }}
+          onClose={() => setOpen(false)}
         >
           <p>
             Work on the same court together. Everyone with the link can edit the

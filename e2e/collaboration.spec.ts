@@ -86,6 +86,7 @@ test("shared link syncs edits, live gestures, settings, assets, undo and rejoini
       .inputValue();
     expect(link).toMatch(/#room=.+&key=/);
     await host.getByLabel("Close dialog").click();
+    await expect(host.getByRole("dialog")).not.toBeVisible();
     await guest.goto(link);
     await expect(
       guest.getByRole("button", { name: "Live collaboration", exact: true }),
