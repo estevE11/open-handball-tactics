@@ -127,6 +127,14 @@ export function Inspector({
               {token.role !== "equipment" && (
                 <>
                   <label className="toggle-row">
+                    Arms
+                    <input
+                      type="checkbox"
+                      checked={token.arms ?? false}
+                      onChange={(e) => updateToken({ arms: e.target.checked })}
+                    />
+                  </label>
+                  <label className="toggle-row">
                     Peto
                     <input
                       type="checkbox"

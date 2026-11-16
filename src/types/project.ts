@@ -18,6 +18,7 @@ export const tokenSchema = z.object({
     .optional(),
   assetId: z.string().optional(),
   peto: petoSchema.optional(),
+  arms: z.boolean().optional(),
 });
 export const arrowSchema = z.object({
   id: z.string(),
@@ -50,6 +51,7 @@ export const courtConfigSchema = z.object({
   lineWeight: z.number().min(1).max(5),
   grid: z.boolean(),
   showLabels: z.boolean(),
+  // Read only for compatibility with the former court-wide setting.
   showArms: z.boolean().optional(),
   highlight: z.boolean(),
 });

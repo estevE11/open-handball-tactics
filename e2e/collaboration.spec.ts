@@ -133,14 +133,16 @@ test("shared link syncs edits, live gestures, settings, assets, undo and rejoini
     );
     await guest.getByLabel("Template").selectOption("full");
     await expect(hostCourt).toHaveAttribute("viewBox", "-12 -12 824 424");
-    await guest.getByLabel("Player arms", { exact: true }).check();
-    await expect(hostCourt.locator("[data-player-arms]")).toHaveCount(13);
-    // Host undo must retain the guest's court setting.
+    await guestPlayer.click();
+    await guest.getByLabel("Arms", { exact: true }).check();
+    await expect(hostPlayer.locator("[data-player-arms]")).toHaveCount(1);
+    await expect(hostCourt.locator("[data-player-arms]")).toHaveCount(1);
+    // Host undo must retain the guest's court and individual player settings.
     await host.getByRole("button", { name: "Undo", exact: true }).click();
     await expect(guestPlayer).toHaveAttribute("transform", original!);
     await expect(guestCourt).toHaveAttribute("viewBox", "-12 -12 824 424");
     await expect(
-      guest.getByLabel("Player arms", { exact: true }),
+      guest.getByLabel("Arms", { exact: true }),
     ).toBeChecked();
     await host.getByRole("button", { name: "Redo", exact: true }).click();
     await expect(guestPlayer).not.toHaveAttribute("transform", original!);

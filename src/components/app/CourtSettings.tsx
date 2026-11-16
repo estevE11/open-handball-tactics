@@ -172,14 +172,13 @@ export function CourtSettings({
           <span>{Math.round((config.playerScale ?? 1) * 100)}%</span>
         </span>
       </label>
-      {(["grid", "showLabels", "showArms", "highlight"] as const).map(
+      {(["grid", "showLabels", "highlight"] as const).map(
         (key, i) => (
           <label className="toggle-row" key={key}>
             {
               [
                 "Show grid",
                 "Player labels",
-                "Player arms",
                 "Highlight key lines",
               ][i]
             }

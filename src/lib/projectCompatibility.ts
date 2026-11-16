@@ -17,6 +17,9 @@ export function normalizeProject(source: DrillProject): DrillProject {
       if (token.rotation === undefined && token.role === "goalkeeper")
         token.shape = "triangle";
       token.rotation = tokenRotation(token);
+      if (token.role !== "equipment" && project.courtConfig.showArms)
+        token.arms ??= true;
     }
+  delete project.courtConfig.showArms;
   return project;
 }

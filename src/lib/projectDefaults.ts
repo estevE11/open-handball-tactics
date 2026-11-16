@@ -11,7 +11,6 @@ export const DEFAULT_COURT: CourtConfig = {
   lineWeight: 2,
   grid: false,
   showLabels: true,
-  showArms: false,
   highlight: false,
   playerScale: 1,
 };
@@ -65,6 +64,8 @@ export function newProject(
       },
     ],
   };
+  // Workspace court defaults no longer control individual player arms.
+  delete project.courtConfig.showArms;
   if (courtConfig.type === "custom_box") {
     const { width, height } = courtSize(courtConfig);
     for (const token of project.keyframes[0].tokens)

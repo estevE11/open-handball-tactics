@@ -22,40 +22,39 @@ async function downloadSnapshot(page: Page, format: "PNG" | "SVG") {
   return readFile((await download.path())!);
 }
 
-test("player arms start disabled and use short thin black lines when enabled across views and exports", async ({
+test("player arms are independent and persist across steps, views and exports", async ({
   page,
   context,
 }) => {
   await page.goto("/");
   const court = page.getByLabel("Interactive handball court");
   await expect(court.locator("[data-player-arms]")).toHaveCount(0);
-  await expect(
-    page.getByLabel("Player arms", { exact: true }),
-  ).not.toBeChecked();
-  await page.getByLabel("Player arms", { exact: true }).check();
+  await expect(page.getByLabel("Arms", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Player arms", { exact: true })).toHaveCount(0);
+  const player = court.getByRole("img", { name: "attacker C", exact: true });
+  const otherPlayer = court.getByRole("img", { name: "attacker B", exact: true });
+  await player.click();
+  await expect(page.getByLabel("Arms", { exact: true })).not.toBeChecked();
+  await page.getByLabel("Arms", { exact: true }).check();
+  await otherPlayer.click();
+  await expect(page.getByLabel("Arms", { exact: true })).not.toBeChecked();
+  await page.getByLabel("Arms", { exact: true }).check();
+  await expect(court.locator("[data-player-arms]")).toHaveCount(2);
+  await page.getByLabel("Arms", { exact: true }).uncheck();
+  await expect(player.locator("[data-player-arms]")).toHaveCount(1);
+  await expect(otherPlayer.locator("[data-player-arms]")).toHaveCount(0);
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
-  await expect(page.getByLabel("Player arms", { exact: true })).toBeChecked();
-  await expect(court.locator("[data-player-arms]")).toHaveCount(13);
-  await expect(court.locator("[data-player-arms] line")).toHaveCount(26);
+  await player.click();
+  await expect(page.getByLabel("Arms", { exact: true })).toBeChecked();
+  await expect(court.locator("[data-player-arms]")).toHaveCount(1);
+  await expect(court.locator("[data-player-arms] line")).toHaveCount(2);
   await expect(
     court.locator('[aria-label^="equipment"] [data-player-arms]'),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Attacker kit", exact: true }).click();
   const kitDialog = page.getByRole("dialog");
-  expect(
-    await kitDialog
-      .locator(".kit-preview")
-      .first()
-      .evaluate((element) => {
-        const svg = element as SVGSVGElement;
-        const box = svg
-          .querySelector<SVGGElement>("[data-player-arms]")!
-          .getBBox();
-        const view = svg.viewBox.baseVal;
-        return box.x > view.x && box.x + box.width < view.x + view.width;
-      }),
-  ).toBe(true);
+  await expect(kitDialog.locator("[data-player-arms]")).toHaveCount(0);
   await kitDialog
     .getByRole("button", { name: "Create kit", exact: true })
     .click();
@@ -64,7 +63,6 @@ test("player arms start disabled and use short thin black lines when enabled acr
   await kitDialog
     .getByRole("button", { name: "Save and apply", exact: true })
     .click();
-  const player = court.getByRole("img", { name: "attacker C", exact: true });
   await expect(player.locator("[data-player-arms]")).toHaveAttribute(
     "stroke",
     "#000000",
@@ -107,30 +105,68 @@ test("player arms start disabled and use short thin black lines when enabled acr
   await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
   await page.getByLabel("Onion skin", { exact: true }).check();
-  await expect(court.locator("[data-player-arms]")).toHaveCount(26);
+  await expect(court.locator("[data-player-arms]")).toHaveCount(2);
   await setRange(page.getByLabel("Animation timeline", { exact: true }), 750);
-  await expect(court.locator("[data-player-arms]")).toHaveCount(13);
+  await expect(court.locator("[data-player-arms]")).toHaveCount(1);
   await page.getByRole("button", { name: /^Export/ }).click();
   const svg = await downloadSnapshot(page, "SVG");
   const exported = await context.newPage();
   await exported.setContent(svg.toString());
-  await expect(exported.locator("[data-player-arms] line")).toHaveCount(26);
+  await expect(exported.locator("[data-player-arms] line")).toHaveCount(2);
   await expect(
     exported.locator('[aria-label^="equipment"] [data-player-arms]'),
   ).toHaveCount(0);
   await expect(exported.locator("[data-token-glyph][filter]")).toHaveCount(0);
   await exported.close();
+  const downloading = page.waitForEvent("download");
+  await page.getByRole("button", { name: /^Handball project/ }).click();
+  const backup = await readFile((await (await downloading).path())!);
+  const saved = JSON.parse(backup.toString());
+  for (const frame of saved.project.keyframes) {
+    expect(
+      frame.tokens.filter((token: { arms?: boolean }) => token.arms),
+    ).toHaveLength(1);
+    expect(
+      frame.tokens.find((token: { label: string }) => token.label === "C").arms,
+    ).toBe(true);
+  }
   await page.getByLabel("Close dialog", { exact: true }).click();
   await page.getByRole("button", { name: "Edit step", exact: true }).click();
   await page.getByRole("tab", { name: "Editor", exact: true }).click();
-  await page.getByLabel("Player arms", { exact: true }).uncheck();
+  await player.click();
+  await page.getByLabel("Peto", { exact: true }).check();
+  await page.getByLabel("Arms", { exact: true }).uncheck();
   await expect(court.locator("[data-player-arms]")).toHaveCount(0);
+  await expect(player.locator("[data-peto]")).toHaveCount(1);
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
+  await player.click();
   await expect(
-    page.getByLabel("Player arms", { exact: true }),
+    page.getByLabel("Arms", { exact: true }),
   ).not.toBeChecked();
   await expect(court.locator("[data-player-arms]")).toHaveCount(0);
+  await page.locator('input[type="file"][accept^=".hbd"]').setInputFiles({
+    name: "arms.hbd",
+    mimeType: "application/json",
+    buffer: backup,
+  });
+  await expect(player.locator("[data-player-arms]")).toHaveCount(1);
+  await expect(otherPlayer.locator("[data-player-arms]")).toHaveCount(0);
+});
+
+test("each player role can have arms while equipment cannot", async ({ page }) => {
+  await page.goto("/");
+  const court = page.getByLabel("Interactive handball court");
+  for (const name of ["attacker B", "defender 1", "goalkeeper GK"]) {
+    const player = court.getByRole("img", { name, exact: true }).first();
+    await player.click();
+    await expect(page.getByLabel("Arms", { exact: true })).not.toBeChecked();
+    await page.getByLabel("Arms", { exact: true }).check();
+    await expect(player.locator("[data-player-arms]")).toHaveCount(1);
+  }
+  await expect(court.locator("[data-player-arms]")).toHaveCount(3);
+  await court.getByRole("img", { name: "equipment ball", exact: true }).click();
+  await expect(page.getByLabel("Arms", { exact: true })).toHaveCount(0);
 });
 
 test("clipboard receives the exact PNG export, including background, arms, images, and off-court ink", async ({
@@ -139,7 +175,11 @@ test("clipboard receives the exact PNG export, including background, arms, image
 }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/");
-  await page.getByLabel("Player arms", { exact: true }).check();
+  await page
+    .getByLabel("Interactive handball court")
+    .getByRole("img", { name: "attacker C", exact: true })
+    .click();
+  await page.getByLabel("Arms", { exact: true }).check();
   await page
     .getByLabel("Canvas background", { exact: true })
     .selectOption("custom");
