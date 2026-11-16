@@ -54,3 +54,13 @@ it("falls back safely from corrupt preferences and reports failed writes", () =>
     savePreferences({ courtDefaults: DEFAULT_COURT, theme: "system" }, local),
   ).toThrow("Could not save");
 });
+it("discards obsolete workspace arm defaults before they can affect player choices", () => {
+  const local = storage();
+  const legacy = {
+    courtDefaults: { ...DEFAULT_COURT, showArms: true },
+    theme: "system" as const,
+  };
+  local.setItem(PREFERENCES_KEY, JSON.stringify(legacy));
+  expect(readPreferences(local).courtDefaults).toEqual(DEFAULT_COURT);
+  expect(savePreferences(legacy, local).courtDefaults).toEqual(DEFAULT_COURT);
+});

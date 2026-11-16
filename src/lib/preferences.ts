@@ -3,7 +3,7 @@ import { courtConfigSchema } from "../types/project";
 import { DEFAULT_COURT } from "./projectDefaults";
 
 const schema = z.object({
-  courtDefaults: courtConfigSchema,
+  courtDefaults: courtConfigSchema.omit({ showArms: true }),
   theme: z.enum(["light", "dark", "system"]).default("system"),
 });
 export type Preferences = z.infer<typeof schema>;
