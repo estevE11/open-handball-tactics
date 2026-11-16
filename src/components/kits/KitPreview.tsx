@@ -9,7 +9,7 @@ export function KitPreview({
   role?: KitRole;
 }) {
   return (
-    <svg className="kit-preview" viewBox="-21 -21 42 42" aria-hidden="true">
+    <svg className="kit-preview" viewBox="-27 -27 54 54" aria-hidden="true">
       <Token
         kit={kit}
         token={{

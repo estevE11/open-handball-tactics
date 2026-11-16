@@ -27,7 +27,7 @@ import {
 import { db, library } from "./lib/browserStorage";
 import { newProject } from "./lib/projectDefaults";
 import { exportProject, importProject } from "./lib/projectIo";
-import { snapshot } from "./lib/snapshot";
+import { copySnapshotImage, snapshot } from "./lib/snapshot";
 import { fitPoint } from "./lib/courtGeometry";
 import { flushSaves, useProjectStore } from "./store/projectStore";
 import { useAssetUrls } from "./hooks/useAssetUrls";
@@ -90,6 +90,7 @@ export default function App() {
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [imageCopied, setImageCopied] = useState(false);
   const [ready, setReady] = useState(false);
   const {
     onion,
@@ -557,6 +558,7 @@ export default function App() {
                   className="button primary"
                   onClick={() => {
                     board.setSelected(null);
+                    setImageCopied(false);
                     setDialog({ type: "export" });
                   }}
                 >
@@ -1034,7 +1036,37 @@ export default function App() {
                     <ArrowDownToLine size={17} />
                   </button>
                 ))}
+                <button
+                  disabled={busy}
+                  aria-label="Copy image to clipboard"
+                  onClick={() =>
+                    void run(async () => {
+                      setImageCopied(false);
+                      setNotice(null);
+                      await copySnapshotImage(
+                        project.courtConfig.background === "floor"
+                          ? project.courtConfig.themeColors.floor
+                          : project.courtConfig.background,
+                      );
+                      setImageCopied(true);
+                    })
+                  }
+                >
+                  <Copy />
+                  <div>
+                    <strong>Copy image to clipboard</strong>
+                    <small>
+                      The same full-resolution image as the PNG snapshot
+                    </small>
+                  </div>
+                  <Copy size={17} />
+                </button>
               </div>
+              {imageCopied && (
+                <p className="muted" role="status">
+                  Image copied to clipboard.
+                </p>
+              )}
             </>
           )}
           {dialog.type === "help" && (

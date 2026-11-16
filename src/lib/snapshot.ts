@@ -59,18 +59,14 @@ export async function snapshotSource(
   return { blob, width: right - left, height: bottom - top };
 }
 
-export async function snapshot(
+export async function snapshotBlob(
   format: "svg" | "png",
-  title: string,
   background = "#fafaf8",
-) {
+): Promise<Blob> {
   const original = document.querySelector<SVGSVGElement>("#tactical-canvas");
-  if (!original) return;
+  if (!original) throw new Error("There is no court to export.");
   const { blob } = await snapshotSource(original, background);
-  if (format === "svg") {
-    download(blob, `${title}.svg`);
-    return;
-  }
+  if (format === "svg") return blob;
   const url = URL.createObjectURL(blob);
   try {
     const image = new Image();
@@ -84,14 +80,48 @@ export async function snapshot(
     ctx.fillStyle = background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(image, 0, 0);
-    const png = await new Promise<Blob>((resolve, reject) =>
+    return await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
         (b) => (b ? resolve(b) : reject(new Error("Could not export image."))),
         "image/png",
       ),
     );
-    download(png, `${title}.png`);
   } finally {
     URL.revokeObjectURL(url);
+  }
+}
+
+export async function snapshot(
+  format: "svg" | "png",
+  title: string,
+  background = "#fafaf8",
+) {
+  download(await snapshotBlob(format, background), `${title}.${format}`);
+}
+
+export async function copySnapshotImage(background = "#fafaf8") {
+  if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined")
+    throw new Error(
+      "This browser cannot copy images. Download the PNG snapshot instead.",
+    );
+  const png = snapshotBlob("png", background);
+  try {
+    // Start the clipboard write during the click, before awaiting rasterization.
+    // Safari requires this promise form to preserve user activation.
+    await Promise.all([
+      png,
+      navigator.clipboard.write([new ClipboardItem({ "image/png": png })]),
+    ]);
+  } catch (error) {
+    // Also handle rendering rejection if the clipboard constructor/write threw.
+    void png.catch(() => {});
+    if (
+      error instanceof DOMException &&
+      (error.name === "NotAllowedError" || error.name === "SecurityError")
+    )
+      throw new Error(
+        "Clipboard access was blocked. Allow clipboard access or download the PNG snapshot instead.",
+      );
+    throw error;
   }
 }

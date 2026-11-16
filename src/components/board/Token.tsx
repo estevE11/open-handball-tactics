@@ -106,6 +106,17 @@ export function Token({
         >
           <g transform={`scale(${contentScale})`}>
             {isPlayer && kit && <KitPattern kit={kit} id={kitId} />}
+            {isPlayer && (
+              <g
+                data-player-arms="true"
+                stroke={kit?.primary ?? t.color}
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              >
+                <line x1="-7" y1="3" x2="-23" y2="-10" />
+                <line x1="7" y1="3" x2="23" y2="-10" />
+              </g>
+            )}
             {t.equipment === "image" ? (
               <image href={image} x={-r} y={-r} width={r * 2} height={r * 2} />
             ) : t.equipment === "cone" ? (
