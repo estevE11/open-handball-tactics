@@ -1,0 +1,321 @@
+import { expect, test, type Page } from "@playwright/test";
+import { newProject } from "../src/lib/projectDefaults";
+import type { FolderNode } from "../src/types/project";
+
+async function seedLibrary(page: Page) {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Build the attack" }),
+  ).toBeVisible();
+  const folders: FolderNode[] = [
+    {
+      id: "offense",
+      name: "Offense",
+      parentId: null,
+      childrenFolderIds: [],
+      drillIds: [],
+    },
+    {
+      id: "def",
+      name: "DEF",
+      parentId: "offense",
+      childrenFolderIds: [],
+      drillIds: [],
+    },
+    {
+      id: "exercises",
+      name: "exercicis",
+      parentId: "def",
+      childrenFolderIds: [],
+      drillIds: [],
+    },
+    {
+      id: "empty",
+      name: "Another folder",
+      parentId: "def",
+      childrenFolderIds: [],
+      drillIds: [],
+    },
+    {
+      id: "grandchild",
+      name: "Hidden grandchild",
+      parentId: "exercises",
+      childrenFolderIds: [],
+      drillIds: [],
+    },
+    {
+      id: "other",
+      name: "Other",
+      parentId: null,
+      childrenFolderIds: [],
+      drillIds: [],
+    },
+  ];
+  const projects = [
+    newProject("Parent drill", "def"),
+    newProject("Zebra drill", "def"),
+    newProject("Child drill", "exercises"),
+    newProject("Other drill", "other"),
+  ];
+  projects[0].tags = ["Defense"];
+  for (const folder of folders) {
+    folder.childrenFolderIds = folders
+      .filter((f) => f.parentId === folder.id)
+      .map((f) => f.id);
+    folder.drillIds = projects
+      .filter((p) => p.folderId === folder.id)
+      .map((p) => p.id);
+  }
+  await page.evaluate(
+    async ({ folders, projects }) => {
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open("ohb.library.v1");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const database = request.result;
+          const transaction = database.transaction(
+            ["folders", "projects"],
+            "readwrite",
+          );
+          folders.forEach((folder) =>
+            transaction.objectStore("folders").put(folder),
+          );
+          projects.forEach((project) =>
+            transaction.objectStore("projects").put(project),
+          );
+          transaction.oncomplete = () => {
+            database.close();
+            resolve();
+          };
+          transaction.onerror = () => {
+            database.close();
+            reject(transaction.error);
+          };
+        };
+      });
+    },
+    { folders, projects },
+  );
+  await page.reload();
+  await expect(page.getByLabel("Interactive handball court")).toBeVisible();
+  await page.getByLabel("Toggle library").click();
+}
+
+test("sidebar shows only the current path, lists child folders first, and has one New drill action", async ({
+  page,
+}) => {
+  await seedLibrary(page);
+  const sidebar = page.locator("#library-sidebar");
+  const path = sidebar.getByRole("navigation", { name: "Current folder path" });
+  const contents = sidebar.getByRole("list", { name: "Folder contents" });
+  await expect(path.locator(".path-link")).toHaveText(["All drills"]);
+  await contents
+    .getByRole("button", { name: "Open folder Offense", exact: true })
+    .click();
+  await contents
+    .getByRole("button", { name: "Open folder DEF", exact: true })
+    .click();
+  await expect(path.locator(".path-link")).toHaveText([
+    "All drills",
+    "Offense",
+    "DEF",
+  ]);
+  await expect(path).not.toContainText("exercicis");
+  await expect(contents.locator(":scope > li")).toHaveCount(4);
+  await expect(contents.locator(":scope > li").nth(0)).toContainText(
+    "Another folder",
+  );
+  await expect(contents.locator(":scope > li").nth(1)).toContainText(
+    "exercicis",
+  );
+  await expect(
+    contents.locator(":scope > li").nth(2).locator(".drill-card"),
+  ).toHaveCount(1);
+  await expect(
+    contents.locator(":scope > li").nth(3).locator(".drill-card"),
+  ).toHaveCount(1);
+  await expect(contents).not.toContainText("Child drill");
+  await expect(contents).not.toContainText("Hidden grandchild");
+  await expect(
+    sidebar.getByRole("button", { name: "New drill", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    sidebar.getByRole("button", { name: "Create a drill", exact: true }),
+  ).toHaveCount(0);
+  await expect(sidebar.locator(".new-drill")).toHaveCount(0);
+  await contents
+    .getByRole("button", { name: "Open folder exercicis", exact: true })
+    .click();
+  await expect(path.locator(".path-link")).toHaveText([
+    "All drills",
+    "Offense",
+    "DEF",
+    "exercicis",
+  ]);
+  await expect(contents.locator(":scope > li").first()).toContainText(
+    "Hidden grandchild",
+  );
+  await expect(contents.locator(".drill-card")).toContainText("Child drill");
+  await path.getByRole("button", { name: "DEF", exact: true }).click();
+  await contents
+    .getByRole("button", { name: "Open folder Another folder", exact: true })
+    .click();
+  await expect(contents).toHaveText("A fresh space for your next idea.");
+  await expect(
+    sidebar.getByRole("button", { name: "New drill", exact: true }),
+  ).toHaveCount(1);
+  await expect(
+    sidebar.getByRole("button", { name: "Create a drill", exact: true }),
+  ).toHaveCount(0);
+  await sidebar.getByRole("button", { name: "New drill", exact: true }).click();
+  await expect(
+    page
+      .getByRole("dialog", { name: "Create a drill", exact: true })
+      .locator('select[name="parent"]'),
+  ).toHaveValue("empty");
+});
+
+test("explorer shares folder navigation and ordering across grid/list, search, management, and opening drills", async ({
+  page,
+}) => {
+  await seedLibrary(page);
+  const sidebar = page.locator("#library-sidebar");
+  await sidebar
+    .getByRole("button", { name: "Open folder Offense", exact: true })
+    .click();
+  await sidebar
+    .getByRole("button", { name: "Open folder DEF", exact: true })
+    .click();
+  await page.getByLabel("Open library explorer", { exact: true }).click();
+  const explorer = page.getByRole("dialog", {
+    name: "Library explorer",
+    exact: true,
+  });
+  const contents = explorer.getByRole("list", { name: "Folder contents" });
+  const tree = explorer.getByRole("complementary", {
+    name: "Library folder tree",
+  });
+  await expect(explorer).toBeVisible();
+  expect((await explorer.boundingBox())!.width).toBeGreaterThan(800);
+  await expect(
+    tree.getByRole("button", { name: "Collapse Offense", exact: true }),
+  ).toBeVisible();
+  await expect(
+    explorer.getByLabel("Grid view", { exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(contents).toHaveCSS("display", "grid");
+  await expect(contents.locator(":scope > li").first()).toContainText(
+    "Another folder",
+  );
+  await page.screenshot({ path: "test-results/library-explorer-grid.png" });
+  await explorer.getByLabel("List view", { exact: true }).click();
+  await expect(contents).toHaveCSS("display", "block");
+  await expect(contents.locator(":scope > li").first()).toContainText(
+    "Another folder",
+  );
+  await explorer.getByLabel("Search library", { exact: true }).fill("Defense");
+  await expect(contents.locator(".drill-card")).toHaveCount(1);
+  await expect(contents).toContainText("Parent drill");
+  await explorer.getByLabel("Clear library search", { exact: true }).click();
+  await explorer
+    .getByLabel("Search library", { exact: true })
+    .fill("exercicis");
+  await expect(contents.locator(".library-folder")).toHaveCount(1);
+  await contents
+    .getByRole("button", { name: "Open folder exercicis", exact: true })
+    .click();
+  await expect(
+    explorer.getByLabel("Search library", { exact: true }),
+  ).toHaveValue("");
+  await expect(contents).toContainText("Child drill");
+  await explorer.getByLabel("Parent folder", { exact: true }).click();
+  await expect(contents.locator(".drill-card")).toHaveCount(2);
+  await tree.getByRole("button", { name: "Other 1", exact: true }).click();
+  await tree.getByLabel("Manage Other", { exact: true }).click();
+  const manage = page.getByRole("dialog", {
+    name: "Manage folder",
+    exact: true,
+  });
+  await manage
+    .getByRole("textbox", { name: "Name", exact: true })
+    .fill("Archive");
+  await manage
+    .getByRole("button", { name: "Save changes", exact: true })
+    .click();
+  await expect(manage).not.toBeVisible();
+  await expect(
+    explorer.getByRole("navigation", { name: "Current folder path" }),
+  ).toContainText("Archive");
+  await expect(
+    sidebar.getByRole("navigation", { name: "Current folder path" }),
+  ).toContainText("Archive");
+  await page.screenshot({ path: "test-results/library-explorer-list.png" });
+  await page.keyboard.press("Escape");
+  await expect(explorer).not.toBeVisible();
+  await expect(sidebar).toHaveAttribute("aria-hidden", "false");
+  await page.getByLabel("Open library explorer", { exact: true }).click();
+  await explorer
+    .locator(".drill-card")
+    .filter({ hasText: "Other drill" })
+    .click();
+  await expect(explorer).not.toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Other drill", exact: true }),
+  ).toBeVisible();
+  await expect(sidebar).toHaveAttribute("aria-hidden", "true");
+});
+
+test("mobile dark explorer keeps list/grid and the complete tree usable without overflowing", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await seedLibrary(page);
+  await page
+    .getByLabel("Close library", { exact: true })
+    .click({ position: { x: 385, y: 400 } });
+  await page.getByLabel("Switch to dark mode", { exact: true }).click();
+  await page.getByLabel("Toggle library", { exact: true }).click();
+  await page.getByLabel("Open library explorer", { exact: true }).click();
+  const explorer = page.getByRole("dialog", {
+    name: "Library explorer",
+    exact: true,
+  });
+  const tree = explorer.getByRole("complementary", {
+    name: "Library folder tree",
+  });
+  await expect(tree).not.toBeVisible();
+  await explorer.getByLabel("Toggle folder tree", { exact: true }).click();
+  await expect(tree).toBeVisible();
+  await tree.locator(".folder-select").filter({ hasText: "DEF" }).click();
+  await expect(tree).not.toBeVisible();
+  await expect(
+    explorer.getByRole("navigation", { name: "Current folder path" }),
+  ).toContainText("DEF");
+  const contents = explorer.getByRole("list", { name: "Folder contents" });
+  await expect(contents.locator(":scope > li").first()).toContainText(
+    "Another folder",
+  );
+  await page.screenshot({
+    path: "test-results/library-explorer-mobile-grid.png",
+  });
+  await explorer.getByLabel("List view", { exact: true }).click();
+  await expect(contents).toHaveCSS("display", "block");
+  expect(
+    await explorer.evaluate(
+      (element) => element.scrollWidth <= element.clientWidth + 1,
+    ),
+  ).toBe(true);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  const box = (await explorer.boundingBox())!;
+  expect(box.width).toBeLessThanOrEqual(390);
+  expect(box.height).toBeLessThanOrEqual(844);
+  await page.screenshot({
+    path: "test-results/library-explorer-mobile-list.png",
+  });
+  await explorer.getByLabel("Close dialog", { exact: true }).click();
+  await expect(explorer).not.toBeVisible();
+});

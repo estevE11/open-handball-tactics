@@ -253,6 +253,334 @@ h3 {
   letter-spacing: 1.5px;
   color: #909398;
 }
+.library-heading-actions {
+  display: flex;
+  gap: 2px;
+}
+.folder-path ol,
+.library-contents {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.folder-path li {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 3px;
+}
+.path-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  color: #777c82;
+  font-size: 12px;
+}
+.path-link span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.path-link svg {
+  flex-shrink: 0;
+}
+.path-link.active {
+  background: #ebeeeb;
+  color: #455c4e;
+}
+.path-link:hover {
+  background: #f0f1f0;
+}
+.folder-path.horizontal {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+.folder-path.horizontal ol {
+  display: flex;
+  width: max-content;
+}
+.folder-path.horizontal .path-link {
+  flex: initial;
+}
+.folder-path.horizontal .path-link span {
+  max-width: 190px;
+}
+.library-contents > li {
+  min-width: 0;
+}
+.library-contents .drill-card-info {
+  flex: 1;
+}
+.library-contents .drill-card-info strong {
+  max-width: none;
+}
+.library-contents .drill-card-info > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.library-folder {
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  margin-bottom: 5px;
+}
+.library-folder:hover {
+  background: #f0f2f1;
+}
+.folder-open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+}
+.folder-glyph {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 41px;
+  flex-shrink: 0;
+  color: #ad8a4d;
+}
+.library-folder > .folder-manage {
+  margin-right: 4px;
+}
+.modal.library-explorer {
+  width: 1080px;
+  height: min(760px, calc(100dvh - 32px));
+  max-width: calc(100vw - 24px);
+  padding: 0;
+  overflow: hidden;
+}
+.library-explorer[open] {
+  display: flex;
+  flex-direction: column;
+}
+.library-explorer .modal-heading {
+  padding: 18px 22px;
+  margin: 0;
+  border-bottom: 1px solid #e5e8e4;
+}
+.library-explorer .modal-heading h2 {
+  margin: 0;
+}
+.explorer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #e5e8e4;
+}
+.explorer-body {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.explorer-tree {
+  min-width: 0;
+  overflow: auto;
+  padding: 12px 10px;
+  border-right: 1px solid #e5e8e4;
+  background: #f6f8f5;
+}
+.explorer-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.explorer-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e8e4;
+}
+.explorer-controls .search {
+  flex: 1;
+  min-width: 0;
+}
+.explorer-controls .search input {
+  font-size: 12px;
+}
+.explorer-view-switch {
+  display: flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid #e5e8e4;
+  border-radius: 6px;
+}
+.explorer-view-switch [aria-pressed="true"] {
+  background: #ebeeeb;
+  color: #455c4e;
+}
+.explorer-files {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 16px;
+  overscroll-behavior: contain;
+}
+.library-explorer .drill-card-info strong {
+  font-size: 12px;
+}
+.library-explorer .drill-card-info > span {
+  font-size: 10px;
+}
+.explorer-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #e5e8e4;
+  color: #89928c;
+  font-size: 11px;
+}
+.library-view-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+.library-view-grid .drill-card,
+.library-view-grid .library-folder {
+  margin: 0;
+  border-color: #e1e6df;
+  min-height: 140px;
+  height: 100%;
+}
+.library-view-grid .drill-card,
+.library-view-grid .folder-open {
+  flex-direction: column;
+  padding: 18px 12px;
+  text-align: center;
+}
+.library-view-grid .library-folder {
+  position: relative;
+}
+.library-view-grid .library-folder > .folder-manage {
+  position: absolute;
+  top: 5px;
+  right: 2px;
+}
+.library-view-grid .drill-card-info {
+  align-items: center;
+  width: 100%;
+  flex: initial;
+}
+.library-view-grid .drill-card-info > :is(strong, span) {
+  max-width: 100%;
+}
+.library-view-grid .mini-court {
+  transform: scale(1.15);
+  margin: 5px 0 8px;
+}
+.library-view-grid .folder-glyph {
+  width: 48px;
+  height: 54px;
+}
+.library-view-grid .folder-glyph svg {
+  width: 36px;
+  height: 36px;
+}
+.library-view-grid .empty-library {
+  grid-column: 1 / -1;
+}
+.icon-button.explorer-tree-toggle,
+.explorer-tree-scrim {
+  display: none;
+}
+.dark .explorer-tree {
+  background: #1b2223;
+}
+.dark
+  :is(
+    .library-explorer .modal-heading,
+    .explorer-toolbar,
+    .explorer-tree,
+    .explorer-controls,
+    .explorer-footer,
+    .explorer-view-switch,
+    .library-view-grid .drill-card,
+    .library-view-grid .library-folder
+  ) {
+  border-color: #353f3d;
+}
+.dark .path-link {
+  color: #abb7af;
+}
+.dark :is(.path-link:hover, .library-folder:hover) {
+  background: #303b34;
+  color: #f1f5ed;
+}
+.dark :is(.path-link.active, .explorer-view-switch [aria-pressed="true"]) {
+  background: #334237;
+  color: #dfebd9;
+}
+.dark .folder-glyph {
+  color: #c9b784;
+}
+@media (max-width: 700px) {
+  .modal.library-explorer {
+    height: calc(100dvh - 24px);
+  }
+  .library-explorer .modal-heading {
+    padding: 14px;
+  }
+  .explorer-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .explorer-controls {
+    gap: 8px;
+    padding: 12px;
+  }
+  .explorer-files {
+    padding: 12px;
+  }
+  .explorer-tree {
+    display: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(250px, 80%);
+    z-index: 2;
+    box-shadow: 10px 0 25px #0002;
+  }
+  .explorer-tree.is-open {
+    display: block;
+  }
+  .icon-button.explorer-tree-toggle {
+    display: inline-flex;
+  }
+  .explorer-tree-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border: 0;
+    background: #0004;
+  }
+  .library-view-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+  }
+}
 .icon-button {
   display: inline-flex;
   align-items: center;
@@ -461,30 +789,11 @@ h3 {
   right: 8px;
   top: 14px;
 }
-.new-drill {
-  border: 1px dashed #d9dcdd;
-  background: transparent;
-  border-radius: 6px;
-  color: #767e79;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 9px;
-  font-size: 11px;
-  margin-top: 5px;
-}
-.new-drill:hover {
-  background: #eef1ed;
-}
 .empty-library {
   font-size: 11px;
   color: #939994;
   text-align: center;
   padding: 20px 0;
-}
-.empty-library button {
-  margin: 10px auto;
 }
 .sidebar-bottom {
   padding: 14px 18px 18px;
@@ -2034,13 +2343,6 @@ h1 {
   background: #334237;
   color: #dfebd9;
   border-color: #53644f;
-}
-.dark .new-drill {
-  color: #b2c0ac;
-  border-color: #52604d;
-}
-.dark .new-drill:hover {
-  background: #303b30;
 }
 .dark .button.primary {
   background: #c4d4b7;

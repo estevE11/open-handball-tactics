@@ -14,6 +14,7 @@ import {
   HardDrive,
   Menu,
   Maximize,
+  Maximize2,
   Minimize,
   MoreHorizontal,
   Plus,
@@ -31,7 +32,13 @@ import { fitPoint } from "./lib/courtGeometry";
 import { flushSaves, useProjectStore } from "./store/projectStore";
 import { useAssetUrls } from "./hooks/useAssetUrls";
 import { useFullscreenWorkspace } from "./hooks/useFullscreenWorkspace";
-import { FolderTree } from "./components/library/FolderTree";
+import { FolderPath } from "./components/library/FolderPath";
+import { LibraryContents } from "./components/library/LibraryContents";
+import { LibraryExplorer } from "./components/library/LibraryExplorer";
+import {
+  folderPath as describeFolderPath,
+  libraryContents,
+} from "./lib/libraryNavigation";
 import { TacticalCanvas } from "./components/board/TacticalCanvas";
 import { Toolbar } from "./components/app/Toolbar";
 import { FullscreenPanel } from "./components/app/FullscreenPanel";
@@ -79,6 +86,7 @@ export default function App() {
   const { assets, urls } = useAssetUrls();
   const [folder, setFolder] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [explorer, setExplorer] = useState(false);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -160,7 +168,12 @@ export default function App() {
   useEffect(() => {
     if (!sidebar) return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSidebar(false);
+      if (
+        event.key === "Escape" &&
+        !document.querySelector("dialog[open]") &&
+        !(event.target as HTMLElement).closest("dialog")
+      )
+        setSidebar(false);
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
@@ -188,6 +201,7 @@ export default function App() {
   useEffect(() => {
     function keys(event: KeyboardEvent) {
       if (
+        document.querySelector("dialog[open]") ||
         (event.target as HTMLElement).closest(
           "input, textarea, select, [contenteditable], dialog",
         )
@@ -240,16 +254,11 @@ export default function App() {
     };
   }, []);
   function folderPath(id: string | null): string {
-    const parts: string[] = [];
-    const seen = new Set<string>();
-    while (id && !seen.has(id)) {
-      seen.add(id);
-      const f = folders.find((f) => f.id === id);
-      if (!f) break;
-      parts.unshift(f.name);
-      id = f.parentId;
-    }
-    return parts.join(" / ");
+    return describeFolderPath(folders, id);
+  }
+  function selectFolder(id: string | null) {
+    setFolder(id);
+    setQuery("");
   }
   async function openProject(p: DrillProject) {
     await flushSaves();
@@ -277,13 +286,7 @@ export default function App() {
       });
     });
   }
-  const visible = projects.filter(
-    (p) =>
-      (!folder || p.folderId === folder) &&
-      `${p.title} ${p.tags.join(" ")} ${folderPath(p.folderId)}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-  );
+  const contents = libraryContents(folders, projects, folder, query);
   async function deleteCurrent() {
     if (
       !project ||
@@ -315,7 +318,7 @@ export default function App() {
       }
       if (dialog?.type === "folder") {
         const next = await library.createFolder(name, parentId);
-        setFolder(next.id);
+        selectFolder(next.id);
       }
       if (dialog?.type === "manage")
         await library.updateFolder(dialog.folder.id, name, parentId);
@@ -366,20 +369,29 @@ export default function App() {
         </a>
         <div className="library-heading">
           <span>YOUR WORKSPACE</span>
-          <button
-            className="icon-button"
-            aria-label="Create folder"
-            onClick={() => setDialog({ type: "folder" })}
-          >
-            <FolderPlus size={16} />
-          </button>
+          <div className="library-heading-actions">
+            <button
+              className="icon-button"
+              aria-label="Open library explorer"
+              title="Open library explorer"
+              onClick={() => setExplorer(true)}
+            >
+              <Maximize2 size={16} />
+            </button>
+            <button
+              className="icon-button"
+              aria-label="Create folder"
+              onClick={() => setDialog({ type: "folder" })}
+            >
+              <FolderPlus size={16} />
+            </button>
+          </div>
         </div>
         <div className="folder-tree">
-          <FolderTree
+          <FolderPath
             folders={folders}
-            projects={projects}
-            active={folder}
-            onSelect={setFolder}
+            current={folder}
+            onSelect={selectFolder}
             onManage={(f) => setDialog({ type: "manage", folder: f })}
           />
         </div>
@@ -401,7 +413,7 @@ export default function App() {
           <label className="search">
             <Search size={14} />
             <input
-              placeholder="Search drills, tags…"
+              placeholder="Search folders, drills, tags…"
               aria-label="Search drills"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -417,51 +429,16 @@ export default function App() {
             )}
           </label>
           <div className="drill-list">
-            {visible.map((p) => (
-              <button
-                key={p.id}
-                className={`drill-card ${p.id === project?.id ? "active" : ""}`}
-                onClick={() => void run(() => openProject(p))}
-              >
-                <div className="mini-court">
-                  <span />
-                  <i />
-                  <b />
-                </div>
-                <div className="drill-card-info">
-                  <strong>{p.title}</strong>
-                  <span>
-                    {p.tags[0] || "Handball drill"}
-                    <span>
-                      {" "}
-                      · {p.keyframes.length}{" "}
-                      {p.keyframes.length === 1 ? "step" : "steps"}
-                    </span>
-                  </span>
-                </div>
-                {p.id === project?.id && <span className="active-dot" />}
-              </button>
-            ))}
-            {!visible.length && (
-              <div className="empty-library">
-                {query
-                  ? "No drills match your search."
-                  : "A fresh space for your next idea."}
-                <button
-                  className="text-button"
-                  onClick={() => setDialog({ type: "new" })}
-                >
-                  <Plus size={14} /> Create a drill
-                </button>
-              </div>
-            )}
+            <LibraryContents
+              contents={contents}
+              selected={project?.id}
+              onFolder={selectFolder}
+              onProject={(project) => void run(() => openProject(project))}
+              onManage={(folder) => setDialog({ type: "manage", folder })}
+              query={query}
+              busy={busy}
+            />
           </div>
-          <button
-            className="new-drill"
-            onClick={() => setDialog({ type: "new" })}
-          >
-            <Plus size={16} /> New drill
-          </button>
         </div>
         <div className="sidebar-bottom">
           <button
@@ -833,6 +810,28 @@ export default function App() {
           e.target.value = "";
         }}
       />
+      {explorer && (
+        <LibraryExplorer
+          folders={folders}
+          projects={projects}
+          current={folder}
+          contents={contents}
+          selected={project?.id}
+          query={query}
+          onQuery={setQuery}
+          onFolder={selectFolder}
+          onProject={(project) =>
+            void run(async () => {
+              await openProject(project);
+              setExplorer(false);
+            })
+          }
+          onManage={(folder) => setDialog({ type: "manage", folder })}
+          onClose={() => setExplorer(false)}
+          busy={busy}
+          error={notice}
+        />
+      )}
       {dialog && (
         <Modal
           title={
