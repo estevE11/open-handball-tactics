@@ -22,12 +22,20 @@ async function downloadSnapshot(page: Page, format: "PNG" | "SVG") {
   return readFile((await download.path())!);
 }
 
-test("players have two angled arms that follow kits, shape, rotation, scale, animation and SVG export", async ({
+test("player arms start disabled and use short thin black lines when enabled across views and exports", async ({
   page,
   context,
 }) => {
   await page.goto("/");
   const court = page.getByLabel("Interactive handball court");
+  await expect(court.locator("[data-player-arms]")).toHaveCount(0);
+  await expect(
+    page.getByLabel("Player arms", { exact: true }),
+  ).not.toBeChecked();
+  await page.getByLabel("Player arms", { exact: true }).check();
+  await expect(page.getByRole("status")).toHaveText("All changes saved");
+  await page.reload();
+  await expect(page.getByLabel("Player arms", { exact: true })).toBeChecked();
   await expect(court.locator("[data-player-arms]")).toHaveCount(13);
   await expect(court.locator("[data-player-arms] line")).toHaveCount(26);
   await expect(
@@ -59,7 +67,11 @@ test("players have two angled arms that follow kits, shape, rotation, scale, ani
   const player = court.getByRole("img", { name: "attacker C", exact: true });
   await expect(player.locator("[data-player-arms]")).toHaveAttribute(
     "stroke",
-    "#b32939",
+    "#000000",
+  );
+  await expect(player.locator("[data-player-arms]")).toHaveAttribute(
+    "stroke-width",
+    "1.5",
   );
   await player.click();
   await setRange(page.getByLabel("Player scale", { exact: true }), 1.5);
@@ -108,6 +120,17 @@ test("players have two angled arms that follow kits, shape, rotation, scale, ani
   ).toHaveCount(0);
   await expect(exported.locator("[data-token-glyph][filter]")).toHaveCount(0);
   await exported.close();
+  await page.getByLabel("Close dialog", { exact: true }).click();
+  await page.getByRole("button", { name: "Edit step", exact: true }).click();
+  await page.getByRole("tab", { name: "Editor", exact: true }).click();
+  await page.getByLabel("Player arms", { exact: true }).uncheck();
+  await expect(court.locator("[data-player-arms]")).toHaveCount(0);
+  await expect(page.getByRole("status")).toHaveText("All changes saved");
+  await page.reload();
+  await expect(
+    page.getByLabel("Player arms", { exact: true }),
+  ).not.toBeChecked();
+  await expect(court.locator("[data-player-arms]")).toHaveCount(0);
 });
 
 test("clipboard receives the exact PNG export, including background, arms, images, and off-court ink", async ({
@@ -116,6 +139,7 @@ test("clipboard receives the exact PNG export, including background, arms, image
 }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/");
+  await page.getByLabel("Player arms", { exact: true }).check();
   await page
     .getByLabel("Canvas background", { exact: true })
     .selectOption("custom");

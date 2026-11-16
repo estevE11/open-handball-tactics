@@ -11,6 +11,7 @@ export function Token({
   token: t,
   selected,
   labels = true,
+  arms = false,
   image,
   onPointerDown,
   onRotate,
@@ -21,6 +22,7 @@ export function Token({
   token: TacticalToken;
   selected?: boolean;
   labels?: boolean;
+  arms?: boolean;
   playerScale?: number;
   sceneRotation?: number;
   kit?: PlayerKit;
@@ -106,15 +108,15 @@ export function Token({
         >
           <g transform={`scale(${contentScale})`}>
             {isPlayer && kit && <KitPattern kit={kit} id={kitId} />}
-            {isPlayer && (
+            {isPlayer && arms && (
               <g
                 data-player-arms="true"
-                stroke={kit?.primary ?? t.color}
-                strokeWidth="3.5"
+                stroke="#000000"
+                strokeWidth="1.5"
                 strokeLinecap="round"
               >
-                <line x1="-7" y1="3" x2="-23" y2="-10" />
-                <line x1="7" y1="3" x2="23" y2="-10" />
+                <line x1="-7" y1="3" x2="-19" y2="-6" />
+                <line x1="7" y1="3" x2="19" y2="-6" />
               </g>
             )}
             {t.equipment === "image" ? (

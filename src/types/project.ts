@@ -50,6 +50,7 @@ export const courtConfigSchema = z.object({
   lineWeight: z.number().min(1).max(5),
   grid: z.boolean(),
   showLabels: z.boolean(),
+  showArms: z.boolean().optional(),
   highlight: z.boolean(),
 });
 

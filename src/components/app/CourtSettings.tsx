@@ -172,16 +172,25 @@ export function CourtSettings({
           <span>{Math.round((config.playerScale ?? 1) * 100)}%</span>
         </span>
       </label>
-      {(["grid", "showLabels", "highlight"] as const).map((key, i) => (
-        <label className="toggle-row" key={key}>
-          {["Show grid", "Player labels", "Highlight key lines"][i]}
-          <input
-            type="checkbox"
-            checked={config[key]}
-            onChange={(e) => change({ [key]: e.target.checked })}
-          />
-        </label>
-      ))}
+      {(["grid", "showLabels", "showArms", "highlight"] as const).map(
+        (key, i) => (
+          <label className="toggle-row" key={key}>
+            {
+              [
+                "Show grid",
+                "Player labels",
+                "Player arms",
+                "Highlight key lines",
+              ][i]
+            }
+            <input
+              type="checkbox"
+              checked={config[key] ?? false}
+              onChange={(e) => change({ [key]: e.target.checked })}
+            />
+          </label>
+        ),
+      )}
     </div>
   );
 }

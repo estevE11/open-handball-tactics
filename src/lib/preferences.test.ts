@@ -26,6 +26,7 @@ it("persists every court default and gives each drill its own settings", () => {
     grid: true,
     highlight: true,
     showLabels: false,
+    showArms: true,
     themeColors: { floor: "#aabbcc", area: "#556677", lines: "#112233" },
   };
   savePreferences({ courtDefaults: config, theme: "system" }, local);

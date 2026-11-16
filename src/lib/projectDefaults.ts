@@ -11,6 +11,7 @@ export const DEFAULT_COURT: CourtConfig = {
   lineWeight: 2,
   grid: false,
   showLabels: true,
+  showArms: false,
   highlight: false,
   playerScale: 1,
 };

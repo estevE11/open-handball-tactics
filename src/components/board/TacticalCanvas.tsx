@@ -429,6 +429,7 @@ export function TacticalCanvas({
                 key={token.id}
                 token={token}
                 labels={config.showLabels}
+                arms={config.showArms ?? false}
                 playerScale={config.playerScale}
                 sceneRotation={sceneRotation}
                 kit={playerKit(project, token)}
@@ -482,6 +483,7 @@ export function TacticalCanvas({
               kit={playerKit(project, token)}
               selected={selected === token.id}
               labels={config.showLabels}
+              arms={config.showArms ?? false}
               image={token.assetId ? assetUrls[token.assetId] : undefined}
               onPointerDown={
                 playbackTime === null
