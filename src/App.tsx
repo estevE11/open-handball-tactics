@@ -1091,8 +1091,11 @@ export default function App() {
                 Use the tools to add players and equipment. Drag to move them,
                 or choose an arrow tool and drag across the court. Drag an
                 existing arrow to move the whole path; use its endpoints and
-                numbered Bézier handles to reshape it. The inspector controls
-                arrowheads and lets you add or remove bends.
+                numbered Bézier handles to reshape it. Double-click or
+                double-tap an item to open its properties beside it. The popup
+                includes Delete, number steppers, and all item settings,
+                including arrowheads and bends. Drag the item or tap outside to
+                close it. You can also select an item and press Enter on the court.
               </p>
               <p>
                 Use Fullscreen to fill the screen with the court. Half courts

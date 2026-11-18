@@ -126,14 +126,14 @@ for (const view of ["top", "bottom", "full"] as const) {
     if (view === "full") expect(pointing.x).toBeGreaterThan(0);
     else if (view === "top") expect(pointing.y).toBeGreaterThan(0);
     else expect(pointing.y).toBeLessThan(0);
-    await defender.click();
-    await page.getByLabel("Object rotation").fill("150");
+    await defender.dblclick();
+    await page.getByLabel("Object rotation", { exact: true }).fill("150");
     expect(await angle(defender)).toBeCloseTo(-30);
     await page.getByRole("tab", { name: "Animation", exact: true }).click();
     await page.getByRole("button", { name: "Add step", exact: true }).click();
     await page.getByRole("tab", { name: "Editor", exact: true }).click();
-    await defender.click();
-    await page.getByLabel("Object rotation").fill("210");
+    await defender.dblclick();
+    await page.getByLabel("Object rotation", { exact: true }).fill("210");
     expect(await angle(defender)).toBeCloseTo(30);
     await page.getByRole("tab", { name: "Animation", exact: true }).click();
     await page.getByLabel("Onion skin").check();

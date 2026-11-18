@@ -18,7 +18,7 @@ test("player petos are translucent beneath labels, configurable, and survive ste
   await page.goto("/");
   const court = page.locator("#tactical-canvas");
   const player = court.getByRole("img", { name: "attacker B", exact: true });
-  await player.click();
+  await player.dblclick();
   await page.getByLabel("Peto", { exact: true }).check();
   await expect(player.locator('[data-peto="yellow"]')).toHaveCount(1);
   await expect(court.locator("[data-peto]")).toHaveCount(1);
@@ -72,9 +72,9 @@ test("player petos are translucent beneath labels, configurable, and survive ste
   await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
   await page.getByRole("tab", { name: "Editor", exact: true }).click();
-  await player.click();
-  await page.getByLabel("Object rotation").fill("60");
-  await setRange(page.getByLabel("Token size"), "28");
+  await player.dblclick();
+  await page.getByLabel("Object rotation", { exact: true }).fill("60");
+  await setRange(page.getByLabel("Token size", { exact: true }), "28");
   await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await setRange(page.getByLabel("Animation timeline"), "750");
   expect(
@@ -164,7 +164,7 @@ test("defenders and goalkeepers can wear petos; equipment cannot", async ({
   const court = page.locator("#tactical-canvas");
   for (const name of ["defender 1", "goalkeeper GK"]) {
     const player = court.getByRole("img", { name, exact: true }).first();
-    await player.click();
+    await player.dblclick();
     await page.getByLabel("Peto", { exact: true }).check();
     await expect(player.locator('[data-peto="yellow"]')).toHaveCount(1);
   }

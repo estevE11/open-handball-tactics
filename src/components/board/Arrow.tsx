@@ -21,6 +21,7 @@ export function Arrow({
       onPointerDown={onPointerDown}
       style={{ cursor: onPointerDown ? "move" : undefined }}
       data-arrow-id={arrow.id}
+      data-item-id={arrow.id}
       aria-label={`${arrow.type} trajectory`}
     >
       <path

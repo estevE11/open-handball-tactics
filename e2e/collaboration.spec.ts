@@ -133,7 +133,7 @@ test("shared link syncs edits, live gestures, settings, assets, undo and rejoini
     );
     await guest.getByLabel("Template").selectOption("full");
     await expect(hostCourt).toHaveAttribute("viewBox", "-12 -12 824 424");
-    await guestPlayer.click();
+    await guestPlayer.dblclick();
     await guest.getByLabel("Arms", { exact: true }).check();
     await expect(hostPlayer.locator("[data-player-arms]")).toHaveCount(1);
     await expect(hostCourt.locator("[data-player-arms]")).toHaveCount(1);

@@ -111,9 +111,9 @@ test("player lettering stays attached through shape, size, rotation, animation, 
     0,
   );
   await setRange(page.getByLabel("Player scale"), 1.5);
-  await attacker.click();
-  await setRange(page.getByLabel("Token size"), 28);
-  await page.getByLabel("Object rotation").fill("45");
+  await attacker.dblclick();
+  await setRange(page.getByLabel("Token size", { exact: true }), 28);
+  await page.getByLabel("Object rotation", { exact: true }).fill("45");
   for (const shape of ["circle", "triangle", "square"]) {
     await page
       .getByRole("button", { name: `Use ${shape}`, exact: true })
@@ -123,9 +123,9 @@ test("player lettering stays attached through shape, size, rotation, animation, 
   await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
   await page.getByRole("tab", { name: "Editor", exact: true }).click();
-  await attacker.click();
-  await setRange(page.getByLabel("Token size"), 14);
-  await page.getByLabel("Object rotation").fill("135");
+  await attacker.dblclick();
+  await setRange(page.getByLabel("Token size", { exact: true }), 14);
+  await page.getByLabel("Object rotation", { exact: true }).fill("135");
   await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByLabel("Onion skin").check();
   const copies = page.getByRole("img", { name: "attacker C", exact: true });
@@ -175,18 +175,18 @@ test("defenders and goalkeepers face attackers, rotate, and animate between step
     "rotate(180)",
   );
   await expect(keeper.locator("[data-token-glyph] path")).toHaveCount(1);
-  await defender.click();
+  await defender.dblclick();
   await expect(defender.locator("[data-token-glyph]")).toHaveAttribute(
     "filter",
     /url/,
   );
   await expect(defender.locator("rect")).toHaveCount(0);
-  await page.getByLabel("Object rotation").fill("350");
+  await page.getByLabel("Object rotation", { exact: true }).fill("350");
   await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await page.getByRole("button", { name: "Add step", exact: true }).click();
   await page.getByRole("tab", { name: "Editor", exact: true }).click();
-  await defender.click();
-  await page.getByLabel("Object rotation").fill("10");
+  await defender.dblclick();
+  await page.getByLabel("Object rotation", { exact: true }).fill("10");
   await page.getByRole("tab", { name: "Animation", exact: true }).click();
   await setRange(page.getByLabel("Animation timeline"), 750);
   await expect(defender.locator("[data-token-body]")).toHaveAttribute(
@@ -393,11 +393,12 @@ test("arrows move as a whole and support draggable endpoints and multiple Bézie
   await expect(line).not.toHaveAttribute("d", original!);
   await expect(court.getByLabel("Arrow start point")).toBeVisible();
   const originalColor = await line.getAttribute("stroke");
+  await page.mouse.dblclick(target.x, target.y);
   await page.getByLabel("Line color", { exact: true }).fill("#e11d48");
   await expect(line).toHaveAttribute("stroke", "#e11d48");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(line).toHaveAttribute("stroke", originalColor!);
-  await page.mouse.click(target.x, target.y);
+  await page.mouse.dblclick(target.x, target.y);
   await page.getByLabel("Line color", { exact: true }).fill("#e11d48");
   await page.getByLabel("Arrowheads", { exact: true }).selectOption("both");
   await expect(court.locator("[data-arrow-head]")).toHaveCount(2);
@@ -470,7 +471,8 @@ test("training equipment has distinct proportions and supports rotation", async 
   await expect(ladder.locator("[data-ladder-rung]")).toHaveCount(8);
   const ladderBox = (await ladder.boundingBox())!;
   expect(ladderBox.height).toBeGreaterThan(ladderBox.width * 2.5);
-  await page.getByLabel("Object rotation").fill("90");
+  await court.getByRole("img", { name: "equipment ladder" }).dblclick();
+  await page.getByLabel("Object rotation", { exact: true }).fill("90");
   await expect(
     page
       .getByRole("img", { name: "equipment ladder" })

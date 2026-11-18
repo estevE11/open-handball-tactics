@@ -162,10 +162,10 @@ test("fullscreen supports drawing, selection properties, changing templates, and
   await page
     .getByRole("button", { name: "Select & move (V)", exact: true })
     .click();
-  await page.getByRole("img", { name: "attacker B", exact: true }).click();
   await page
     .getByRole("button", { name: "Show properties", exact: true })
     .click();
+  await page.getByRole("img", { name: "attacker B", exact: true }).dblclick();
   await page.getByLabel("Token label", { exact: true }).fill("Playmaker");
   await page.getByRole("button", { name: "Hide tools", exact: true }).click();
   await page.getByLabel("Template").selectOption("full");

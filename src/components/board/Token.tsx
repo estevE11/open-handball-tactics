@@ -54,6 +54,7 @@ export function Token({
       onPointerDown={onPointerDown}
       role="img"
       aria-label={`${t.role} ${t.label || t.equipment || ""}`}
+      data-item-id={t.id}
       style={{ cursor: onPointerDown ? "grab" : undefined }}
       data-kit-id={isPlayer ? kit?.id : undefined}
     >
@@ -100,6 +101,29 @@ export function Token({
             </filter>
           </defs>
         )}
+        {onPointerDown &&
+          ["ladder", "goal", "text"].includes(t.equipment ?? "") && (
+            <rect
+              data-editor-only="true"
+              x={
+                t.equipment === "ladder"
+                  ? -r * 0.6
+                  : t.equipment === "text"
+                    ? -r * Math.max(1, t.label.length * 0.35)
+                    : -r
+              }
+              y={t.equipment === "ladder" ? -r * 1.8 : -r}
+              width={
+                t.equipment === "ladder"
+                  ? r * 1.2
+                  : t.equipment === "text"
+                    ? r * Math.max(2, t.label.length * 0.7)
+                    : r * 2
+              }
+              height={t.equipment === "ladder" ? r * 3.6 : r * 2}
+              fill="transparent"
+            />
+          )}
         <g
           data-token-glyph="true"
           filter={selected ? `url(#${outlineId})` : undefined}

@@ -33,10 +33,10 @@ test("player arms are independent and persist across steps, views and exports", 
   await expect(page.getByLabel("Player arms", { exact: true })).toHaveCount(0);
   const player = court.getByRole("img", { name: "attacker C", exact: true });
   const otherPlayer = court.getByRole("img", { name: "attacker B", exact: true });
-  await player.click();
+  await player.dblclick();
   await expect(page.getByLabel("Arms", { exact: true })).not.toBeChecked();
   await page.getByLabel("Arms", { exact: true }).check();
-  await otherPlayer.click();
+  await otherPlayer.dblclick();
   await expect(page.getByLabel("Arms", { exact: true })).not.toBeChecked();
   await page.getByLabel("Arms", { exact: true }).check();
   await expect(court.locator("[data-player-arms]")).toHaveCount(2);
@@ -45,7 +45,7 @@ test("player arms are independent and persist across steps, views and exports", 
   await expect(otherPlayer.locator("[data-player-arms]")).toHaveCount(0);
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
-  await player.click();
+  await player.dblclick();
   await expect(page.getByLabel("Arms", { exact: true })).toBeChecked();
   await expect(court.locator("[data-player-arms]")).toHaveCount(1);
   await expect(court.locator("[data-player-arms] line")).toHaveCount(2);
@@ -71,8 +71,9 @@ test("player arms are independent and persist across steps, views and exports", 
     "stroke-width",
     "1.5",
   );
-  await player.click();
+  await player.dblclick();
   await setRange(page.getByLabel("Player scale", { exact: true }), 1.5);
+  await player.dblclick();
   await setRange(page.getByLabel("Token size", { exact: true }), 28);
   await page.getByLabel("Object rotation", { exact: true }).fill("45");
   for (const shape of ["circle", "triangle", "square"]) {
@@ -133,14 +134,14 @@ test("player arms are independent and persist across steps, views and exports", 
   await page.getByLabel("Close dialog", { exact: true }).click();
   await page.getByRole("button", { name: "Edit step", exact: true }).click();
   await page.getByRole("tab", { name: "Editor", exact: true }).click();
-  await player.click();
+  await player.dblclick();
   await page.getByLabel("Peto", { exact: true }).check();
   await page.getByLabel("Arms", { exact: true }).uncheck();
   await expect(court.locator("[data-player-arms]")).toHaveCount(0);
   await expect(player.locator("[data-peto]")).toHaveCount(1);
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
-  await player.click();
+  await player.dblclick();
   await expect(
     page.getByLabel("Arms", { exact: true }),
   ).not.toBeChecked();
@@ -159,7 +160,7 @@ test("each player role can have arms while equipment cannot", async ({ page }) =
   const court = page.getByLabel("Interactive handball court");
   for (const name of ["attacker B", "defender 1", "goalkeeper GK"]) {
     const player = court.getByRole("img", { name, exact: true }).first();
-    await player.click();
+    await player.dblclick();
     await expect(page.getByLabel("Arms", { exact: true })).not.toBeChecked();
     await page.getByLabel("Arms", { exact: true }).check();
     await expect(player.locator("[data-player-arms]")).toHaveCount(1);
@@ -178,7 +179,7 @@ test("clipboard receives the exact PNG export, including background, arms, image
   await page
     .getByLabel("Interactive handball court")
     .getByRole("img", { name: "attacker C", exact: true })
-    .click();
+    .dblclick();
   await page.getByLabel("Arms", { exact: true }).check();
   await page
     .getByLabel("Canvas background", { exact: true })
