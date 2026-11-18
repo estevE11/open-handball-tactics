@@ -175,53 +175,102 @@ test("Delete is shared by players, equipment, text, and images and can be undone
   await expect(court.locator("image")).toHaveAttribute("href", /^blob:/);
 });
 
-test("trajectory popup retains all arrow settings and closes when reshaping or moving the line", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const court = page.getByLabel("Interactive handball court");
-  const popup = page.getByRole("dialog", {
-    name: "Item properties",
-    exact: true,
+for (const width of [1440, 390]) {
+  test(`${width}px trajectory popup retains all arrow settings and closes when reshaping or moving the line`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ colorScheme: width === 1440 ? "dark" : "light" });
+    await page.goto("/");
+    const court = page.getByLabel("Interactive handball court");
+    const popup = page.getByRole("dialog", {
+      name: "Item properties",
+      exact: true,
+    });
+    const start = await courtPoint(page, 50, 340),
+      end = await courtPoint(page, 150, 340);
+    const middle = await courtPoint(page, 100, 340);
+    await page.getByRole("button", { name: "Run arrow", exact: true }).click();
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(end.x, end.y, { steps: 5 });
+    await page.mouse.up();
+    await page
+      .getByRole("button", { name: "Select & move (V)", exact: true })
+      .click();
+    await page.mouse.dblclick(middle.x, middle.y);
+    await expect(popup).toBeVisible();
+    await popup.getByLabel("Arrowheads").selectOption("both");
+    await popup.getByLabel("Line color").fill("#e11d48");
+    const points = popup.getByRole("region", {
+      name: "Bézier points",
+      exact: true,
+    });
+    const pointList = points.getByRole("list", {
+      name: "Bézier control points",
+    });
+    const straightPath = await court
+      .locator("[data-arrow-line]")
+      .getAttribute("d");
+    await expect(pointList.getByRole("listitem")).toHaveCount(1);
+    await expect(
+      points.getByRole("button", { name: "Remove Bézier point 1" }),
+    ).toBeDisabled();
+    await expect(
+      points.getByRole("button", { name: "Straighten line" }),
+    ).toBeDisabled();
+    await popup.getByRole("button", { name: "Add Bézier point" }).click();
+    await expect(pointList.getByRole("listitem")).toHaveCount(2);
+    const beforeBend = await court
+      .locator("[data-arrow-line]")
+      .getAttribute("d");
+    const bend = (await court
+      .getByLabel("Bézier point 1", { exact: true })
+      .boundingBox())!;
+    await page.mouse.move(bend.x + bend.width / 2, bend.y + bend.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(bend.x + 10, bend.y - 35, { steps: 5 });
+    await page.mouse.up();
+    await expect(court.locator("[data-arrow-line]")).not.toHaveAttribute(
+      "d",
+      beforeBend!,
+    );
+    await court.focus();
+    await page.keyboard.press("Enter");
+    await page.screenshot({ path: `test-results/bezier-points-${width}.png` });
+    await points.getByRole("button", { name: "Straighten line" }).click();
+    await expect(court.locator("[data-arrow-line]")).toHaveAttribute(
+      "d",
+      straightPath!,
+    );
+    await expect(pointList.getByRole("listitem")).toHaveCount(1);
+    await expect(
+      points.getByRole("button", { name: "Straighten line" }),
+    ).toBeDisabled();
+    await popup.getByRole("button", { name: "Add Bézier point" }).click();
+    await popup.getByRole("button", { name: "Remove Bézier point 2" }).click();
+    await expect(court.locator("[data-arrow-head]")).toHaveCount(2);
+    await expect(court.locator("[data-arrow-line]")).toHaveAttribute(
+      "stroke",
+      "#e11d48",
+    );
+    const handle = (await court.getByLabel("Arrow end point").boundingBox())!;
+    await page.mouse.move(
+      handle.x + handle.width / 2,
+      handle.y + handle.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(handle.x + 30, handle.y - 30, { steps: 5 });
+    await page.mouse.up();
+    await expect(popup).toHaveCount(0);
+    await page.mouse.dblclick(start.x + 10, start.y - 3);
+    await expect(popup).toBeVisible();
+    await popup.getByRole("button", { name: "Delete", exact: true }).click();
+    await expect(court.locator("[data-arrow-line]")).toHaveCount(0);
+    await page.getByRole("button", { name: "Undo", exact: true }).click();
+    await expect(court.locator("[data-arrow-line]")).toHaveCount(1);
   });
-  const start = await courtPoint(page, 50, 340),
-    end = await courtPoint(page, 150, 340);
-  const middle = await courtPoint(page, 100, 340);
-  await page.getByRole("button", { name: "Run arrow", exact: true }).click();
-  await page.mouse.move(start.x, start.y);
-  await page.mouse.down();
-  await page.mouse.move(end.x, end.y, { steps: 5 });
-  await page.mouse.up();
-  await page
-    .getByRole("button", { name: "Select & move (V)", exact: true })
-    .click();
-  await page.mouse.dblclick(middle.x, middle.y);
-  await expect(popup).toBeVisible();
-  await popup.getByLabel("Arrowheads").selectOption("both");
-  await popup.getByLabel("Line color").fill("#e11d48");
-  await popup.getByRole("button", { name: "Add Bézier point" }).click();
-  await popup.getByRole("button", { name: "Remove Bézier point 2" }).click();
-  await expect(court.locator("[data-arrow-head]")).toHaveCount(2);
-  await expect(court.locator("[data-arrow-line]")).toHaveAttribute(
-    "stroke",
-    "#e11d48",
-  );
-  const handle = (await court.getByLabel("Arrow end point").boundingBox())!;
-  await page.mouse.move(
-    handle.x + handle.width / 2,
-    handle.y + handle.height / 2,
-  );
-  await page.mouse.down();
-  await page.mouse.move(handle.x + 30, handle.y - 30, { steps: 5 });
-  await page.mouse.up();
-  await expect(popup).toHaveCount(0);
-  await page.mouse.dblclick(start.x + 10, start.y - 3);
-  await expect(popup).toBeVisible();
-  await popup.getByRole("button", { name: "Delete", exact: true }).click();
-  await expect(court.locator("[data-arrow-line]")).toHaveCount(0);
-  await page.getByRole("button", { name: "Undo", exact: true }).click();
-  await expect(court.locator("[data-arrow-line]")).toHaveCount(1);
-});
+}
 
 test.describe("touch item properties", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });

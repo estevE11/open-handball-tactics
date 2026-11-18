@@ -1,4 +1,13 @@
-import { Circle, Triangle, Square, Trash2, Check, X } from "lucide-react";
+import {
+  Circle,
+  Triangle,
+  Square,
+  Trash2,
+  Check,
+  X,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
 import { PETO_COLORS } from "../../types/peto";
 import { playerKit } from "../../lib/kits";
 import {
@@ -202,52 +211,89 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
                 <option value="none">None</option>
               </select>
             </label>
-            <p className="muted">
-              Drag the line to move it. Blue endpoints change its reach;
-              numbered handles shape the curve.
-            </p>
-            <button
-              className="text-button"
-              disabled={arrowControls(arrow).length >= 12}
-              onClick={() =>
-                edit((d) => {
-                  const frame = d.keyframes[frameIndex];
-                  const index = frame.arrows.findIndex(
-                    (a) => a.id === selected,
-                  );
-                  if (index !== -1)
-                    frame.arrows[index] = addControl(frame.arrows[index]);
-                })
-              }
-            >
-              + Add Bézier point
-            </button>
-            <div className="bezier-points">
-              {editableControls(arrow).map((_, index) => (
+            <section className="bezier-editor" aria-label="Bézier points">
+              <div className="bezier-heading">
+                <h3>
+                  Bézier points{" "}
+                  <span className="bezier-count">
+                    {editableControls(arrow).length} / 12
+                  </span>
+                </h3>
                 <button
-                  key={index}
-                  className="text-button"
-                  aria-label={`Remove Bézier point ${index + 1}`}
+                  className="bezier-add"
+                  aria-label="Add Bézier point"
+                  disabled={arrowControls(arrow).length >= 12}
                   onClick={() =>
                     edit((d) => {
                       const frame = d.keyframes[frameIndex];
-                      const at = frame.arrows.findIndex(
+                      const index = frame.arrows.findIndex(
                         (a) => a.id === selected,
                       );
-                      if (at !== -1)
-                        frame.arrows[at] = withControls(
-                          frame.arrows[at],
-                          editableControls(frame.arrows[at]).filter(
-                            (_, i) => i !== index,
-                          ),
-                        );
+                      if (index !== -1)
+                        frame.arrows[index] = addControl(frame.arrows[index]);
                     })
                   }
                 >
-                  Point {index + 1} ×
+                  <Plus size={16} /> Add point
                 </button>
-              ))}
-            </div>
+              </div>
+              <p className="muted">
+                {arrowControls(arrow).length
+                  ? "Drag the numbered handles on the court to shape the curve."
+                  : "Drag the center handle to bend the line, or add points for more control."}
+              </p>
+              <ol className="bezier-points" aria-label="Bézier control points">
+                {editableControls(arrow).map((_, index) => (
+                  <li key={index}>
+                    <span className="bezier-number" aria-hidden="true">
+                      {index + 1}
+                    </span>
+                    <span>Point {index + 1}</span>
+                    <button
+                      className="bezier-remove"
+                      aria-label={`Remove Bézier point ${index + 1}`}
+                      title={
+                        arrowControls(arrow).length
+                          ? `Remove point ${index + 1}`
+                          : "Drag the center handle to start a curve"
+                      }
+                      disabled={!arrowControls(arrow).length}
+                      onClick={() =>
+                        edit((d) => {
+                          const frame = d.keyframes[frameIndex];
+                          const at = frame.arrows.findIndex(
+                            (a) => a.id === selected,
+                          );
+                          if (at !== -1)
+                            frame.arrows[at] = withControls(
+                              frame.arrows[at],
+                              editableControls(frame.arrows[at]).filter(
+                                (_, i) => i !== index,
+                              ),
+                            );
+                        })
+                      }
+                    >
+                      <X size={17} />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <button
+                className="bezier-reset"
+                disabled={!arrowControls(arrow).length}
+                onClick={() =>
+                  edit((d) => {
+                    const frame = d.keyframes[frameIndex];
+                    const at = frame.arrows.findIndex((a) => a.id === selected);
+                    if (at !== -1)
+                      frame.arrows[at] = withControls(frame.arrows[at], []);
+                  })
+                }
+              >
+                <RotateCcw size={15} /> Straighten line
+              </button>
+            </section>
           </div>
         )}
         {token && (

@@ -2365,17 +2365,103 @@ h1 {
   margin: 12px 0;
 }
 
-.bezier-points {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  margin: 5px 0;
+.bezier-editor {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #dce5df;
 }
-.bezier-points .text-button {
-  border: 1px solid #dce3d8;
-  padding: 4px 6px;
-  border-radius: 4px;
-  font-size: 9px;
+.bezier-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bezier-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+}
+.bezier-count {
+  color: #7c8a81;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.bezier-add,
+.bezier-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #c9d9cd;
+  border-radius: 7px;
+  background: #edf4ee;
+  color: #45634e;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.bezier-add:hover:not(:disabled),
+.bezier-reset:hover:not(:disabled) {
+  background: #dfebe2;
+}
+.bezier-points {
+  display: grid;
+  gap: 7px;
+  max-height: 208px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.bezier-points li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 4px 4px 4px 11px;
+  border: 1px solid #dce5df;
+  border-radius: 8px;
+  background: #f6f8f6;
+  color: #46574c;
+  font-size: 14px;
+}
+.bezier-number {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #a5bef3;
+  border-radius: 50%;
+  background: #eaf0ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+}
+.bezier-remove {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #87968c;
+}
+.bezier-remove:hover:not(:disabled) {
+  background: #fae9e7;
+  color: #bd4444;
+}
+.bezier-reset {
+  width: 100%;
+  background: transparent;
+  font-weight: 400;
 }
 
 /* Appearance belongs to the workspace. Court fills and exports stay drill-owned. */
@@ -2677,8 +2763,36 @@ h1 {
   background: #35452e;
   border-color: #4d6042;
 }
-.dark .bezier-points .text-button {
-  border-color: #4c5b44;
+.dark :is(.bezier-editor, .bezier-points li) {
+  border-color: #3d4b43;
+}
+.dark .bezier-points li {
+  background: #27312b;
+  color: #d1ddd4;
+}
+.dark .bezier-number {
+  background: #233958;
+  border-color: #45699c;
+  color: #a8c6ff;
+}
+.dark .bezier-count {
+  color: #a0b0a5;
+}
+.dark :is(.bezier-add, .bezier-reset) {
+  background: #304334;
+  border-color: #536c55;
+  color: #d0e1cb;
+}
+.dark .bezier-reset {
+  background: transparent;
+}
+.dark .bezier-add:hover:not(:disabled),
+.dark .bezier-reset:hover:not(:disabled) {
+  background: #405842;
+}
+.dark .bezier-remove:hover:not(:disabled) {
+  background: #4b3031;
+  color: #ffb2ac;
 }
 .dark .tool-attacker {
   color: #86b9dc;
