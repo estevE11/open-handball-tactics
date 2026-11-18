@@ -1664,12 +1664,13 @@ h1 {
 }
 .item-properties-heading h2 {
   flex: 1;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
 }
 .item-properties-heading .danger {
   color: #b54343;
+  font-size: 12px;
   gap: 5px;
   padding: 7px 4px;
 }
@@ -1677,6 +1678,9 @@ h1 {
   display: grid;
   gap: 14px;
   padding: 14px;
+}
+.item-properties-fields label {
+  font-size: 14px;
 }
 .item-properties-fields :is(.inline-label, .toggle-row, .shape-options) {
   margin: 0;
@@ -1688,14 +1692,41 @@ h1 {
   font-size: 16px;
 }
 .item-properties-fields .muted {
-  font-size: 11px;
+  font-size: 12px;
 }
 .item-properties-fields .shape-options button {
   flex: 1;
   height: 36px;
 }
 .item-properties-fields .toggle-row {
-  min-height: 28px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.item-properties-fields .toggle-row input {
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.item-properties-fields .toggle-row input::before {
+  width: 22px;
+  height: 22px;
+  top: 3px;
+  left: 3px;
+}
+.item-properties-fields .toggle-row input:checked::before {
+  left: 23px;
+}
+.item-properties-fields input[type="color"] {
+  width: 56px;
+  height: 44px;
+  padding: 4px;
+  border-radius: 8px;
+}
+.item-properties-fields .peto-colors button {
+  width: 44px;
+  height: 44px;
 }
 .item-properties-fields .arrow-settings {
   display: grid;
