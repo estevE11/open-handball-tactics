@@ -60,7 +60,8 @@ import { useCollaborationStore } from "./store/collaborationStore";
 import type { DrillProject, FolderNode, Point } from "./types/project";
 
 type Dialog =
-  | { type: "new" | "folder" | "export" | "help" | "preferences" }
+  | { type: "export" | "help" | "preferences" }
+  | { type: "new" | "folder"; fromExplorer?: boolean }
   | { type: "details"; projectId?: string }
   | { type: "manage"; folder: FolderNode };
 
@@ -326,12 +327,15 @@ export default function App() {
       if (dialog?.type === "new") {
         const next = createProject(name, parentId);
         await library.save(next);
-        board.open(next);
-        setSidebar(false);
+        if (dialog.fromExplorer) selectFolder(parentId);
+        else {
+          board.open(next);
+          setSidebar(false);
+        }
       }
       if (dialog?.type === "folder") {
         const next = await library.createFolder(name, parentId);
-        selectFolder(next.id);
+        selectFolder(dialog.fromExplorer ? parentId : next.id);
       }
       if (dialog?.type === "manage")
         await library.updateFolder(dialog.folder.id, name, parentId);
@@ -857,6 +861,8 @@ export default function App() {
           onManageProject={(p) =>
             setDialog({ type: "details", projectId: p.id })
           }
+          onNewFolder={() => setDialog({ type: "folder", fromExplorer: true })}
+          onNewDrill={() => setDialog({ type: "new", fromExplorer: true })}
           onClose={() => setExplorer(false)}
           busy={busy}
           error={notice}

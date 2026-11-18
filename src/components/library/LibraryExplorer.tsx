@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { ArrowUp, LayoutGrid, List, PanelLeft, Search, X } from "lucide-react";
+import {
+  ArrowUp,
+  FilePlus2,
+  FolderPlus,
+  LayoutGrid,
+  List,
+  PanelLeft,
+  Search,
+  X,
+} from "lucide-react";
 import type { LibraryContents as Contents } from "../../lib/libraryNavigation";
 import type { DrillProject, FolderNode } from "../../types/project";
 import { Modal } from "../ui/Modal";
@@ -19,6 +28,8 @@ export function LibraryExplorer({
   onProject,
   onManage,
   onManageProject,
+  onNewFolder,
+  onNewDrill,
   onClose,
   busy,
   error,
@@ -34,6 +45,8 @@ export function LibraryExplorer({
   onProject: (project: DrillProject) => void;
   onManage: (folder: FolderNode) => void;
   onManageProject: (project: DrillProject) => void;
+  onNewFolder: () => void;
+  onNewDrill: () => void;
   onClose: () => void;
   busy: boolean;
   error: string | null;
@@ -49,6 +62,30 @@ export function LibraryExplorer({
       title="Library explorer"
       className="library-explorer"
       onClose={onClose}
+      headingActions={
+        <>
+          <button
+            className="button secondary explorer-create"
+            aria-label="New folder"
+            title="New folder in this location"
+            disabled={busy}
+            onClick={onNewFolder}
+          >
+            <FolderPlus size={17} />
+            <span>New folder</span>
+          </button>
+          <button
+            className="button primary explorer-create"
+            aria-label="New drill"
+            title="New drill in this location"
+            disabled={busy}
+            onClick={onNewDrill}
+          >
+            <FilePlus2 size={17} />
+            <span>New drill</span>
+          </button>
+        </>
+      }
     >
       <div className="explorer-toolbar">
         <button

@@ -101,6 +101,128 @@ async function seedLibrary(page: Page) {
   await page.getByLabel("Toggle library").click();
 }
 
+for (const width of [1440, 390]) {
+  test(`${width}px explorer creates folders and drills in the current location from its header`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ colorScheme: width === 1440 ? "dark" : "light" });
+    await seedLibrary(page);
+    const activeTitle = await page.locator(".topbar h1").textContent();
+    await page.getByLabel("Open library explorer", { exact: true }).click();
+    const explorer = page.getByRole("dialog", {
+      name: "Library explorer",
+      exact: true,
+    });
+    const heading = explorer.locator(".modal-heading");
+    const path = explorer.getByRole("navigation", {
+      name: "Current folder path",
+    });
+    const newFolder = heading.getByRole("button", {
+      name: "New folder",
+      exact: true,
+    });
+    const newDrill = heading.getByRole("button", {
+      name: "New drill",
+      exact: true,
+    });
+    const close = heading.getByRole("button", {
+      name: "Close dialog",
+      exact: true,
+    });
+    const positions = await Promise.all(
+      [newFolder, newDrill, close].map((button) => button.boundingBox()),
+    );
+    expect(positions[0]!.x).toBeLessThan(positions[1]!.x);
+    expect(positions[1]!.x).toBeLessThan(positions[2]!.x);
+    expect(positions[0]!.y).toBeCloseTo(positions[1]!.y);
+    for (const [name, parent] of [
+      ["Root", ""],
+      ["Nested", "def"],
+    ]) {
+      if (parent) {
+        await explorer
+          .getByRole("button", { name: "Open folder Offense", exact: true })
+          .click();
+        await explorer
+          .getByRole("button", { name: "Open folder DEF", exact: true })
+          .click();
+        await explorer.getByLabel("List view", { exact: true }).click();
+      }
+      const originalPath = await path.textContent();
+      await explorer
+        .getByLabel("Search library", { exact: true })
+        .fill("nothing matches this search");
+      await newFolder.click();
+      const folderForm = page.getByRole("dialog", {
+        name: "Create a folder",
+        exact: true,
+      });
+      await expect(
+        folderForm.getByRole("combobox", { name: "Folder", exact: true }),
+      ).toHaveValue(parent);
+      await folderForm
+        .getByRole("textbox", { name: "Name", exact: true })
+        .fill(`${name} new folder`);
+      await folderForm
+        .getByRole("button", { name: "Create", exact: true })
+        .click();
+      await expect(folderForm).not.toBeVisible();
+      await expect(explorer).toBeVisible();
+      await expect(path).toHaveText(originalPath!);
+      await expect(
+        explorer.getByLabel("Search library", { exact: true }),
+      ).toHaveValue("");
+      await expect(
+        explorer.getByRole("button", {
+          name: `Open folder ${name} new folder`,
+          exact: true,
+        }),
+      ).toBeVisible();
+      await newDrill.click();
+      const drillForm = page.getByRole("dialog", {
+        name: "Create a drill",
+        exact: true,
+      });
+      await expect(
+        drillForm.getByRole("combobox", { name: "Folder", exact: true }),
+      ).toHaveValue(parent);
+      await drillForm
+        .getByRole("textbox", { name: "Name", exact: true })
+        .fill(`${name} new drill`);
+      await drillForm
+        .getByRole("button", { name: "Create", exact: true })
+        .click();
+      await expect(drillForm).not.toBeVisible();
+      await expect(explorer).toBeVisible();
+      await expect(path).toHaveText(originalPath!);
+      await expect(page.locator(".topbar h1")).toHaveText(activeTitle!);
+      await explorer
+        .getByRole("button", {
+          name: `Manage drill ${name} new drill`,
+          exact: true,
+        })
+        .click();
+      const details = page.getByRole("dialog", {
+        name: "Drill details",
+        exact: true,
+      });
+      await expect(
+        details.getByRole("combobox", { name: "Folder", exact: true }),
+      ).toHaveValue(parent);
+      await details.getByLabel("Close dialog", { exact: true }).click();
+      await page.screenshot({
+        path: `test-results/explorer-create-${width}-${name}.png`,
+      });
+      expect(
+        await explorer.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth + 1,
+        ),
+      ).toBe(true);
+    }
+  });
+}
+
 test("sidebar drill menus edit, move, duplicate and delete the chosen drill without changing the active board", async ({
   page,
 }) => {
