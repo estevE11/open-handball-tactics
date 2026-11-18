@@ -111,6 +111,68 @@ test("item popup replaces the inspector, edits properties, and dismisses without
   expect(errors).toEqual([]);
 });
 
+test("right-click opens item properties and suppresses context menus only on the canvas", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const court = page.getByLabel("Interactive handball court");
+  const popup = page.getByRole("dialog", {
+    name: "Item properties",
+    exact: true,
+  });
+  await page.evaluate(() => {
+    window.addEventListener("contextmenu", (event) => {
+      document.body.dataset.contextMenuPrevented = String(event.defaultPrevented);
+    });
+  });
+  const player = court.getByRole("img", { name: "attacker C", exact: true });
+  const position = await player.getAttribute("transform");
+  await player.click({ button: "right" });
+  await expect(popup.getByLabel("Token label")).toHaveValue("C");
+  await expect(page.locator("body")).toHaveAttribute(
+    "data-context-menu-prevented",
+    "true",
+  );
+  await expect(player).toHaveAttribute("transform", position!);
+  await popup.getByLabel("Token label").fill("Right click");
+  await page.keyboard.press("Escape");
+  await court.getByRole("img", { name: "attacker Right click", exact: true }).click({
+    button: "right",
+  });
+  await expect(popup.getByLabel("Token label")).toHaveValue("Right click");
+  await page.keyboard.press("Escape");
+  await court.getByRole("img", { name: "equipment ball", exact: true }).click({
+    button: "right",
+  });
+  await expect(popup.getByRole("heading", { name: "Ball properties" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Run arrow", exact: true }).click();
+  const start = await courtPoint(page, 50, 340);
+  const end = await courtPoint(page, 150, 340);
+  const middle = await courtPoint(page, 100, 340);
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y, { steps: 5 });
+  await page.mouse.up();
+  await page.mouse.click(middle.x, middle.y, { button: "right" });
+  await expect(popup.getByLabel("Arrowheads")).toBeVisible();
+  await page.keyboard.press("Escape");
+  const blank = await courtPoint(page, 20, 300);
+  await page.mouse.click(blank.x, blank.y, { button: "right" });
+  await expect(popup).toHaveCount(0);
+  await expect(page.locator("body")).toHaveAttribute(
+    "data-context-menu-prevented",
+    "true",
+  );
+  const outsidePrevented = await page.locator(".topbar").evaluate((element) => {
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    element.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(outsidePrevented).toBe(false);
+});
+
 test("Delete is shared by players, equipment, text, and images and can be undone", async ({
   page,
 }) => {

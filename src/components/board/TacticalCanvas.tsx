@@ -453,6 +453,25 @@ export function TacticalCanvas({
         viewBox={courtViewBox(config)}
         aria-label={t("Interactive handball court")}
         tabIndex={renderScene ? undefined : 0}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          if (renderScene || playbackTime !== null) return;
+          const item = (event.target as Element).closest<SVGGraphicsElement>(
+            "[data-item-id]",
+          );
+          const id = item?.dataset.itemId;
+          if (
+            !id ||
+            !item ||
+            (!frame.tokens.some((token) => token.id === id) &&
+              !frame.arrows.some((arrow) => arrow.id === id))
+          )
+            return;
+          lastTap.current = null;
+          setTool("select");
+          setSelected(id);
+          setProperties({ id, anchor: item.getBoundingClientRect() });
+        }}
         onKeyDown={(event) => {
           if (
             event.key !== "Enter" ||
