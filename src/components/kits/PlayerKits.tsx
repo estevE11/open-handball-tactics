@@ -1,12 +1,14 @@
+import { useTranslation } from "../../lib/i18n";
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { KitRole, PlayerKit } from "../../types/kit";
-import { applyKit } from "../../lib/kits";
+import { applyKit, kitDisplayName } from "../../lib/kits";
 import { useProjectStore } from "../../store/projectStore";
 import { KitPreview } from "./KitPreview";
 import { KitPicker } from "./KitPicker";
 
 export function PlayerKits() {
+  const t = useTranslation();
   const project = useProjectStore((state) => state.project);
   const [role, setRole] = useState<KitRole | null>(null);
   if (!project) return null;
@@ -23,18 +25,26 @@ export function PlayerKits() {
   }
   return (
     <section className="inspector-section player-kits">
-      <h3>Player kits</h3>
+      <h3>{t("Player kits")}</h3>
       {(["attacker", "defender"] as const).map((team) => (
         <button
           key={team}
           className="kit-team-button"
-          aria-label={`${team === "attacker" ? "Attacker" : "Defender"} kit`}
+          aria-label={t("{v0} kit", {
+            v0: team === "attacker" ? t("Attacker") : t("Defender"),
+          })}
           onClick={() => setRole(team)}
         >
           <KitPreview kit={project.teamKits?.[team]} role={team} />
           <span>
-            <strong>{team === "attacker" ? "Attackers" : "Defenders"}</strong>
-            <small>{project.teamKits?.[team]?.name ?? "Player colors"}</small>
+            <strong>
+              {team === "attacker" ? t("Attackers") : t("Defenders")}
+            </strong>
+            <small>
+              {project.teamKits?.[team]
+                ? kitDisplayName(project.teamKits[team]!)
+                : t("Player colors")}
+            </small>
           </span>
           <ChevronRight size={14} />
         </button>

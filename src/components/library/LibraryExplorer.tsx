@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useState } from "react";
 import {
   ArrowUp,
@@ -51,6 +52,7 @@ export function LibraryExplorer({
   busy: boolean;
   error: string | null;
 }) {
+  const t = useTranslation();
   const [view, setView] = useState<"list" | "grid">("grid");
   const [treeOpen, setTreeOpen] = useState(false);
   function selectFolder(id: string | null) {
@@ -59,30 +61,30 @@ export function LibraryExplorer({
   }
   return (
     <Modal
-      title="Library explorer"
+      title={t("Library explorer")}
       className="library-explorer"
       onClose={onClose}
       headingActions={
         <>
           <button
             className="button secondary explorer-create"
-            aria-label="New folder"
-            title="New folder in this location"
+            aria-label={t("New folder")}
+            title={t("New folder in this location")}
             disabled={busy}
             onClick={onNewFolder}
           >
             <FolderPlus size={17} />
-            <span>New folder</span>
+            <span>{t("New folder")}</span>
           </button>
           <button
             className="button primary explorer-create"
-            aria-label="New drill"
-            title="New drill in this location"
+            aria-label={t("New drill")}
+            title={t("New drill in this location")}
             disabled={busy}
             onClick={onNewDrill}
           >
             <FilePlus2 size={17} />
-            <span>New drill</span>
+            <span>{t("New drill")}</span>
           </button>
         </>
       }
@@ -90,7 +92,7 @@ export function LibraryExplorer({
       <div className="explorer-toolbar">
         <button
           className="icon-button explorer-tree-toggle"
-          aria-label="Toggle folder tree"
+          aria-label={t("Toggle folder tree")}
           aria-expanded={treeOpen}
           aria-controls="explorer-folder-tree"
           onClick={() => setTreeOpen(!treeOpen)}
@@ -99,7 +101,7 @@ export function LibraryExplorer({
         </button>
         <button
           className="icon-button"
-          aria-label="Parent folder"
+          aria-label={t("Parent folder")}
           disabled={!current || busy}
           onClick={() =>
             selectFolder(
@@ -120,14 +122,14 @@ export function LibraryExplorer({
         {treeOpen && (
           <button
             className="explorer-tree-scrim"
-            aria-label="Close folder tree"
+            aria-label={t("Close folder tree")}
             onClick={() => setTreeOpen(false)}
           />
         )}
         <aside
           id="explorer-folder-tree"
           className={`explorer-tree ${treeOpen ? "is-open" : ""}`}
-          aria-label="Library folder tree"
+          aria-label={t("Library folder tree")}
         >
           <FolderTree
             folders={folders}
@@ -137,20 +139,20 @@ export function LibraryExplorer({
             onManage={onManage}
           />
         </aside>
-        <section className="explorer-main" aria-label="Library contents">
+        <section className="explorer-main" aria-label={t("Library contents")}>
           <div className="explorer-controls">
             <label className="search">
               <Search size={15} />
               <input
-                aria-label="Search library"
-                placeholder="Search folders, drills, tags…"
+                aria-label={t("Search library")}
+                placeholder={t("Search folders, drills, tags…")}
                 value={query}
                 onChange={(event) => onQuery(event.target.value)}
               />
               {query && (
                 <button
                   className="icon-button"
-                  aria-label="Clear library search"
+                  aria-label={t("Clear library search")}
                   onClick={() => onQuery("")}
                 >
                   <X size={14} />
@@ -160,11 +162,11 @@ export function LibraryExplorer({
             <div
               className="explorer-view-switch"
               role="group"
-              aria-label="Library view"
+              aria-label={t("Library view")}
             >
               <button
                 className="icon-button"
-                aria-label="List view"
+                aria-label={t("List view")}
                 aria-pressed={view === "list"}
                 onClick={() => setView("list")}
               >
@@ -172,7 +174,7 @@ export function LibraryExplorer({
               </button>
               <button
                 className="icon-button"
-                aria-label="Grid view"
+                aria-label={t("Grid view")}
                 aria-pressed={view === "grid"}
                 onClick={() => setView("grid")}
               >
@@ -182,7 +184,7 @@ export function LibraryExplorer({
           </div>
           {error && (
             <p className="dialog-error" role="alert">
-              {error}
+              {t(error)}
             </p>
           )}
           <div className="explorer-files">
@@ -200,9 +202,9 @@ export function LibraryExplorer({
           </div>
           <footer className="explorer-footer">
             {contents.folders.length}{" "}
-            {contents.folders.length === 1 ? "folder" : "folders"} ·{" "}
+            {contents.folders.length === 1 ? t("folder") : t("folders")} ·{" "}
             {contents.projects.length}{" "}
-            {contents.projects.length === 1 ? "drill" : "drills"}
+            {contents.projects.length === 1 ? t("drill") : t("drills")}
           </footer>
         </section>
       </div>

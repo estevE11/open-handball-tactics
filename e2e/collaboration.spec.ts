@@ -104,6 +104,30 @@ test("shared link syncs edits, live gestures, settings, assets, undo and rejoini
       guest.getByRole("button", { name: "Live collaboration", exact: true }),
     ).toContainText("Live · 2", { timeout: 25000 });
     await expect(guest.locator(".room-waiting")).toHaveCount(0);
+    await guest
+      .getByRole("button", { name: "More actions", exact: true })
+      .click();
+    await guest
+      .getByRole("combobox", { name: "Interface language", exact: true })
+      .selectOption("es");
+    await expect(
+      guest.getByRole("button", {
+        name: "Colaboración en directo",
+        exact: true,
+      }),
+    ).toContainText("En directo · 2");
+    await expect(
+      host.getByRole("button", { name: "Live collaboration", exact: true }),
+    ).toContainText("Live · 2");
+    await expect(host.locator("html")).toHaveAttribute("lang", "en");
+    await guest.keyboard.press("Escape");
+    await guest
+      .getByRole("button", { name: "Más acciones", exact: true })
+      .click();
+    await guest
+      .getByRole("combobox", { name: "Idioma de la interfaz", exact: true })
+      .selectOption("en");
+    await guest.keyboard.press("Escape");
     const hostCourt = host.getByLabel("Interactive handball court");
     const guestCourt = guest.getByLabel("Interactive handball court");
     await expect(
@@ -141,9 +165,7 @@ test("shared link syncs edits, live gestures, settings, assets, undo and rejoini
     await host.getByRole("button", { name: "Undo", exact: true }).click();
     await expect(guestPlayer).toHaveAttribute("transform", original!);
     await expect(guestCourt).toHaveAttribute("viewBox", "-12 -12 824 424");
-    await expect(
-      guest.getByLabel("Arms", { exact: true }),
-    ).toBeChecked();
+    await expect(guest.getByLabel("Arms", { exact: true })).toBeChecked();
     await host.getByRole("button", { name: "Redo", exact: true }).click();
     await expect(guestPlayer).not.toHaveAttribute("transform", original!);
     await host

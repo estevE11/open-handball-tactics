@@ -1031,6 +1031,26 @@ h3 {
 .workspace-menu-appearance {
   display: none;
 }
+.language-setting > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.workspace-menu-content .language-setting {
+  padding: 10px 12px 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #e2e8e3;
+  font-size: 13px;
+}
+.workspace-menu-content .language-setting select {
+  padding: 7px 9px;
+}
+.workspace-settings > .language-setting {
+  margin-bottom: 20px;
+}
+.dark .workspace-menu-content .language-setting {
+  border-color: #3b4740;
+}
 .workspace-menu-content hr {
   margin: 5px 6px;
   border: 0;

@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ItemProperties } from "./ItemProperties";
@@ -11,6 +12,7 @@ export function ItemPropertiesPopover({
   anchor: ItemAnchor;
   onClose: () => void;
 }) {
+  const t = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
   const [position, setPosition] = useState({ left: 8, top: 8 });
   useLayoutEffect(() => {
@@ -85,7 +87,7 @@ export function ItemPropertiesPopover({
       open
       ref={ref}
       tabIndex={-1}
-      aria-label="Item properties"
+      aria-label={t("Item properties")}
       aria-modal="false"
       className="item-properties-popover"
       style={position}

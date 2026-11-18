@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useProjectStore } from "../../store/projectStore";
 import type {
@@ -62,6 +63,7 @@ export function TacticalCanvas({
   onion: boolean;
   renderScene?: { project: DrillProject; time: number; voronoi: boolean };
 }) {
+  const t = useTranslation();
   const {
     project: storedProject,
     frameIndex,
@@ -262,7 +264,7 @@ export function TacticalCanvas({
           : tool === "goalkeeper"
             ? "GK"
             : tool === "text"
-              ? "Note"
+              ? t("Note")
               : "";
     const token: TacticalToken = {
       id: crypto.randomUUID(),
@@ -449,7 +451,7 @@ export function TacticalCanvas({
         ref={svg}
         className={`tactical-canvas ${tool !== "select" ? "drawing" : ""}`}
         viewBox={courtViewBox(config)}
-        aria-label="Interactive handball court"
+        aria-label={t("Interactive handball court")}
         tabIndex={renderScene ? undefined : 0}
         onKeyDown={(event) => {
           if (

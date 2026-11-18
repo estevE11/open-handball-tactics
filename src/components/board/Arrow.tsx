@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import type { TacticalArrow, Point } from "../../types/project";
 import {
   arrowPath,
@@ -12,6 +13,7 @@ export function Arrow({
   arrow: TacticalArrow;
   onPointerDown?: (event: React.PointerEvent) => void;
 }) {
+  const t = useTranslation();
   const d = arrowPath(arrow);
   const color = arrow.color;
   const heads = arrow.heads ?? "end";
@@ -22,7 +24,7 @@ export function Arrow({
       style={{ cursor: onPointerDown ? "move" : undefined }}
       data-arrow-id={arrow.id}
       data-item-id={arrow.id}
-      aria-label={`${arrow.type} trajectory`}
+      aria-label={t("{v0} trajectory", { v0: t(arrow.type) })}
     >
       <path
         d={d}
@@ -72,6 +74,7 @@ export function ArrowHandles({
     index?: number,
   ) => void;
 }) {
+  const t = useTranslation();
   const controls = editableControls(arrow);
   return (
     <g data-editor-only="true">
@@ -89,7 +92,7 @@ export function ArrowHandles({
       {controls.map((p, index) => (
         <g key={index}>
           <circle
-            aria-label={`Bézier point ${index + 1}`}
+            aria-label={t("Bézier point {v0}", { v0: index + 1 })}
             cx={p.x}
             cy={p.y}
             r="5"
@@ -113,7 +116,7 @@ export function ArrowHandles({
       {(["start", "end"] as const).map((key) => (
         <circle
           key={key}
-          aria-label={`Arrow ${key} point`}
+          aria-label={t("Arrow {v0} point", { v0: t(key) })}
           cx={arrow[key].x}
           cy={arrow[key].y}
           r="5"

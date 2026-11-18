@@ -1,5 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type { PlayerKit } from "../types/kit";
+import { translate as t } from "./i18n";
 import { normalizeProject } from "./projectCompatibility";
 import {
   projectSchema,
@@ -118,7 +119,7 @@ export class LibraryService {
     const copy = {
       ...structuredClone(project),
       id: crypto.randomUUID(),
-      title: `${project.title.slice(0, 150)} (copy)`,
+      title: t("{v0} (copy)", { v0: project.title.slice(0, 150) }),
       createdAt: Date.now(),
     };
     await this.save(copy);
@@ -140,7 +141,9 @@ export class LibraryService {
           root = false,
         ): Promise<FolderNode> => {
           const copy = await this.createFolder(
-            root ? `${folder.name.slice(0, 150)} (copy)` : folder.name,
+            root
+              ? t("{v0} (copy)", { v0: folder.name.slice(0, 150) })
+              : folder.name,
             parentId,
           );
           for (const p of projects.filter((p) => p.folderId === folder.id)) {
@@ -217,7 +220,7 @@ export class LibraryService {
       throw new Error("Images must be smaller than 10 MB.");
     const asset: StoredAsset = {
       id: crypto.randomUUID(),
-      name: file.name ?? "Image",
+      name: file.name ?? t("Image"),
       blob: file,
       createdAt: Date.now(),
     };

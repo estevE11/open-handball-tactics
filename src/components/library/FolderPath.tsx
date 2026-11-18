@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import {
   ChevronRight,
   Folder,
@@ -21,10 +22,11 @@ export function FolderPath({
   onManage?: (folder: FolderNode) => void;
   horizontal?: boolean;
 }) {
+  const t = useTranslation();
   return (
     <nav
       className={`folder-path ${horizontal ? "horizontal" : ""}`}
-      aria-label="Current folder path"
+      aria-label={t("Current folder path")}
     >
       <ol>
         <li>
@@ -34,7 +36,7 @@ export function FolderPath({
             aria-current={current === null ? "location" : undefined}
           >
             <LayoutGrid size={16} />
-            <span>All drills</span>
+            <span>{t("All drills")}</span>
           </button>
         </li>
         {folderAncestors(folders, current).map((folder, index) => (
@@ -59,7 +61,7 @@ export function FolderPath({
             {onManage && (
               <button
                 className="icon-button folder-manage"
-                aria-label={`Manage ${folder.name}`}
+                aria-label={t("Manage {v0}", { v0: folder.name })}
                 onClick={() => onManage(folder)}
               >
                 <MoreHorizontal size={14} />

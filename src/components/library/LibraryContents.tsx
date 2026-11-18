@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { Folder, MoreHorizontal } from "lucide-react";
 import type { LibraryContents as Contents } from "../../lib/libraryNavigation";
 import type { DrillProject, FolderNode } from "../../types/project";
@@ -23,10 +24,11 @@ export function LibraryContents({
   view?: "list" | "grid";
   busy?: boolean;
 }) {
+  const t = useTranslation();
   return (
     <ul
       className={`library-contents library-view-${view}`}
-      aria-label="Folder contents"
+      aria-label={t("Folder contents")}
     >
       {contents.folders.map((folder) => {
         const count = folder.childrenFolderIds.length + folder.drillIds.length;
@@ -34,7 +36,7 @@ export function LibraryContents({
           <li className="library-folder" key={folder.id}>
             <button
               className="folder-open"
-              aria-label={`Open folder ${folder.name}`}
+              aria-label={t("Open folder {v0}", { v0: folder.name })}
               disabled={busy}
               onClick={() => onFolder(folder.id)}
             >
@@ -44,13 +46,13 @@ export function LibraryContents({
               <span className="drill-card-info">
                 <strong title={folder.name}>{folder.name}</strong>
                 <span>
-                  Folder · {count} {count === 1 ? "item" : "items"}
+                  {t("Folder ·")} {count} {count === 1 ? t("item") : t("items")}
                 </span>
               </span>
             </button>
             <button
               className="icon-button folder-manage"
-              aria-label={`Manage ${folder.name}`}
+              aria-label={t("Manage {v0}", { v0: folder.name })}
               disabled={busy}
               onClick={() => onManage(folder)}
             >
@@ -75,16 +77,16 @@ export function LibraryContents({
             <span className="drill-card-info">
               <strong title={project.title}>{project.title}</strong>
               <span>
-                {project.tags[0] || "Handball drill"} ·{" "}
+                {project.tags[0] || t("Handball drill")} ·{" "}
                 {project.keyframes.length}{" "}
-                {project.keyframes.length === 1 ? "step" : "steps"}
+                {project.keyframes.length === 1 ? t("step") : t("steps")}
               </span>
             </span>
           </button>
           <button
             className="icon-button drill-manage"
-            aria-label={`Manage drill ${project.title}`}
-            title={`Manage ${project.title}`}
+            aria-label={t("Manage drill {v0}", { v0: project.title })}
+            title={t("Manage {v0}", { v0: project.title })}
             disabled={busy}
             onClick={() => onManageProject(project)}
           >
@@ -95,8 +97,8 @@ export function LibraryContents({
       {!contents.folders.length && !contents.projects.length && (
         <li className="empty-library">
           {query.trim()
-            ? "No folders or drills match your search."
-            : "A fresh space for your next idea."}
+            ? t("No folders or drills match your search.")
+            : t("A fresh space for your next idea.")}
         </li>
       )}
     </ul>

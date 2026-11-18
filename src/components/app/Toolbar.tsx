@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import {
   MousePointer2,
   Circle,
@@ -52,6 +53,7 @@ export function Toolbar({
 }: {
   orientation?: "horizontal" | "vertical";
 }) {
+  const t = useTranslation();
   const {
     tool,
     setTool,
@@ -72,7 +74,7 @@ export function Toolbar({
       <div
         className="toolbar"
         role="toolbar"
-        aria-label="Drawing tools"
+        aria-label={t("Drawing tools")}
         aria-orientation={orientation}
       >
         {groups.map((group, index) => (
@@ -80,8 +82,8 @@ export function Toolbar({
             {group.map(({ tool: value, label, icon: Icon }) => (
               <button
                 key={value}
-                aria-label={label}
-                title={label}
+                aria-label={t(label)}
+                title={t(label)}
                 aria-pressed={tool === value}
                 className={`tool ${tool === value ? "active" : ""} tool-${value}`}
                 onClick={() => setTool(value)}
@@ -92,8 +94,8 @@ export function Toolbar({
             {index === 1 && (
               <button
                 className="tool clear-drawing"
-                aria-label="Clear drawing"
-                title="Clear drawing in this step (can be undone)"
+                aria-label={t("Clear drawing")}
+                title={t("Clear drawing in this step (can be undone)")}
                 disabled={!strokeCount}
                 onClick={() =>
                   edit((draft) => {
@@ -102,7 +104,7 @@ export function Toolbar({
                 }
               >
                 <Trash2 size={17} />
-                <span>Clear drawing</span>
+                <span>{t("Clear drawing")}</span>
               </button>
             )}
           </div>
@@ -110,8 +112,8 @@ export function Toolbar({
         <div className="tool-group history">
           <button
             className={`tool ${voronoi ? "active" : ""}`}
-            aria-label="Voronoi mode"
-            title="Voronoi team spaces"
+            aria-label={t("Voronoi mode")}
+            title={t("Voronoi team spaces")}
             aria-pressed={voronoi}
             onClick={() => setVoronoi(!voronoi)}
           >
@@ -119,8 +121,8 @@ export function Toolbar({
           </button>
           <button
             className="tool"
-            aria-label="Undo"
-            title="Undo (⌘Z)"
+            aria-label={t("Undo")}
+            title={t("Undo (⌘Z)")}
             disabled={roomId ? !canUndo : !past.length}
             onClick={undo}
           >
@@ -128,8 +130,8 @@ export function Toolbar({
           </button>
           <button
             className="tool"
-            aria-label="Redo"
-            title="Redo (⌘⇧Z)"
+            aria-label={t("Redo")}
+            title={t("Redo (⌘⇧Z)")}
             disabled={roomId ? !canRedo : !future.length}
             onClick={redo}
           >

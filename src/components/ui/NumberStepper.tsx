@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -14,6 +15,7 @@ export function NumberStepper({
   max: number;
   onChange: (value: number) => void;
 }) {
+  const t = useTranslation();
   const [draft, setDraft] = useState({ value, text: String(value) });
   if (draft.value !== value) setDraft({ value, text: String(value) });
   function commit(next: number) {
@@ -48,7 +50,7 @@ export function NumberStepper({
       <span className="number-stepper-buttons">
         <button
           type="button"
-          aria-label={`Increase ${label.toLowerCase()}`}
+          aria-label={t("Increase {v0}", { v0: label.toLowerCase() })}
           disabled={value >= max}
           onClick={() => commit(value + 1)}
         >
@@ -56,7 +58,7 @@ export function NumberStepper({
         </button>
         <button
           type="button"
-          aria-label={`Decrease ${label.toLowerCase()}`}
+          aria-label={t("Decrease {v0}", { v0: label.toLowerCase() })}
           disabled={value <= min}
           onClick={() => commit(value - 1)}
         >

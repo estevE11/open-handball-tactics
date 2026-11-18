@@ -168,6 +168,7 @@ test("defenders and goalkeepers can wear petos; equipment cannot", async ({
     await page.getByLabel("Peto", { exact: true }).check();
     await expect(player.locator('[data-peto="yellow"]')).toHaveCount(1);
   }
+  await page.keyboard.press("Escape");
   await court.getByRole("img", { name: "equipment ball", exact: true }).click();
   await expect(page.getByLabel("Peto", { exact: true })).toHaveCount(0);
 });

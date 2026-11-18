@@ -1,6 +1,8 @@
+import { useTranslation } from "../../lib/i18n";
 import { useProjectStore } from "../../store/projectStore";
 
 export function DrawingOptions() {
+  const t = useTranslation();
   const { tool, project, frameIndex, drawing, setDrawing, playbackTime } =
     useProjectStore();
   if (tool !== "draw" && tool !== "erase") return null;
@@ -10,22 +12,22 @@ export function DrawingOptions() {
       inert={playbackTime !== null}
       className="drawing-options"
       role="group"
-      aria-label="Freehand drawing settings"
+      aria-label={t("Freehand drawing settings")}
     >
       <label>
-        Color
+        {t("Color")}
         <input
           type="color"
-          aria-label="Drawing color"
+          aria-label={t("Drawing color")}
           value={drawing.color}
           onChange={(e) => setDrawing({ color: e.target.value })}
         />
       </label>
       <label>
-        Thickness <span className="drawing-value">{drawing.width}</span>
+        {t("Thickness")} <span className="drawing-value">{drawing.width}</span>
         <input
           type="range"
-          aria-label="Drawing thickness"
+          aria-label={t("Drawing thickness")}
           min="1"
           max="12"
           step="0.5"
@@ -34,13 +36,13 @@ export function DrawingOptions() {
         />
       </label>
       <label>
-        Opacity{" "}
+        {t("Opacity")}{" "}
         <span className="drawing-value">
           {Math.round(drawing.opacity * 100)}%
         </span>
         <input
           type="range"
-          aria-label="Drawing opacity"
+          aria-label={t("Drawing opacity")}
           min="0.1"
           max="1"
           step="0.1"
@@ -49,13 +51,13 @@ export function DrawingOptions() {
         />
       </label>
       <label>
-        Smoothing{" "}
+        {t("Smoothing")}{" "}
         <span className="drawing-value">
           {Math.round(drawing.smoothing * 100)}%
         </span>
         <input
           type="range"
-          aria-label="Drawing smoothing"
+          aria-label={t("Drawing smoothing")}
           min="0"
           max="0.8"
           step="0.1"
@@ -69,15 +71,17 @@ export function DrawingOptions() {
           checked={drawing.penOnly}
           onChange={(e) => setDrawing({ penOnly: e.target.checked })}
         />
-        Pen only
+        {t("Pen only")}
       </label>
       <span className="drawing-hint">
         {strokeCount >= 500
-          ? "Stroke limit reached. Erase or clear to draw more."
+          ? t("Stroke limit reached. Erase or clear to draw more.")
           : tool === "erase"
-            ? "Drag across a stroke to erase it. Undo restores it."
-            : "Draw with mouse, touch, or pen. Right-drag erases whole strokes."}
-        {drawing.penOnly && " Fingers are ignored."}
+            ? t("Drag across a stroke to erase it. Undo restores it.")
+            : t(
+                "Draw with mouse, touch, or pen. Right-drag erases whole strokes.",
+              )}
+        {drawing.penOnly && t(" Fingers are ignored.")}
       </span>
     </aside>
   );

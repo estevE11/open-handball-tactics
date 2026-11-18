@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { Layers, Plus, X } from "lucide-react";
 import { useProjectStore } from "../../store/projectStore";
 import { PlaybackControls } from "./PlaybackControls";
@@ -9,30 +10,31 @@ export function AnimationPanel({
   onion: boolean;
   setOnion: (value: boolean) => void;
 }) {
+  const t = useTranslation();
   const { project, frameIndex, edit, setFrame } = useProjectStore();
   if (!project) return null;
 
   return (
-    <section className="animation-panel" aria-label="Animation panel">
+    <section className="animation-panel" aria-label={t("Animation panel")}>
       <div className="panel-title animation-panel-heading">
         <span>
           <Layers size={15} />
-          <strong>Drill steps</strong>
+          <strong>{t("Drill steps")}</strong>
         </span>
         <span className="steps-count">{project.keyframes.length} / 200</span>
       </div>
       <PlaybackControls />
       <label
         className="onion-toggle"
-        title="Show the previous step on the court"
+        title={t("Show the previous step on the court")}
       >
         <input
           type="checkbox"
-          aria-label="Onion skin"
+          aria-label={t("Onion skin")}
           checked={onion}
           onChange={(event) => setOnion(event.target.checked)}
         />
-        Onion skin
+        {t("Onion skin")}
       </label>
       <div className="steps-list">
         {project.keyframes.map((frame, index) => (
@@ -49,7 +51,7 @@ export function AnimationPanel({
             {project.keyframes.length > 1 && index === frameIndex && (
               <button
                 className="icon-button"
-                aria-label="Delete step"
+                aria-label={t("Delete step")}
                 onClick={() => {
                   edit((draft) => {
                     draft.keyframes.splice(index, 1);
@@ -70,14 +72,14 @@ export function AnimationPanel({
             edit((draft) => {
               const frame = structuredClone(draft.keyframes[frameIndex]);
               frame.id = crypto.randomUUID();
-              frame.name = `Step ${index + 1}`;
+              frame.name = t("Step {v0}", { v0: index + 1 });
               draft.keyframes.push(frame);
             });
             setFrame(index);
           }}
         >
           <Plus size={17} />
-          <span>Add step</span>
+          <span>{t("Add step")}</span>
         </button>
       </div>
     </section>

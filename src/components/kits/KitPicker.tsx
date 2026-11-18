@@ -1,8 +1,9 @@
+import { useTranslation } from "../../lib/i18n";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Plus, Pencil, Check } from "lucide-react";
 import type { KitRole, PlayerKit } from "../../types/kit";
-import { BASIC_KITS, kitLibrary, newKit } from "../../lib/kits";
+import { BASIC_KITS, kitLibrary, newKit, kitDisplayName } from "../../lib/kits";
 import { Modal } from "../ui/Modal";
 import { KitPreview } from "./KitPreview";
 import { KitEditor } from "./KitEditor";
@@ -18,6 +19,7 @@ export function KitPicker({
   onApply: (kit?: PlayerKit) => void;
   onClose: () => void;
 }) {
+  const t = useTranslation();
   const [editing, setEditing] = useState<{
     kit: PlayerKit;
     creating: boolean;
@@ -40,6 +42,7 @@ export function KitPicker({
       kit: {
         ...structuredClone(kit),
         id: basic ? crypto.randomUUID() : kit.id,
+        name: kitDisplayName(kit),
       },
       creating: basic,
     });
@@ -54,21 +57,21 @@ export function KitPicker({
           >
             <button
               className="kit-use"
-              aria-label={`Use ${kit.name}`}
+              aria-label={t("Use {v0}", { v0: kitDisplayName(kit) })}
               aria-pressed={current?.id === kit.id}
               onClick={() => onApply(kit)}
             >
               <KitPreview kit={kit} role={role} />
-              <span>{kit.name}</span>
+              <span>{kitDisplayName(kit)}</span>
               {current?.id === kit.id && <Check size={13} />}
             </button>
             <button
               className="kit-edit"
-              aria-label={`Edit ${kit.name}`}
+              aria-label={t("Edit {v0}", { v0: kitDisplayName(kit) })}
               onClick={() => customize(kit)}
             >
               <Pencil size={12} />
-              {kit.id.startsWith("basic-") ? "Customize" : "Edit"}
+              {kit.id.startsWith("basic-") ? t("Customize") : t("Edit")}
             </button>
           </div>
         ))}
@@ -83,9 +86,11 @@ export function KitPicker({
       title={
         editing
           ? editing.creating
-            ? "Create kit"
-            : "Edit kit"
-          : `${role === "attacker" ? "Attacker" : "Defender"} kits`
+            ? t("Create kit")
+            : t("Edit kit")
+          : t("{v0} kits", {
+              v0: role === "attacker" ? t("Attacker") : t("Defender"),
+            })
       }
       onClose={onClose}
     >
@@ -99,40 +104,43 @@ export function KitPicker({
       ) : (
         <div className="kit-library">
           <p className="muted">
-            Applies to all {role === "attacker" ? "attackers" : "defenders"} in
-            this drill, across every step.
+            {t("Applies to all")}{" "}
+            {role === "attacker" ? t("attackers") : t("defenders")}{" "}
+            {t("in this drill, across every step.")}
           </p>
           <div className="kit-menu-actions">
             <button
               className="button primary"
               onClick={() => setEditing({ kit: newKit(), creating: true })}
             >
-              <Plus size={14} /> Create kit
+              <Plus size={14} /> {t("Create kit")}
             </button>
             <button className="text-button" onClick={() => onApply()}>
-              Use player colors
+              {t("Use player colors")}
             </button>
           </div>
           {result.error && (
             <p className="dialog-error" role="alert">
-              {result.error}
+              {t(result.error)}
             </p>
           )}
           {missingCurrent && (
             <>
-              <h3>Current kit</h3>
+              <h3>{t("Current kit")}</h3>
               {cards([current])}
             </>
           )}
-          <h3>Your kits</h3>
+          <h3>{t("Your kits")}</h3>
           {result.kits.length ? (
             cards(result.kits)
           ) : (
             <p className="muted">
-              Create a kit or customize a basic design to start your collection.
+              {t(
+                "Create a kit or customize a basic design to start your collection.",
+              )}
             </p>
           )}
-          <h3>Basic designs</h3>
+          <h3>{t("Basic designs")}</h3>
           {cards(BASIC_KITS)}
         </div>
       )}

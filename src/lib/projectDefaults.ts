@@ -1,4 +1,5 @@
 import type { DrillProject, CourtConfig } from "../types/project";
+import { translate as t } from "./i18n";
 import { formation } from "./formations";
 import { fitProjectToCourt, courtSize } from "./courtGeometry";
 
@@ -16,7 +17,7 @@ export const DEFAULT_COURT: CourtConfig = {
 };
 
 export function newProject(
-  title = "Untitled drill",
+  title = t("Untitled drill"),
   folderId: string | null = null,
   courtConfig: CourtConfig = DEFAULT_COURT,
 ): DrillProject {
@@ -34,7 +35,7 @@ export function newProject(
     keyframes: [
       {
         id: crypto.randomUUID(),
-        name: "Starting positions",
+        name: t("Starting positions"),
         duration: 1500,
         tokens: [
           ...formation("defender", "6:0"),

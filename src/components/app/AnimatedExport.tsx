@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { ArrowDownToLine, Copy, Film, Image, Share2 } from "lucide-react";
 import type { DrillProject } from "../../types/project";
@@ -25,6 +26,7 @@ export function AnimatedExport({
   assetUrls: Record<string, string>;
   voronoi: boolean;
 }) {
+  const t = useTranslation();
   const [format, setFormat] = useState<AnimationFormat | null>(null);
   const [results, setResults] = useState<
     Partial<Record<AnimationFormat, ReadyAnimation>>
@@ -138,12 +140,17 @@ export function AnimatedExport({
     }
   }
   return (
-    <section className="animated-export" aria-label="Animated export">
-      <h3>Share the whole drill</h3>
+    <section className="animated-export" aria-label={t("Animated export")}>
+      <h3>{t("Share the whole drill")}</h3>
       <p className="muted">
         {project.keyframes.length < 2
-          ? "One step produces a still image. Add steps in Animation for movement."
-          : `${project.keyframes.length} steps · ${(animationDuration(project) / 1000).toFixed(1)} seconds of movement`}
+          ? t(
+              "One step produces a still image. Add steps in Animation for movement.",
+            )
+          : t("{v0} steps · {v1} seconds of movement", {
+              v0: project.keyframes.length,
+              v1: (animationDuration(project) / 1000).toFixed(1),
+            })}
       </p>
       <div className="animated-export-choices">
         <button
@@ -151,12 +158,14 @@ export function AnimatedExport({
           disabled={recording || !whatsappVideo}
           title={
             whatsappVideo
-              ? "Download an H.264 MP4 for WhatsApp Web"
-              : "MP4 recording is unavailable in this browser. Try an updated Chrome or Safari."
+              ? t("Download an H.264 MP4 for WhatsApp Web")
+              : t(
+                  "MP4 recording is unavailable in this browser. Try an updated Chrome or Safari.",
+                )
           }
           onClick={() => void downloadWhatsAppVideo()}
         >
-          <ArrowDownToLine size={16} /> WhatsApp MP4
+          <ArrowDownToLine size={16} /> {t("WhatsApp MP4")}
         </button>
         <button
           className="button secondary"
@@ -164,7 +173,7 @@ export function AnimatedExport({
           aria-pressed={format === "gif"}
           onClick={() => void generate("gif")}
         >
-          <Image size={16} /> GIF animation
+          <Image size={16} /> {t("GIF animation")}
         </button>
         <button
           className="button secondary"
@@ -172,37 +181,41 @@ export function AnimatedExport({
           aria-pressed={format === "video"}
           title={
             video
-              ? "Video renders in real time"
-              : "Video export is unavailable; use GIF"
+              ? t("Video renders in real time")
+              : t("Video export is unavailable; use GIF")
           }
           onClick={() => void generate("video")}
         >
-          <Film size={16} /> Video animation{" "}
-          <small>{video?.startsWith("video/mp4") ? "MP4" : "WebM"}</small>
+          <Film size={16} /> {t("Video animation")}{" "}
+          <small>{video?.startsWith("video/mp4") ? t("MP4") : t("WebM")}</small>
         </button>
       </div>
       <p className="animation-clipboard-note">
-        For WhatsApp Web, download MP4 and attach it using Photos &amp; videos.
-        It sends as a video. Pasting or uploading a GIF may produce a still
-        image.
+        {t(
+          "For WhatsApp Web, download MP4 and attach it using Photos & videos. It sends as a video. Pasting or uploading a GIF may produce a still image.",
+        )}
         {!whatsappVideo &&
-          " MP4 recording is unavailable here; try an updated Chrome or Safari."}
+          t(
+            " MP4 recording is unavailable here; try an updated Chrome or Safari.",
+          )}
       </p>
       {recording && (
         <div className="animation-export-progress">
           <progress
-            aria-label={`Preparing ${format === "gif" ? "GIF" : "video"}`}
+            aria-label={t("Preparing {v0}", {
+              v0: format === "gif" ? t("GIF") : t("video"),
+            })}
             max={100}
             value={Math.round(progress * 100)}
           />
           <span>
             {Math.round(progress * 100)}%
             {format === "video"
-              ? " · Recording in real time"
-              : " · Preparing GIF"}
+              ? t(" · Recording in real time")
+              : t(" · Preparing GIF")}
           </span>
           <button className="text-button" onClick={cancel}>
-            Cancel export
+            {t("Cancel export")}
           </button>
         </div>
       )}
@@ -210,7 +223,7 @@ export function AnimatedExport({
         <div className="animation-export-result">
           <p className="muted">
             {result.extension.toUpperCase()} · {result.width} × {result.height}{" "}
-            · {Math.max(1, Math.round(result.blob.size / 1024))} KB
+            · {Math.max(1, Math.round(result.blob.size / 1024))} {t("KB")}
           </p>
           <div className="animation-share-actions">
             <button
@@ -219,7 +232,7 @@ export function AnimatedExport({
                 download(result.blob, `${project.title}.${result.extension}`)
               }
             >
-              <ArrowDownToLine size={15} /> Download{" "}
+              <ArrowDownToLine size={15} /> {t("Download")}{" "}
               {result.extension.toUpperCase()}
             </button>
             {result.extension === "gif" && (
@@ -228,43 +241,44 @@ export function AnimatedExport({
                 onClick={() => void copyGif()}
               >
                 <Copy size={15} />{" "}
-                {nativeGifClipboard() ? "Copy GIF" : "Copy image"}
+                {nativeGifClipboard() ? t("Copy GIF") : t("Copy image")}
               </button>
             )}
             {canShare && (
               <button className="button secondary" onClick={() => void share()}>
-                <Share2 size={15} /> Share {result.extension.toUpperCase()}
+                <Share2 size={15} /> {t("Share")}{" "}
+                {result.extension.toUpperCase()}
               </button>
             )}
           </div>
           {result.extension === "gif" ? (
-            <img src={result.url} alt="Animated drill preview" />
+            <img src={result.url} alt={t("Animated drill preview")} />
           ) : (
             <video
               src={result.url}
               controls
               loop
               playsInline
-              aria-label="Drill video preview"
+              aria-label={t("Drill video preview")}
             />
           )}
           {result.extension === "gif" && !nativeGifClipboard() && (
             <p className="animation-clipboard-note">
-              Copy image includes a PNG preview and an embedded GIF. The
-              receiving app decides whether it accepts animation; WhatsApp Web
-              may use only the still preview. Use WhatsApp MP4 for that app.
+              {t(
+                "Copy image includes a PNG preview and an embedded GIF. The receiving app decides whether it accepts animation; WhatsApp Web may use only the still preview. Use WhatsApp MP4 for that app.",
+              )}
             </p>
           )}
         </div>
       )}
       {message && (
         <p className="animation-export-message" role="status">
-          {message}
+          {t(message)}
         </p>
       )}
       {error && (
         <p className="dialog-error" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
     </section>

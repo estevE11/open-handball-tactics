@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import type { DrillProject, TacticalToken } from "../../types/project";
 import { voronoiCells } from "../../lib/voronoi";
 
@@ -12,6 +13,7 @@ export function Voronoi({
   width: number;
   height: number;
 }) {
+  const t = useTranslation();
   const colors = {
     attacker:
       project.teamKits?.attacker?.primary ??
@@ -25,7 +27,7 @@ export function Voronoi({
   return (
     <g
       data-voronoi="true"
-      aria-label="Voronoi team control"
+      aria-label={t("Voronoi team control")}
       pointerEvents="none"
       stroke="#46564d"
       strokeWidth="1"

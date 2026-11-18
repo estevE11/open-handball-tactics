@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import {
   ChevronDown,
   ChevronRight,
@@ -23,6 +24,7 @@ export function FolderTree({
   onSelect,
   onManage,
 }: Props) {
+  const t = useTranslation();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   function branch(parent: string | null, depth = 0): React.ReactNode {
     return folders
@@ -39,7 +41,9 @@ export function FolderTree({
             >
               <button
                 className="tree-toggle"
-                aria-label={`${open ? "Collapse" : "Expand"} ${folder.name}`}
+                aria-label={t(open ? "Collapse {v0}" : "Expand {v0}", {
+                  v0: folder.name,
+                })}
                 disabled={!children}
                 onClick={() =>
                   setCollapsed((previous) => {
@@ -73,7 +77,7 @@ export function FolderTree({
               </button>
               <button
                 className="folder-manage icon-button"
-                aria-label={`Manage ${folder.name}`}
+                aria-label={t("Manage {v0}", { v0: folder.name })}
                 onClick={() => onManage(folder)}
               >
                 <MoreHorizontal size={14} />
@@ -85,13 +89,13 @@ export function FolderTree({
       });
   }
   return (
-    <nav aria-label="Drill folders">
+    <nav aria-label={t("Drill folders")}>
       <button
         className={`all-drills ${active === null ? "active" : ""}`}
         onClick={() => onSelect(null)}
       >
         <LayoutGrid size={16} />
-        <span>All drills</span>
+        <span>{t("All drills")}</span>
         <small>{projects.length}</small>
       </button>
       {branch(null)}

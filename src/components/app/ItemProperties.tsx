@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import {
   Circle,
   Triangle,
@@ -22,6 +23,7 @@ import type { TacticalToken } from "../../types/project";
 import { NumberStepper } from "../ui/NumberStepper";
 
 export function ItemProperties({ onClose }: { onClose: () => void }) {
+  const t = useTranslation();
   const { project, frameIndex, edit, selected, setSelected } =
     useProjectStore();
   if (!project) return null;
@@ -52,13 +54,15 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
   return (
     <>
       <header className="item-properties-heading">
-        <h2>{name.charAt(0).toUpperCase() + name.slice(1)} properties</h2>
+        <h2>
+          {t(`${name.charAt(0).toUpperCase() + name.slice(1)} properties`)}
+        </h2>
         <button className="text-button danger" onClick={remove}>
-          <Trash2 size={15} /> Delete
+          <Trash2 size={15} /> {t("Delete")}
         </button>
         <button
           className="icon-button"
-          aria-label="Close item properties"
+          aria-label={t("Close item properties")}
           onClick={onClose}
         >
           <X size={17} />
@@ -68,9 +72,9 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
         {token && (
           <>
             <label>
-              Label
+              {t("Label")}
               <input
-                aria-label="Token label"
+                aria-label={t("Token label")}
                 maxLength={80}
                 value={token.label}
                 onChange={(e) => updateToken({ label: e.target.value })}
@@ -85,7 +89,7 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
                       key={shape}
                       className={token.shape === shape ? "active" : ""}
                       onClick={() => updateToken({ shape })}
-                      aria-label={`Use ${shape}`}
+                      aria-label={t("Use {v0}", { v0: t(shape) })}
                     >
                       <Icon size={16} />
                     </button>
@@ -96,7 +100,7 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
             {token.role !== "equipment" && (
               <>
                 <label className="toggle-row">
-                  Arms
+                  {t("Arms")}
                   <input
                     type="checkbox"
                     checked={token.arms ?? false}
@@ -104,7 +108,7 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
                   />
                 </label>
                 <label className="toggle-row">
-                  Peto
+                  {t("Peto")}
                   <input
                     type="checkbox"
                     checked={token.peto?.enabled ?? false}
@@ -122,7 +126,7 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
                   <div
                     className="peto-colors"
                     role="group"
-                    aria-label="Peto color"
+                    aria-label={t("Peto color")}
                   >
                     {(
                       Object.keys(PETO_COLORS) as (keyof typeof PETO_COLORS)[]
@@ -130,8 +134,10 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
                       <button
                         key={color}
                         type="button"
-                        aria-label={`${PETO_COLORS[color].label} peto`}
-                        title={PETO_COLORS[color].label}
+                        aria-label={t("{v0} peto", {
+                          v0: t(PETO_COLORS[color].label),
+                        })}
+                        title={t(PETO_COLORS[color].label)}
                         aria-pressed={token.peto?.color === color}
                         style={{ backgroundColor: PETO_COLORS[color].color }}
                         onClick={() =>
@@ -147,23 +153,23 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
             )}
             {playerKit(project, token) ? (
               <p className="muted">
-                Colors follow the team kit. Edit it under Player kits.
+                {t("Colors follow the team kit. Edit it under Player kits.")}
               </p>
             ) : (
               <label className="inline-label">
-                Color
+                {t("Color")}
                 <input
                   type="color"
-                  aria-label="Token color"
+                  aria-label={t("Token color")}
                   value={token.color}
                   onChange={(e) => updateToken({ color: e.target.value })}
                 />
               </label>
             )}
             <label className="inline-label">
-              Size
+              {t("Size")}
               <NumberStepper
-                label="Token size"
+                label={t("Token size")}
                 min={4}
                 max={50}
                 value={token.size}
@@ -175,10 +181,10 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
         {arrow && (
           <div className="arrow-settings">
             <label className="inline-label">
-              Line color
+              {t("Line color")}
               <input
                 type="color"
-                aria-label="Line color"
+                aria-label={t("Line color")}
                 value={arrow.color}
                 onChange={(e) =>
                   edit((d) => {
@@ -191,9 +197,9 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
               />
             </label>
             <label>
-              Arrowheads
+              {t("Arrowheads")}
               <select
-                aria-label="Arrowheads"
+                aria-label={t("Arrowheads")}
                 value={arrow.heads ?? "end"}
                 onChange={(e) =>
                   edit((d) => {
@@ -205,23 +211,23 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
                   })
                 }
               >
-                <option value="end">End only</option>
-                <option value="start">Start only</option>
-                <option value="both">Both ends</option>
-                <option value="none">None</option>
+                <option value="end">{t("End only")}</option>
+                <option value="start">{t("Start only")}</option>
+                <option value="both">{t("Both ends")}</option>
+                <option value="none">{t("None")}</option>
               </select>
             </label>
-            <section className="bezier-editor" aria-label="Bézier points">
+            <section className="bezier-editor" aria-label={t("Bézier points")}>
               <div className="bezier-heading">
                 <h3>
-                  Bézier points{" "}
+                  {t("Bézier points")}{" "}
                   <span className="bezier-count">
                     {editableControls(arrow).length} / 12
                   </span>
                 </h3>
                 <button
                   className="bezier-add"
-                  aria-label="Add Bézier point"
+                  aria-label={t("Add Bézier point")}
                   disabled={arrowControls(arrow).length >= 12}
                   onClick={() =>
                     edit((d) => {
@@ -234,28 +240,39 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
                     })
                   }
                 >
-                  <Plus size={16} /> Add point
+                  <Plus size={16} /> {t("Add point")}
                 </button>
               </div>
               <p className="muted">
                 {arrowControls(arrow).length
-                  ? "Drag the numbered handles on the court to shape the curve."
-                  : "Drag the center handle to bend the line, or add points for more control."}
+                  ? t(
+                      "Drag the numbered handles on the court to shape the curve.",
+                    )
+                  : t(
+                      "Drag the center handle to bend the line, or add points for more control.",
+                    )}
               </p>
-              <ol className="bezier-points" aria-label="Bézier control points">
+              <ol
+                className="bezier-points"
+                aria-label={t("Bézier control points")}
+              >
                 {editableControls(arrow).map((_, index) => (
                   <li key={index}>
                     <span className="bezier-number" aria-hidden="true">
                       {index + 1}
                     </span>
-                    <span>Point {index + 1}</span>
+                    <span>
+                      {t("Point")} {index + 1}
+                    </span>
                     <button
                       className="bezier-remove"
-                      aria-label={`Remove Bézier point ${index + 1}`}
+                      aria-label={t("Remove Bézier point {v0}", {
+                        v0: index + 1,
+                      })}
                       title={
                         arrowControls(arrow).length
-                          ? `Remove point ${index + 1}`
-                          : "Drag the center handle to start a curve"
+                          ? t("Remove point {v0}", { v0: index + 1 })
+                          : t("Drag the center handle to start a curve")
                       }
                       disabled={!arrowControls(arrow).length}
                       onClick={() =>
@@ -291,7 +308,7 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
                   })
                 }
               >
-                <RotateCcw size={15} /> Straighten line
+                <RotateCcw size={15} /> {t("Straighten line")}
               </button>
             </section>
           </div>
@@ -299,9 +316,9 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
         {token && (
           <>
             <label className="inline-label">
-              Rotation
+              {t("Rotation")}
               <NumberStepper
-                label="Object rotation"
+                label={t("Object rotation")}
                 min={0}
                 max={359}
                 value={((Math.round(tokenRotation(token)) % 360) + 360) % 360}
@@ -310,7 +327,7 @@ export function ItemProperties({ onClose }: { onClose: () => void }) {
               <span>°</span>
             </label>
             <p className="muted">
-              Drag the round handle to rotate. Hold Shift to snap to 15°.
+              {t("Drag the round handle to rotate. Hold Shift to snap to 15°.")}
             </p>
           </>
         )}

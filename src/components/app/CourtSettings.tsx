@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import type { CourtConfig } from "../../types/project";
 
 // The same controls edit workspace defaults and a drill's independent settings.
@@ -8,13 +9,14 @@ export function CourtSettings({
   config: CourtConfig;
   onChange: (config: CourtConfig) => void;
 }) {
+  const t = useTranslation();
   function change(patch: Partial<CourtConfig>) {
     onChange({ ...structuredClone(config), ...patch });
   }
   return (
     <div className="court-settings">
       <label>
-        Template
+        {t("Template")}
         <select
           value={config.type}
           onChange={(e) =>
@@ -31,15 +33,15 @@ export function CourtSettings({
             })
           }
         >
-          <option value="half">Half court · 20 × 20 m</option>
-          <option value="full">Full court · 40 × 20 m</option>
-          <option value="custom_box">Custom practice area</option>
+          <option value="half">{t("Half court · 20 × 20 m")}</option>
+          <option value="full">{t("Full court · 40 × 20 m")}</option>
+          <option value="custom_box">{t("Custom practice area")}</option>
         </select>
       </label>
       {config.type === "half" && (
         <>
           <label>
-            Court size
+            {t("Court size")}
             <select
               value={config.halfCourtDepth ?? "20"}
               onChange={(e) => {
@@ -50,20 +52,20 @@ export function CourtSettings({
                 });
               }}
             >
-              <option value="20">20 × 20 m</option>
-              <option value="16">20 × 16 m · compact</option>
+              <option value="20">{t("20 × 20 m")}</option>
+              <option value="16">{t("20 × 16 m · compact")}</option>
             </select>
           </label>
           <label>
-            Goal position
+            {t("Goal position")}
             <select
               value={config.halfCourtEnd ?? "top"}
               onChange={(e) =>
                 change({ halfCourtEnd: e.target.value as "top" | "bottom" })
               }
             >
-              <option value="top">Top · attacking view</option>
-              <option value="bottom">Bottom · defending view</option>
+              <option value="top">{t("Top · attacking view")}</option>
+              <option value="bottom">{t("Bottom · defending view")}</option>
             </select>
           </label>
         </>
@@ -72,7 +74,7 @@ export function CourtSettings({
         <div className="two-cols">
           {(["width", "height"] as const).map((axis) => (
             <label key={axis}>
-              {axis} (m)
+              {t(axis)} {t("(m)")}
               <input
                 type="number"
                 min="10"
@@ -100,7 +102,7 @@ export function CourtSettings({
           <label key={key}>
             <input
               type="color"
-              aria-label={`Court ${key} color`}
+              aria-label={t("Court {v0} color", { v0: t(key) })}
               value={config.themeColors[key]}
               onChange={(e) =>
                 change({
@@ -108,15 +110,15 @@ export function CourtSettings({
                 })
               }
             />
-            <span>{key}</span>
+            <span>{t(key)}</span>
           </label>
         ))}
       </div>
       <div className="background-setting">
         <label>
-          Canvas background
+          {t("Canvas background")}
           <select
-            aria-label="Canvas background"
+            aria-label={t("Canvas background")}
             value={config.background === "floor" ? "floor" : "custom"}
             onChange={(e) =>
               change({
@@ -129,27 +131,27 @@ export function CourtSettings({
               })
             }
           >
-            <option value="floor">Same as floor</option>
-            <option value="custom">Custom color</option>
+            <option value="floor">{t("Same as floor")}</option>
+            <option value="custom">{t("Custom color")}</option>
           </select>
         </label>
         {config.background !== "floor" && (
           <label>
             <input
               type="color"
-              aria-label="Canvas background color"
+              aria-label={t("Canvas background color")}
               value={config.background}
               onChange={(e) => change({ background: e.target.value })}
             />
-            <span>background</span>
+            <span>{t("background")}</span>
           </label>
         )}
       </div>
       <label className="inline-label">
-        Line weight
+        {t("Line weight")}
         <input
           type="range"
-          aria-label="Court line weight"
+          aria-label={t("Court line weight")}
           min="1"
           max="5"
           step=".5"
@@ -158,11 +160,11 @@ export function CourtSettings({
         />
       </label>
       <label className="inline-label">
-        Player scale
+        {t("Player scale")}
         <span className="scale-control">
           <input
             type="range"
-            aria-label="Player scale"
+            aria-label={t("Player scale")}
             min="0.5"
             max="2"
             step="0.05"
@@ -172,24 +174,16 @@ export function CourtSettings({
           <span>{Math.round((config.playerScale ?? 1) * 100)}%</span>
         </span>
       </label>
-      {(["grid", "showLabels", "highlight"] as const).map(
-        (key, i) => (
-          <label className="toggle-row" key={key}>
-            {
-              [
-                "Show grid",
-                "Player labels",
-                "Highlight key lines",
-              ][i]
-            }
-            <input
-              type="checkbox"
-              checked={config[key] ?? false}
-              onChange={(e) => change({ [key]: e.target.checked })}
-            />
-          </label>
-        ),
-      )}
+      {(["grid", "showLabels", "highlight"] as const).map((key, i) => (
+        <label className="toggle-row" key={key}>
+          {t(["Show grid", "Player labels", "Highlight key lines"][i])}
+          <input
+            type="checkbox"
+            checked={config[key] ?? false}
+            onChange={(e) => change({ [key]: e.target.checked })}
+          />
+        </label>
+      ))}
     </div>
   );
 }

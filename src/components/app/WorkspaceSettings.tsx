@@ -1,10 +1,13 @@
+import { useTranslation } from "../../lib/i18n";
 import { useState } from "react";
 import { usePreferencesStore } from "../../store/preferencesStore";
 import { useProjectStore } from "../../store/projectStore";
 import { CourtSettings } from "./CourtSettings";
 import { DEFAULT_COURT } from "../../lib/projectDefaults";
+import { LanguageSelect } from "./LanguageSelect";
 
 export function WorkspaceSettings({ onClose }: { onClose: () => void }) {
+  const t = useTranslation();
   const { courtDefaults, setCourtDefaults, theme, setTheme } =
     usePreferencesStore();
   const project = useProjectStore((state) => state.project);
@@ -12,10 +15,11 @@ export function WorkspaceSettings({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
   return (
     <div className="workspace-settings">
+      <LanguageSelect />
       <label className="theme-preference">
-        Appearance
+        {t("Appearance")}
         <select
-          aria-label="Interface theme"
+          aria-label={t("Interface theme")}
           value={theme}
           onChange={(e) => {
             try {
@@ -29,19 +33,20 @@ export function WorkspaceSettings({ onClose }: { onClose: () => void }) {
             }
           }}
         >
-          <option value="system">Follow system</option>
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
+          <option value="system">{t("Follow system")}</option>
+          <option value="light">{t("Light")}</option>
+          <option value="dark">{t("Dark")}</option>
         </select>
       </label>
       <p className="muted">
-        Your defaults for new drills on this browser. Each drill can override
-        every setting below.
+        {t(
+          "Your defaults for new drills on this browser. Each drill can override every setting below.",
+        )}
       </p>
       <CourtSettings config={draft} onChange={setDraft} />
       {error && (
         <p role="alert" className="dialog-error">
-          {error}
+          {t(error)}
         </p>
       )}
       <div className="defaults-actions">
@@ -52,13 +57,13 @@ export function WorkspaceSettings({ onClose }: { onClose: () => void }) {
             if (project) setDraft(structuredClone(project.courtConfig));
           }}
         >
-          Use current drill
+          {t("Use current drill")}
         </button>
         <button
           className="text-button"
           onClick={() => setDraft(structuredClone(DEFAULT_COURT))}
         >
-          Reset defaults
+          {t("Reset defaults")}
         </button>
       </div>
       <div className="modal-actions">
@@ -77,7 +82,7 @@ export function WorkspaceSettings({ onClose }: { onClose: () => void }) {
             }
           }}
         >
-          Save defaults
+          {t("Save defaults")}
         </button>
       </div>
     </div>

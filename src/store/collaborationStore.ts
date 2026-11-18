@@ -1,3 +1,4 @@
+import { translate as t } from "../lib/i18n";
 import { create } from "zustand";
 import type {
   DrawingStroke,
@@ -39,7 +40,7 @@ export const useCollaborationStore = create<CollaborationState>(() => ({
   error: null,
   connectionHint: null,
   peers: {},
-  name: `Coach ${Math.floor(Math.random() * 900 + 100)}`,
+  name: t("Coach {v0}", { v0: Math.floor(Math.random() * 900 + 100) }),
   color: ["#2563eb", "#b45309", "#9333ea", "#047857"][
     Math.floor(Math.random() * 4)
   ],

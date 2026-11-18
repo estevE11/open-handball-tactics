@@ -22,6 +22,7 @@ For environments without Chrome, run `npx playwright install chromium` and `CI=1
 
 ## Features · v0.2
 
+- **English and Spanish:** choose **More actions (⋯) → Language** or change it in Workspace defaults. The interface, help, accessibility labels, and app messages switch immediately; the choice persists in this browser and stays personal in live rooms. Saved drill names, folders, tags, notes, step names, player labels, and custom kit names remain as entered. New generated names use the selected language.
 - The top bar groups **Duplicate**, **Share**, and **Export** in that order, with fullscreen and appearance controls alongside them. **More actions (⋯)** contains Workspace defaults, Help, and offline status; on phones, appearance is also in that menu. Save status remains visible on desktop. The menu works with keyboard navigation, Escape, and outside clicks, and stays within narrow screens.
 - **Live collaboration:** choose **Share → Create live room**, copy the link, and send it to other coaches. Everyone can edit; names, live court cursors, player/arrow drags, ink and erasing previews appear as they happen. Drill contents (including uploaded images, kits, steps and coaching notes), court settings, workspace defaults, theme, drawing settings, Voronoi, onion skin, active step/pane, and playback controls are shared. Tools and object selection stay personal so people can work independently. A room starts with a copy of your drill; leaving keeps a local copy. Opening another drill leaves the room.
 - React 19, TypeScript, Vite, Tailwind CSS, Lucide, and Zustand, following Open Handball Video's `components/app`, `components/ui`, `lib`, `hooks`, `store`, and `types` separation.
@@ -67,6 +68,7 @@ src/
     arrowGeometry.ts     Path translation and multi-bend Bézier geometry
     drawingGeometry.ts   Freehand smoothing and whole-stroke eraser geometry
     preferences.ts       Validated browser-local court defaults and theme
+    i18n.ts              Browser-personal language and English/Spanish messages
     projectCompatibility.ts  Additive compatibility for older saved drills
     formations.ts        Handball-specific formation coordinates and labels
     projectDefaults.ts   Serializable project construction

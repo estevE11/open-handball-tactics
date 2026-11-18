@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useId } from "react";
 import type { PlayerKit } from "../../types/kit";
 import { KitPattern } from "./KitPattern";
@@ -28,6 +29,7 @@ export function Token({
   onPointerDown?: (event: React.PointerEvent) => void;
   onRotate?: (event: React.PointerEvent) => void;
 }) {
+  const tr = useTranslation();
   const outlineId = useId();
   const isPlayer = t.role !== "equipment";
   const kitId = `${outlineId}-kit`;
@@ -53,7 +55,7 @@ export function Token({
       transform={`translate(${t.position.x} ${t.position.y})`}
       onPointerDown={onPointerDown}
       role="img"
-      aria-label={`${t.role} ${t.label || t.equipment || ""}`}
+      aria-label={`${tr(t.role)} ${t.label || (t.equipment ? tr(t.equipment) : "")}`}
       data-item-id={t.id}
       style={{ cursor: onPointerDown ? "grab" : undefined }}
       data-kit-id={isPlayer ? kit?.id : undefined}
@@ -237,7 +239,7 @@ export function Token({
               strokeWidth="1"
             />
             <circle
-              aria-label="Rotate object"
+              aria-label={tr("Rotate object")}
               cx="0"
               cy={-handleRadius - 19}
               r="5"

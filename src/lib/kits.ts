@@ -1,6 +1,16 @@
 import { kitSchema, type PlayerKit, type KitRole } from "../types/kit";
 import type { DrillProject, TacticalToken } from "../types/project";
 import { db, type BoardDatabase } from "./browserStorage";
+import { translate as t } from "./i18n";
+
+export function kitDisplayName(kit: PlayerKit) {
+  if (!kit.id.startsWith("basic-")) return kit.name;
+  if (kit.pattern === "solid") return t("Solid color");
+  const direction = t(kitDirections[kit.direction]);
+  return kit.pattern === "halves"
+    ? t("{v0} halves", { v0: direction })
+    : `${direction} · ${kit.stripeCount} ${t(kit.stripeCount === 1 ? "stripe" : "stripes")}`;
+}
 
 export const kitDirections = {
   vertical: "Vertical",

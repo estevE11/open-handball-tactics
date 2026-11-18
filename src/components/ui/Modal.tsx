@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 
@@ -14,6 +15,7 @@ export function Modal({
   headingActions?: React.ReactNode;
   className?: string;
 }) {
+  const t = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
@@ -40,7 +42,7 @@ export function Modal({
           {headingActions}
           <button
             className="icon-button"
-            aria-label="Close dialog"
+            aria-label={t("Close dialog")}
             onClick={onClose}
           >
             <X size={19} />

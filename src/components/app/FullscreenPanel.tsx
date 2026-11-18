@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useRef, useState, type ReactNode } from "react";
 import {
   ChevronDown,
@@ -30,6 +31,7 @@ export function FullscreenPanel({
   edge: keyof typeof inward;
   children: ReactNode;
 }) {
+  const t = useTranslation();
   const [open, setOpen] = useState(true);
   const showButton = useRef<HTMLButtonElement>(null);
   const hideButton = useRef<HTMLButtonElement>(null);
@@ -53,11 +55,11 @@ export function FullscreenPanel({
       <button
         ref={showButton}
         className="fullscreen-panel-handle"
-        aria-label={`Show ${name.toLowerCase()}`}
+        aria-label={t("Show {v0}", { v0: t(name.toLowerCase()) })}
         aria-expanded={open}
         aria-controls={id}
         hidden={open}
-        title={`Show ${name.toLowerCase()}`}
+        title={t("Show {v0}", { v0: t(name.toLowerCase()) })}
         onClick={() => toggle(true)}
       >
         <Show size={18} />
@@ -65,19 +67,19 @@ export function FullscreenPanel({
       <section
         id={id}
         className="fullscreen-panel-surface"
-        aria-label={`${name} panel`}
+        aria-label={t("{v0} panel", { v0: t(name) })}
         aria-hidden={!open}
         inert={!open}
       >
         <div className="fullscreen-panel-heading">
-          <span>{name}</span>
+          <span>{t(name)}</span>
           <button
             ref={hideButton}
             className="icon-button"
-            aria-label={`Hide ${name.toLowerCase()}`}
+            aria-label={t("Hide {v0}", { v0: t(name.toLowerCase()) })}
             aria-expanded={open}
             aria-controls={id}
-            title={`Hide ${name.toLowerCase()}`}
+            title={t("Hide {v0}", { v0: t(name.toLowerCase()) })}
             onClick={() => toggle(false)}
           >
             <Hide size={18} />

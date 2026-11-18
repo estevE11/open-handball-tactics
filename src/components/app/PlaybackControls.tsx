@@ -1,9 +1,11 @@
+import { useTranslation } from "../../lib/i18n";
 import { useEffect } from "react";
 import { Play, Pause, RotateCcw, Pencil } from "lucide-react";
 import { useProjectStore } from "../../store/projectStore";
 import { animationDuration, frameTime } from "../../lib/animation";
 
 export function PlaybackControls() {
+  const t = useTranslation();
   const {
     project,
     frameIndex,
@@ -34,7 +36,7 @@ export function PlaybackControls() {
     <div className="playback-controls">
       <button
         className="icon-button"
-        aria-label={playing ? "Pause animation" : "Play animation"}
+        aria-label={playing ? t("Pause animation") : t("Play animation")}
         disabled={!duration}
         onClick={() => setPlayback(time >= duration ? 0 : time, !playing)}
       >
@@ -42,7 +44,7 @@ export function PlaybackControls() {
       </button>
       <button
         className="icon-button"
-        aria-label="Restart animation"
+        aria-label={t("Restart animation")}
         disabled={!duration}
         onClick={() => setPlayback(0, playing)}
       >
@@ -50,7 +52,7 @@ export function PlaybackControls() {
       </button>
       <input
         type="range"
-        aria-label="Animation timeline"
+        aria-label={t("Animation timeline")}
         min={0}
         max={duration || 1}
         step={10}
@@ -59,18 +61,19 @@ export function PlaybackControls() {
         onChange={(e) => setPlayback(Number(e.target.value))}
       />
       <span className="playback-time">
-        {(time / 1000).toFixed(1)} / {(duration / 1000).toFixed(1)}s
+        {(time / 1000).toFixed(1)} / {(duration / 1000).toFixed(1)}
+        {t("s")}
       </span>
       {playbackTime !== null ? (
         <button className="text-button" onClick={stopPlayback}>
-          <Pencil size={13} /> Edit step
+          <Pencil size={13} /> {t("Edit step")}
         </button>
       ) : (
         <label className="duration-label">
-          To next step
+          {t("To next step")}
           <input
             type="number"
-            aria-label="Transition duration in seconds"
+            aria-label={t("Transition duration in seconds")}
             min="0.1"
             max="30"
             step="0.1"
@@ -87,7 +90,7 @@ export function PlaybackControls() {
                 });
             }}
           />
-          <span>s</span>
+          <span>{t("s")}</span>
         </label>
       )}
     </div>

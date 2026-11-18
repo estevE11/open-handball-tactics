@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { useState } from "react";
 import type { PlayerKit } from "../../types/kit";
 import { kitDirections, kitLibrary } from "../../lib/kits";
@@ -12,6 +13,7 @@ export function KitEditor({
   onSave: (kit: PlayerKit) => void;
   onCancel: () => void;
 }) {
+  const t = useTranslation();
   const [draft, setDraft] = useState(() => structuredClone(initial));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -43,41 +45,41 @@ export function KitEditor({
       <div className="kit-editor-preview">
         <div>
           <KitPreview kit={draft} />
-          <span>Attackers</span>
+          <span>{t("Attackers")}</span>
         </div>
         <div>
           <KitPreview kit={draft} role="defender" />
-          <span>Defenders</span>
+          <span>{t("Defenders")}</span>
         </div>
       </div>
       <label>
-        Kit name
+        {t("Kit name")}
         <input
           autoFocus
           required
           maxLength={80}
           value={draft.name}
           onChange={(e) => change({ name: e.target.value })}
-          placeholder="e.g. Home · blue stripes"
+          placeholder={t("e.g. Home · blue stripes")}
         />
       </label>
       <div className="two-cols">
         <label>
-          Pattern
+          {t("Pattern")}
           <select
             value={draft.pattern}
             onChange={(e) =>
               change({ pattern: e.target.value as PlayerKit["pattern"] })
             }
           >
-            <option value="solid">Solid color</option>
-            <option value="stripes">Stripes</option>
-            <option value="halves">Two-color halves</option>
+            <option value="solid">{t("Solid color")}</option>
+            <option value="stripes">{t("Stripes")}</option>
+            <option value="halves">{t("Two-color halves")}</option>
           </select>
         </label>
         {draft.pattern !== "solid" && (
           <label>
-            Direction
+            {t("Direction")}
             <select
               value={draft.direction}
               onChange={(e) =>
@@ -86,7 +88,7 @@ export function KitEditor({
             >
               {Object.entries(kitDirections).map(([value, label]) => (
                 <option key={value} value={value}>
-                  {label}
+                  {t(label)}
                 </option>
               ))}
             </select>
@@ -95,14 +97,14 @@ export function KitEditor({
       </div>
       {draft.pattern === "stripes" && (
         <label>
-          Stripe count
+          {t("Stripe count")}
           <select
             value={draft.stripeCount}
             onChange={(e) => change({ stripeCount: Number(e.target.value) })}
           >
             {[1, 2, 3].map((count) => (
               <option key={count} value={count}>
-                {count} {count === 1 ? "stripe" : "stripes"}
+                {count} {count === 1 ? t("stripe") : t("stripes")}
               </option>
             ))}
           </select>
@@ -110,7 +112,7 @@ export function KitEditor({
       )}
       <div className="kit-colors">
         <label>
-          Primary color
+          {t("Primary color")}
           <input
             type="color"
             value={draft.primary}
@@ -119,7 +121,7 @@ export function KitEditor({
         </label>
         {draft.pattern !== "solid" && (
           <label>
-            Secondary color
+            {t("Secondary color")}
             <input
               type="color"
               value={draft.secondary}
@@ -128,7 +130,7 @@ export function KitEditor({
           </label>
         )}
         <label>
-          Label color
+          {t("Label color")}
           <input
             type="color"
             value={draft.labelColor}
@@ -137,11 +139,11 @@ export function KitEditor({
         </label>
       </div>
       <p className="muted">
-        Saved in your kit library and applied to this drill.
+        {t("Saved in your kit library and applied to this drill.")}
       </p>
       {error && (
         <p role="alert" className="dialog-error">
-          {error}
+          {t(error)}
         </p>
       )}
       <div className="modal-actions">
@@ -151,10 +153,10 @@ export function KitEditor({
           disabled={saving}
           onClick={onCancel}
         >
-          Back to kits
+          {t("Back to kits")}
         </button>
         <button className="button primary" disabled={saving}>
-          {saving ? "Saving…" : "Save and apply"}
+          {saving ? t("Saving…") : t("Save and apply")}
         </button>
       </div>
     </form>

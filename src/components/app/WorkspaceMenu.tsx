@@ -1,6 +1,8 @@
+import { useTranslation } from "../../lib/i18n";
 import { useEffect, useRef } from "react";
 import { CircleHelp, HardDrive, MoreHorizontal, Settings2 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { LanguageSelect } from "./LanguageSelect";
 
 export function WorkspaceMenu({
   onPreferences,
@@ -13,6 +15,7 @@ export function WorkspaceMenu({
   onError: (message: string) => void;
   storageStatus: string;
 }) {
+  const t = useTranslation();
   const ref = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     function outside(event: PointerEvent) {
@@ -42,21 +45,22 @@ export function WorkspaceMenu({
       <summary
         role="button"
         className="icon-button"
-        aria-label="More actions"
-        title="More actions"
+        aria-label={t("More actions")}
+        title={t("More actions")}
       >
         <MoreHorizontal size={20} />
       </summary>
       <div
         className="workspace-menu-content"
         role="group"
-        aria-label="Workspace actions"
+        aria-label={t("Workspace actions")}
       >
+        <LanguageSelect />
         <button
-          aria-label="Workspace defaults"
+          aria-label={t("Workspace defaults")}
           onClick={() => choose(onPreferences)}
         >
-          <Settings2 size={17} /> Workspace defaults
+          <Settings2 size={17} /> {t("Workspace defaults")}
         </button>
         <div className="workspace-menu-appearance">
           <ThemeToggle
@@ -68,10 +72,10 @@ export function WorkspaceMenu({
           />
         </div>
         <button onClick={() => choose(onHelp)}>
-          <CircleHelp size={17} /> Help
+          <CircleHelp size={17} /> {t("Help")}
         </button>
         <div className="workspace-menu-status">
-          <HardDrive size={15} /> {storageStatus}
+          <HardDrive size={15} /> {t(storageStatus)}
         </div>
       </div>
     </details>

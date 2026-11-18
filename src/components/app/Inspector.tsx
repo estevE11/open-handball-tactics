@@ -1,3 +1,4 @@
+import { useTranslation } from "../../lib/i18n";
 import { Circle, Triangle, ImagePlus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { PlayerKits } from "../kits/PlayerKits";
@@ -27,6 +28,7 @@ export function Inspector({
   addAsset: (id: string, p: Point) => void;
   removeAsset: (id: string) => void;
 }) {
+  const t = useTranslation();
   const { project, frameIndex, edit } = useProjectStore();
   const file = useRef<HTMLInputElement>(null);
   const [defaultsResult, setDefaultsResult] = useState<{
@@ -56,10 +58,10 @@ export function Inspector({
   return (
     <aside className="inspector">
       <div className="panel-title">
-        Tactics settings <span className="tiny-label">LIVE</span>
+        {t("Tactics settings")} <span className="tiny-label">{t("LIVE")}</span>
       </div>
       <section className="inspector-section court-panel">
-        <h3>Court · this drill</h3>
+        <h3>{t("Court · this drill")}</h3>
         <CourtSettings
           config={config}
           onChange={(next) =>
@@ -81,11 +83,13 @@ export function Inspector({
               })
             }
           >
-            Apply workspace defaults
+            {t("Apply workspace defaults")}
           </button>
           <button
             className="text-button"
-            title="Use this drill’s court settings as the defaults for new drills"
+            title={t(
+              "Use this drill’s court settings as the defaults for new drills",
+            )}
             onClick={() => {
               try {
                 usePreferencesStore
@@ -103,7 +107,7 @@ export function Inspector({
               }
             }}
           >
-            Save as defaults
+            {t("Save as defaults")}
           </button>
         </div>
         {defaultsResult?.config === config && (
@@ -112,16 +116,16 @@ export function Inspector({
             role={defaultsResult.error ? "alert" : undefined}
             aria-live="polite"
           >
-            {defaultsResult.error ?? "Workspace defaults saved."}
+            {t(defaultsResult.error ?? "Workspace defaults saved.")}
           </p>
         )}
       </section>
       <PlayerKits />
       <section className="inspector-section">
-        <h3>Quick formations</h3>
-        <p className="muted">Set your shape. Make it your own.</p>
+        <h3>{t("Quick formations")}</h3>
+        <p className="muted">{t("Set your shape. Make it your own.")}</p>
         <div className="formation-label">
-          <Triangle size={12} fill="#eaa958" color="#c88b41" /> Defense
+          <Triangle size={12} fill="#eaa958" color="#c88b41" /> {t("Defense")}
         </div>
         <div className="preset-grid">
           {defenses.map((system) => (
@@ -131,7 +135,7 @@ export function Inspector({
           ))}
         </div>
         <div className="formation-label">
-          <Circle size={12} fill="#4f8cba" color="#4f8cba" /> Offense
+          <Circle size={12} fill="#4f8cba" color="#4f8cba" /> {t("Offense")}
         </div>
         <div className="preset-grid">
           {offenses.map((system) => (
@@ -143,10 +147,10 @@ export function Inspector({
       </section>
       <section className="inspector-section">
         <div className="section-heading">
-          <h3>Your assets</h3>
+          <h3>{t("Your assets")}</h3>
           <button
             className="icon-button"
-            aria-label="Upload image"
+            aria-label={t("Upload image")}
             onClick={() => file.current?.click()}
           >
             <ImagePlus size={16} />
@@ -172,15 +176,15 @@ export function Inspector({
                     e.dataTransfer.setData("application/handball-asset", a.id)
                   }
                   onClick={() => addAsset(a.id, { x: 200, y: 330 })}
-                  title={`Add ${a.name}`}
-                  aria-label={`Add ${a.name}`}
+                  title={t("Add {v0}", { v0: a.name })}
+                  aria-label={t("Add {v0}", { v0: a.name })}
                 >
                   <img src={urls[a.id]} alt={a.name} />
                 </button>
                 <button
                   className="asset-delete"
                   onClick={() => removeAsset(a.id)}
-                  aria-label={`Delete asset ${a.name}`}
+                  aria-label={t("Delete asset {v0}", { v0: a.name })}
                 >
                   <Trash2 size={10} />
                 </button>
@@ -193,12 +197,12 @@ export function Inspector({
             onClick={() => file.current?.click()}
           >
             <ImagePlus size={21} />
-            <span>Bring your own images</span>
-            <small>PNG, JPG, WebP, GIF · up to 10 MB</small>
+            <span>{t("Bring your own images")}</span>
+            <small>{t("PNG, JPG, WebP, GIF · up to 10 MB")}</small>
           </button>
         )}
         {assets.length > 0 && (
-          <p className="muted">Click or drag an image onto the court.</p>
+          <p className="muted">{t("Click or drag an image onto the court.")}</p>
         )}
       </section>
     </aside>
