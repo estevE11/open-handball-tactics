@@ -5,9 +5,7 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Check,
-  ChevronDown,
   ChevronRight,
-  CircleHelp,
   Copy,
   FilePlus2,
   FolderPlus,
@@ -47,6 +45,7 @@ import { AnimationPanel } from "./components/app/AnimationPanel";
 import { AnimatedExport } from "./components/app/AnimatedExport";
 import { WorkspaceSettings } from "./components/app/WorkspaceSettings";
 import { ThemeToggle } from "./components/app/ThemeToggle";
+import { WorkspaceMenu } from "./components/app/WorkspaceMenu";
 import { usePreferencesStore } from "./store/preferencesStore";
 import { Inspector } from "./components/app/Inspector";
 import { Modal } from "./components/ui/Modal";
@@ -522,7 +521,39 @@ export default function App() {
           <div className="topbar-actions">
             {project && (
               <>
-                <Collaboration />
+                <span className="save-status" role="status">
+                  {board.saveStatus === "saved" && <Check size={12} />}{" "}
+                  {board.saveStatus === "saved"
+                    ? "All changes saved"
+                    : board.saveStatus === "saving"
+                      ? "Saving…"
+                      : "Save failed"}
+                </span>
+                <div
+                  className="topbar-primary-actions"
+                  role="group"
+                  aria-label="Share and export"
+                >
+                  <Collaboration />
+                  <button
+                    className="button primary"
+                    onClick={() => {
+                      board.setSelected(null);
+                      setImageCopied(false);
+                      setDialog({ type: "export" });
+                    }}
+                  >
+                    <ArrowDownToLine size={16} /> Export
+                  </button>
+                </div>
+              </>
+            )}
+            <div
+              className="topbar-utilities"
+              role="group"
+              aria-label="Workspace controls"
+            >
+              {project && (
                 <button
                   className="icon-button"
                   aria-label="Enter fullscreen"
@@ -534,69 +565,37 @@ export default function App() {
                 >
                   <Maximize size={18} />
                 </button>
-                <span className="save-status" role="status">
-                  {board.saveStatus === "saved" && <Check size={12} />}{" "}
-                  {board.saveStatus === "saved"
-                    ? "All changes saved"
-                    : board.saveStatus === "saving"
-                      ? "Saving…"
-                      : "Save failed"}
-                </span>
-                <button
-                  className="button secondary duplicate-button"
-                  disabled={busy}
-                  onClick={() =>
-                    void run(async () => {
-                      await flushSaves();
-                      board.open(await library.duplicate(project));
-                    })
-                  }
-                >
-                  <Copy size={15} /> Duplicate
-                </button>
-                <button
-                  className="button primary"
-                  onClick={() => {
-                    board.setSelected(null);
-                    setImageCopied(false);
-                    setDialog({ type: "export" });
-                  }}
-                >
-                  <ArrowDownToLine size={15} /> Export <ChevronDown size={12} />
-                </button>
-              </>
-            )}
-            <button
-              className="icon-button mobile-settings"
-              aria-label="Toggle settings"
-              onClick={() => setSettings(!settings)}
-            >
-              <Settings2 size={19} />
-            </button>
-            <ThemeToggle onError={setNotice} />
-            <span className="offline-status">
-              <span />
-              {offline
-                ? "Working offline"
-                : offlineReady
-                  ? "Ready offline"
-                  : "Local workspace"}
-            </span>
-            <button
-              className="icon-button"
-              aria-label="Workspace defaults"
-              title="Workspace defaults"
-              onClick={() => setDialog({ type: "preferences" })}
-            >
-              <Settings2 size={18} />
-            </button>
-            <button
-              className="icon-button"
-              aria-label="Help"
-              onClick={() => setDialog({ type: "help" })}
-            >
-              <CircleHelp size={18} />
-            </button>
+              )}
+              <button
+                className="icon-button mobile-settings"
+                aria-label="Toggle settings"
+                onClick={() => setSettings(!settings)}
+              >
+                <Settings2 size={19} />
+              </button>
+              <ThemeToggle onError={setNotice} />
+              <WorkspaceMenu
+                busy={busy}
+                onDuplicate={
+                  project
+                    ? () =>
+                        void run(async () => {
+                          await flushSaves();
+                          board.open(await library.duplicate(project));
+                        })
+                    : undefined
+                }
+                onPreferences={() => setDialog({ type: "preferences" })}
+                onHelp={() => setDialog({ type: "help" })}
+                storageStatus={
+                  offline
+                    ? "Working offline"
+                    : offlineReady
+                      ? "Ready offline"
+                      : "Local workspace"
+                }
+              />
+            </div>
           </div>
         </header>
         {roomId && !synced && (
@@ -1095,7 +1094,8 @@ export default function App() {
                 double-tap an item to open its properties beside it. The popup
                 includes Delete, number steppers, and all item settings,
                 including arrowheads and bends. Drag the item or tap outside to
-                close it. You can also select an item and press Enter on the court.
+                close it. You can also select an item and press Enter on the
+                court.
               </p>
               <p>
                 Use Fullscreen to fill the screen with the court. Half courts

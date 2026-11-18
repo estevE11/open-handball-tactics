@@ -225,6 +225,7 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   await expect(
     page.getByRole("heading", { name: "Build the attack" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
   await page.getByLabel("Workspace defaults", { exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Template").selectOption("full");
@@ -272,6 +273,7 @@ test("workspace court defaults persist while drill overrides and equipment sizes
   await expect(page.getByRole("status")).toHaveText("All changes saved");
   await page.reload();
   await expect(page.getByLabel("Court floor color")).toHaveValue("#eeddaa");
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
   await page.getByLabel("Workspace defaults", { exact: true }).click();
   await expect(dialog.getByLabel("Court floor color")).toHaveValue("#abcabc");
   await expect(dialog.getByLabel("Player scale")).toHaveValue("1.5");
@@ -508,6 +510,7 @@ test("dark mode persists and leaves the canvas pixels unchanged", async ({
   await page.screenshot({ path: "/tmp/handball-dark.png", fullPage: true });
   await page.reload();
   await expect(page.locator("html")).toHaveClass("dark");
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
   await page.getByLabel("Workspace defaults", { exact: true }).click();
   await page
     .getByRole("dialog")

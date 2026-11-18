@@ -74,9 +74,11 @@ test("formations, dragging, arrows, undo, steps, exports, and offline reload", a
   await expect(
     page.getByRole("heading", { name: "Build the attack" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
   await expect(
     page.getByText("Working offline", { exact: true }),
   ).toBeVisible();
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "6:0", exact: true }).click();
   await expect(court.getByRole("img", { name: "defender Av" })).toHaveCount(0);
   await expect(page.getByRole("status")).toHaveText("All changes saved");
@@ -145,6 +147,7 @@ test("nested folders, drill metadata, binary assets, import, and duplication", a
   });
   await expect(page.locator(".drill-card")).toHaveCount(3);
   await expect(page.locator("#tactical-canvas image")).toHaveCount(1);
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
   await page.getByRole("button", { name: "Duplicate", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Wing overload (copy)" }),

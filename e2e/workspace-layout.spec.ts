@@ -45,6 +45,9 @@ for (const width of [1440, 390]) {
       expect(input.x).toBeGreaterThanOrEqual(side.x);
       expect(input.x + input.width).toBeLessThanOrEqual(side.x + side.width);
     }
+    await page
+      .getByRole("button", { name: "More actions", exact: true })
+      .click();
     await page.getByRole("button", { name: "Help", exact: true }).click();
     const help = page.getByRole("dialog");
     await expect(

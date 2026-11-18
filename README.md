@@ -22,6 +22,7 @@ For environments without Chrome, run `npx playwright install chromium` and `CI=1
 
 ## Features · v0.2
 
+- The top bar groups **Share** and **Export** together, with fullscreen and appearance controls alongside them. **More actions (⋯)** contains Duplicate drill, Workspace defaults, Help, and offline status. Save status remains visible on desktop. The menu works with keyboard navigation, Escape, and outside clicks, and stays within narrow screens.
 - **Live collaboration:** choose **Share → Create live room**, copy the link, and send it to other coaches. Everyone can edit; names, live court cursors, player/arrow drags, ink and erasing previews appear as they happen. Drill contents (including uploaded images, kits, steps and coaching notes), court settings, workspace defaults, theme, drawing settings, Voronoi, onion skin, active step/pane, and playback controls are shared. Tools and object selection stay personal so people can work independently. A room starts with a copy of your drill; leaving keeps a local copy. Opening another drill leaves the room.
 - React 19, TypeScript, Vite, Tailwind CSS, Lucide, and Zustand, following Open Handball Video's `components/app`, `components/ui`, `lib`, `hooks`, `store`, and `types` separation.
 - Native SVG tactical engine with pointer capture, scalable court coordinates, drag positioning, and editable quadratic Bézier trajectories. SVG keeps the foundation lightweight and supports self-contained vector export without an additional rendering framework.

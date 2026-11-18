@@ -14,6 +14,7 @@ test("half court goal position persists per drill, in defaults, and in exports",
   expect((await keeper.boundingBox())!.y).toBeLessThan(
     (await center.boundingBox())!.y,
   );
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
   await page.getByLabel("Workspace defaults", { exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Goal position").selectOption("bottom");
