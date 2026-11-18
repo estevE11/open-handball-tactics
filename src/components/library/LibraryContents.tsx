@@ -8,6 +8,7 @@ export function LibraryContents({
   onFolder,
   onProject,
   onManage,
+  onManageProject,
   query,
   view = "list",
   busy = false,
@@ -17,6 +18,7 @@ export function LibraryContents({
   onFolder: (id: string) => void;
   onProject: (project: DrillProject) => void;
   onManage: (folder: FolderNode) => void;
+  onManageProject: (project: DrillProject) => void;
   query: string;
   view?: "list" | "grid";
   busy?: boolean;
@@ -58,7 +60,7 @@ export function LibraryContents({
         );
       })}
       {contents.projects.map((project) => (
-        <li key={project.id}>
+        <li className="library-drill" key={project.id}>
           <button
             className={`drill-card ${project.id === selected ? "active" : ""}`}
             disabled={busy}
@@ -78,7 +80,15 @@ export function LibraryContents({
                 {project.keyframes.length === 1 ? "step" : "steps"}
               </span>
             </span>
-            {project.id === selected && <span className="active-dot" />}
+          </button>
+          <button
+            className="icon-button drill-manage"
+            aria-label={`Manage drill ${project.title}`}
+            title={`Manage ${project.title}`}
+            disabled={busy}
+            onClick={() => onManageProject(project)}
+          >
+            <MoreHorizontal size={17} />
           </button>
         </li>
       ))}

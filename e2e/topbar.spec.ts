@@ -15,7 +15,7 @@ for (const [width, theme] of [
     await page.goto("/");
     const header = page.locator(".topbar");
     const primary = header.getByRole("group", {
-      name: "Share and export",
+      name: "Drill actions",
       exact: true,
     });
     const menu = header.getByRole("group", {
@@ -26,7 +26,7 @@ for (const [width, theme] of [
       name: "More actions",
       exact: true,
     });
-    await expect(primary.getByRole("button")).toHaveCount(2);
+    await expect(primary.getByRole("button")).toHaveCount(3);
     await expect(
       primary.getByRole("button", { name: "Share live room", exact: true }),
     ).toBeVisible();
@@ -38,9 +38,19 @@ for (const [width, theme] of [
     await expect(
       header.getByRole("button", { name: "Enter fullscreen", exact: true }),
     ).toBeVisible();
-    await expect(
-      header.getByRole("button", { name: /Switch to (light|dark) mode/ }),
-    ).toBeVisible();
+    if (width > 700)
+      await expect(
+        header.getByRole("button", { name: /Switch to (light|dark) mode/ }),
+      ).toBeVisible();
+    const actionNames = await primary
+      .getByRole("button")
+      .evaluateAll((buttons) =>
+        buttons.map(
+          (button) =>
+            button.getAttribute("aria-label") ?? button.textContent?.trim(),
+        ),
+      );
+    expect(actionNames).toEqual(["Duplicate", "Share live room", "Export"]);
     await expect(menu).not.toBeVisible();
     await page.screenshot({
       path: `test-results/topbar-${width}-${theme}.png`,
@@ -56,7 +66,7 @@ for (const [width, theme] of [
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
     await expect(
       menu.getByRole("button", { name: "Duplicate", exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(
       menu.getByRole("button", { name: "Workspace defaults", exact: true }),
     ).toBeVisible();
@@ -87,8 +97,9 @@ for (const [width, theme] of [
         .getByText("Your ideas. Your court.", { exact: true }),
     ).toBeVisible();
     await page.getByLabel("Close dialog").click();
-    await more.click();
-    await menu.getByRole("button", { name: "Duplicate", exact: true }).click();
+    await primary
+      .getByRole("button", { name: "Duplicate", exact: true })
+      .click();
     await expect(
       header.getByRole("heading", {
         name: "Build the attack (copy)",
@@ -101,6 +112,16 @@ for (const [width, theme] of [
       page.getByRole("dialog").getByRole("button", { name: /^PNG snapshot/ }),
     ).toBeVisible();
     await page.getByLabel("Close dialog").click();
+    if (width <= 700) {
+      await more.click();
+      await menu
+        .getByRole("button", { name: /Switch to (light|dark) mode/ })
+        .click();
+      await expect(menu).not.toBeVisible();
+      if (theme === "dark")
+        await expect(page.locator("html")).not.toHaveClass(/dark/);
+      else await expect(page.locator("html")).toHaveClass(/dark/);
+    }
     if (width === 1440) {
       await context.setOffline(true);
       await more.click();

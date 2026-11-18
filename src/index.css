@@ -724,6 +724,28 @@ h3 {
   background: #f0f3f0;
   border-color: #dfe6df;
 }
+.library-drill {
+  position: relative;
+}
+.library-drill > .drill-card {
+  padding-right: 42px;
+}
+.library-drill > .drill-manage {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 34px;
+}
+.library-view-grid .library-drill > .drill-card {
+  padding: 18px 12px;
+}
+.library-view-grid .library-drill > .drill-manage {
+  top: 5px;
+  right: 4px;
+  transform: none;
+}
 .mini-court {
   height: 41px;
   width: 38px;
@@ -975,7 +997,8 @@ h3 {
   background: #fff;
   box-shadow: 0 10px 30px #14251a24;
 }
-.workspace-menu-content > button {
+.workspace-menu-content > button,
+.workspace-menu-appearance > button {
   display: flex;
   align-items: center;
   gap: 11px;
@@ -989,8 +1012,12 @@ h3 {
   text-align: left;
   font-size: 13px;
 }
-.workspace-menu-content > button:hover:not(:disabled) {
+.workspace-menu-content > button:hover:not(:disabled),
+.workspace-menu-appearance > button:hover:not(:disabled) {
   background: #edf3ee;
+}
+.workspace-menu-appearance {
+  display: none;
 }
 .workspace-menu-content hr {
   margin: 5px 6px;
@@ -2490,10 +2517,12 @@ h1 {
   border-color: #46534b;
   box-shadow: 0 10px 30px #0005;
 }
-.dark .workspace-menu-content > button {
+.dark .workspace-menu-content > button,
+.dark .workspace-menu-appearance > button {
   color: #d2ded5;
 }
 .dark .workspace-menu-content > button:hover:not(:disabled),
+.dark .workspace-menu-appearance > button:hover:not(:disabled),
 .dark .workspace-menu[open] summary {
   color: #d2ded5;
   background: #344239;
@@ -2825,6 +2854,12 @@ h1 {
   }
   .topbar-primary-actions {
     gap: 5px;
+  }
+  .topbar-utilities > .theme-toggle {
+    display: none;
+  }
+  .workspace-menu-appearance {
+    display: block;
   }
   .topbar-utilities {
     gap: 1px;

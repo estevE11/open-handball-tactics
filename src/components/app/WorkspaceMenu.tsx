@@ -1,23 +1,16 @@
 import { useEffect, useRef } from "react";
-import {
-  CircleHelp,
-  Copy,
-  HardDrive,
-  MoreHorizontal,
-  Settings2,
-} from "lucide-react";
+import { CircleHelp, HardDrive, MoreHorizontal, Settings2 } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function WorkspaceMenu({
-  onDuplicate,
   onPreferences,
   onHelp,
-  busy,
+  onError,
   storageStatus,
 }: {
-  onDuplicate?: () => void;
   onPreferences: () => void;
   onHelp: () => void;
-  busy: boolean;
+  onError: (message: string) => void;
   storageStatus: string;
 }) {
   const ref = useRef<HTMLDetailsElement>(null);
@@ -59,24 +52,21 @@ export function WorkspaceMenu({
         role="group"
         aria-label="Workspace actions"
       >
-        {onDuplicate && (
-          <>
-            <button
-              aria-label="Duplicate"
-              disabled={busy}
-              onClick={() => choose(onDuplicate)}
-            >
-              <Copy size={17} /> Duplicate drill
-            </button>
-            <hr />
-          </>
-        )}
         <button
           aria-label="Workspace defaults"
           onClick={() => choose(onPreferences)}
         >
           <Settings2 size={17} /> Workspace defaults
         </button>
+        <div className="workspace-menu-appearance">
+          <ThemeToggle
+            labelled
+            onError={onError}
+            onToggle={() => {
+              if (ref.current) ref.current.open = false;
+            }}
+          />
+        </div>
         <button onClick={() => choose(onHelp)}>
           <CircleHelp size={17} /> Help
         </button>

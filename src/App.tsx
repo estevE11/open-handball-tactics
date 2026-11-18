@@ -60,7 +60,8 @@ import { useCollaborationStore } from "./store/collaborationStore";
 import type { DrillProject, FolderNode, Point } from "./types/project";
 
 type Dialog =
-  | { type: "new" | "folder" | "details" | "export" | "help" | "preferences" }
+  | { type: "new" | "folder" | "export" | "help" | "preferences" }
+  | { type: "details"; projectId?: string }
   | { type: "manage"; folder: FolderNode };
 
 function createProject(title?: string, folderId: string | null = null) {
@@ -287,20 +288,32 @@ export default function App() {
     });
   }
   const contents = libraryContents(folders, projects, folder, query);
-  async function deleteCurrent() {
-    if (
-      !project ||
-      !window.confirm(`Delete “${project.title}”? This cannot be undone.`)
-    )
+  const detailsProject =
+    dialog?.type === "details"
+      ? !dialog.projectId || dialog.projectId === project?.id
+        ? project
+        : projects.find((p) => p.id === dialog.projectId)
+      : null;
+  async function duplicateDrill(target: DrillProject, openCopy: boolean) {
+    await flushSaves();
+    const latest = await db.projects.get(target.id);
+    if (!latest) throw new Error("This drill has been deleted.");
+    const copy = await library.duplicate(latest);
+    if (openCopy) board.open(copy);
+  }
+  async function deleteDrill(target: DrillProject) {
+    if (!window.confirm(`Delete “${target.title}”? This cannot be undone.`))
       return;
     await flushSaves();
-    await library.deleteProject(project.id);
-    let next = await db.projects.orderBy("updatedAt").last();
-    if (!next) {
-      next = createProject();
-      await library.save(next);
+    await library.deleteProject(target.id);
+    if (useProjectStore.getState().project?.id === target.id) {
+      let next = await db.projects.orderBy("updatedAt").last();
+      if (!next) {
+        next = createProject();
+        await library.save(next);
+      }
+      board.open(next);
     }
-    board.open(next);
     setDialog(null);
   }
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -322,17 +335,25 @@ export default function App() {
       }
       if (dialog?.type === "manage")
         await library.updateFolder(dialog.folder.id, name, parentId);
-      if (dialog?.type === "details" && project) {
-        edit((draft) => {
-          draft.title = name;
-          draft.folderId = parentId;
-          draft.tags = String(form.get("tags") ?? "")
+      if (dialog?.type === "details") {
+        if (!detailsProject) throw new Error("This drill has been deleted.");
+        const metadata = {
+          title: name,
+          folderId: parentId,
+          tags: String(form.get("tags") ?? "")
             .split(",")
             .map((s) => s.trim())
-            .filter(Boolean);
-          draft.description = String(form.get("description") ?? "");
-        });
-        await flushSaves();
+            .filter(Boolean),
+          description: String(form.get("description") ?? ""),
+        };
+        if (detailsProject.id === project?.id) {
+          edit((draft) => Object.assign(draft, metadata));
+          await flushSaves();
+        } else {
+          const latest = await db.projects.get(detailsProject.id);
+          if (!latest) throw new Error("This drill has been deleted.");
+          await library.save({ ...latest, ...metadata });
+        }
       }
       setDialog(null);
     });
@@ -435,6 +456,9 @@ export default function App() {
               onFolder={selectFolder}
               onProject={(project) => void run(() => openProject(project))}
               onManage={(folder) => setDialog({ type: "manage", folder })}
+              onManageProject={(p) =>
+                setDialog({ type: "details", projectId: p.id })
+              }
               query={query}
               busy={busy}
             />
@@ -532,8 +556,19 @@ export default function App() {
                 <div
                   className="topbar-primary-actions"
                   role="group"
-                  aria-label="Share and export"
+                  aria-label="Drill actions"
                 >
+                  <button
+                    className="button secondary"
+                    aria-label="Duplicate"
+                    title="Duplicate drill"
+                    disabled={busy}
+                    onClick={() =>
+                      void run(() => duplicateDrill(project, true))
+                    }
+                  >
+                    <Copy size={16} /> Duplicate
+                  </button>
                   <Collaboration />
                   <button
                     className="button primary"
@@ -575,16 +610,7 @@ export default function App() {
               </button>
               <ThemeToggle onError={setNotice} />
               <WorkspaceMenu
-                busy={busy}
-                onDuplicate={
-                  project
-                    ? () =>
-                        void run(async () => {
-                          await flushSaves();
-                          board.open(await library.duplicate(project));
-                        })
-                    : undefined
-                }
+                onError={setNotice}
                 onPreferences={() => setDialog({ type: "preferences" })}
                 onHelp={() => setDialog({ type: "help" })}
                 storageStatus={
@@ -828,6 +854,9 @@ export default function App() {
             })
           }
           onManage={(folder) => setDialog({ type: "manage", folder })}
+          onManageProject={(p) =>
+            setDialog({ type: "details", projectId: p.id })
+          }
           onClose={() => setExplorer(false)}
           busy={busy}
           error={notice}
@@ -875,7 +904,7 @@ export default function App() {
                     dialog.type === "manage"
                       ? dialog.folder.name
                       : dialog.type === "details"
-                        ? project?.title
+                        ? detailsProject?.title
                         : ""
                   }
                   placeholder={
@@ -889,7 +918,7 @@ export default function App() {
                 dialog.type === "manage"
                   ? dialog.folder.parentId
                   : dialog.type === "details"
-                    ? (project?.folderId ?? null)
+                    ? (detailsProject?.folderId ?? null)
                     : folder,
               )}
               {dialog.type === "manage" && (
@@ -917,7 +946,7 @@ export default function App() {
                     Tags
                     <input
                       name="tags"
-                      defaultValue={project?.tags.join(", ")}
+                      defaultValue={detailsProject?.tags.join(", ")}
                       placeholder="U15, Pivot, Warmup"
                     />
                   </label>
@@ -927,9 +956,23 @@ export default function App() {
                       name="description"
                       rows={4}
                       maxLength={10000}
-                      defaultValue={project?.description}
+                      defaultValue={detailsProject?.description}
                     />
                   </label>
+                  <button
+                    type="button"
+                    className="text-button"
+                    disabled={busy || !detailsProject}
+                    onClick={() =>
+                      detailsProject &&
+                      void run(async () => {
+                        await duplicateDrill(detailsProject, false);
+                        setDialog(null);
+                      })
+                    }
+                  >
+                    <Copy size={15} /> Duplicate drill
+                  </button>
                 </>
               )}
               <div className="modal-actions">
@@ -938,7 +981,10 @@ export default function App() {
                     type="button"
                     className="text-button danger"
                     disabled={busy}
-                    onClick={() => void run(deleteCurrent)}
+                    onClick={() =>
+                      detailsProject &&
+                      void run(() => deleteDrill(detailsProject))
+                    }
                   >
                     <Trash2 size={14} /> Delete drill
                   </button>

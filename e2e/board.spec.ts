@@ -147,7 +147,6 @@ test("nested folders, drill metadata, binary assets, import, and duplication", a
   });
   await expect(page.locator(".drill-card")).toHaveCount(3);
   await expect(page.locator("#tactical-canvas image")).toHaveCount(1);
-  await page.getByRole("button", { name: "More actions", exact: true }).click();
   await page.getByRole("button", { name: "Duplicate", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Wing overload (copy)" }),

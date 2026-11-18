@@ -18,6 +18,7 @@ export function LibraryExplorer({
   onFolder,
   onProject,
   onManage,
+  onManageProject,
   onClose,
   busy,
   error,
@@ -32,6 +33,7 @@ export function LibraryExplorer({
   onFolder: (id: string | null) => void;
   onProject: (project: DrillProject) => void;
   onManage: (folder: FolderNode) => void;
+  onManageProject: (project: DrillProject) => void;
   onClose: () => void;
   busy: boolean;
   error: string | null;
@@ -153,6 +155,7 @@ export function LibraryExplorer({
               onFolder={selectFolder}
               onProject={onProject}
               onManage={onManage}
+              onManageProject={onManageProject}
               query={query}
               view={view}
               busy={busy}

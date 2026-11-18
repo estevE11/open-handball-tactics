@@ -101,6 +101,199 @@ async function seedLibrary(page: Page) {
   await page.getByLabel("Toggle library").click();
 }
 
+test("sidebar drill menus edit, move, duplicate and delete the chosen drill without changing the active board", async ({
+  page,
+}) => {
+  await seedLibrary(page);
+  const sidebar = page.locator("#library-sidebar");
+  await sidebar
+    .locator(".drill-card")
+    .filter({ hasText: "Build the attack" })
+    .click();
+  await page.getByLabel("Toggle library").click();
+  const header = page.locator(".topbar h1");
+  const details = page.getByRole("dialog", {
+    name: "Drill details",
+    exact: true,
+  });
+  await sidebar
+    .getByRole("button", { name: "Manage drill Parent drill", exact: true })
+    .click();
+  await expect(header).toHaveText("Build the attack");
+  await expect(details.getByLabel("Name", { exact: true })).toHaveValue(
+    "Parent drill",
+  );
+  await details.getByLabel("Name", { exact: true }).fill("Edited parent");
+  await details
+    .getByRole("combobox", { name: "Folder", exact: true })
+    .selectOption("other");
+  await details.getByLabel("Tags", { exact: true }).fill("U17, Defense");
+  await details
+    .getByRole("textbox", { name: "Coaching notes", exact: true })
+    .fill("Keep the wings wide.");
+  await details
+    .getByRole("button", { name: "Save changes", exact: true })
+    .click();
+  await expect(details).not.toBeVisible();
+  await expect(header).toHaveText("Build the attack");
+  await sidebar
+    .getByRole("button", { name: "Manage drill Edited parent", exact: true })
+    .click();
+  await details
+    .getByRole("button", { name: "Duplicate drill", exact: true })
+    .click();
+  await expect(details).not.toBeVisible();
+  await expect(header).toHaveText("Build the attack");
+  await sidebar
+    .getByRole("button", {
+      name: "Manage drill Edited parent (copy)",
+      exact: true,
+    })
+    .click();
+  await expect(
+    details.getByRole("combobox", { name: "Folder", exact: true }),
+  ).toHaveValue("other");
+  await expect(details.getByLabel("Tags", { exact: true })).toHaveValue(
+    "U17, Defense",
+  );
+  await expect(
+    details.getByRole("textbox", { name: "Coaching notes", exact: true }),
+  ).toHaveValue("Keep the wings wide.");
+  await page.screenshot({ path: "test-results/sidebar-drill-actions.png" });
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await details
+    .getByRole("button", { name: "Delete drill", exact: true })
+    .click();
+  await expect(details).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await details
+    .getByRole("button", { name: "Delete drill", exact: true })
+    .click();
+  await expect(details).not.toBeVisible();
+  await expect(
+    sidebar.getByRole("button", {
+      name: "Manage drill Edited parent (copy)",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await expect(
+    sidebar.getByRole("button", {
+      name: "Manage drill Edited parent",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(header).toHaveText("Build the attack");
+  await page.reload();
+  await page.getByLabel("Toggle library").click();
+  await sidebar
+    .getByRole("button", { name: "Manage drill Edited parent", exact: true })
+    .click();
+  await expect(
+    details.getByRole("combobox", { name: "Folder", exact: true }),
+  ).toHaveValue("other");
+  await expect(details.getByLabel("Tags", { exact: true })).toHaveValue(
+    "U17, Defense",
+  );
+});
+
+test("deleting the active last drill through its sidebar menu leaves a usable board", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Toggle library").click();
+  await page
+    .getByRole("button", { name: "Manage drill Build the attack", exact: true })
+    .click();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("dialog", { name: "Drill details", exact: true })
+    .getByRole("button", { name: "Delete drill", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".topbar h1")).toHaveText("Untitled drill");
+  await expect(page.getByLabel("Interactive handball court")).toBeVisible();
+});
+
+for (const width of [1440, 390]) {
+  test(`${width}px explorer drill menus manage non-active drills in both grid and list views`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await seedLibrary(page);
+    const sidebar = page.locator("#library-sidebar");
+    await sidebar
+      .locator(".drill-card")
+      .filter({ hasText: "Build the attack" })
+      .click();
+    await page.getByLabel("Toggle library").click();
+    await page.getByLabel("Open library explorer", { exact: true }).click();
+    const explorer = page.getByRole("dialog", {
+      name: "Library explorer",
+      exact: true,
+    });
+    const details = page.getByRole("dialog", {
+      name: "Drill details",
+      exact: true,
+    });
+    let title = "Parent drill";
+    for (const view of ["Grid", "List"]) {
+      await explorer.getByLabel(`${view} view`, { exact: true }).click();
+      await explorer
+        .getByRole("button", { name: `Manage drill ${title}`, exact: true })
+        .click();
+      title = `${view} edited`;
+      await details.getByLabel("Name", { exact: true }).fill(title);
+      await details
+        .getByRole("combobox", { name: "Folder", exact: true })
+        .selectOption("other");
+      await details
+        .getByRole("button", { name: "Save changes", exact: true })
+        .click();
+      await expect(explorer).toBeVisible();
+      await expect(page.locator(".topbar h1")).toHaveText("Build the attack");
+      await explorer
+        .getByRole("button", { name: `Manage drill ${title}`, exact: true })
+        .click();
+      await page.screenshot({
+        path: `test-results/explorer-drill-actions-${width}-${view}.png`,
+      });
+      await details
+        .getByRole("button", { name: "Duplicate drill", exact: true })
+        .click();
+      await expect(explorer).toBeVisible();
+      await explorer
+        .getByRole("button", {
+          name: `Manage drill ${title} (copy)`,
+          exact: true,
+        })
+        .click();
+      page.once("dialog", (dialog) => dialog.accept());
+      await details
+        .getByRole("button", { name: "Delete drill", exact: true })
+        .click();
+      await expect(explorer).toBeVisible();
+      await expect(
+        explorer.getByRole("button", {
+          name: `Manage drill ${title} (copy)`,
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      await expect(
+        explorer.getByRole("button", {
+          name: `Manage drill ${title}`,
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(page.locator(".topbar h1")).toHaveText("Build the attack");
+    }
+    expect(
+      await explorer.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth + 1,
+      ),
+    ).toBe(true);
+  });
+}
+
 test("sidebar shows only the current path, lists child folders first, and has one New drill action", async ({
   page,
 }) => {
@@ -273,7 +466,10 @@ test("mobile dark explorer keeps list/grid and the complete tree usable without 
   await page
     .getByLabel("Close library", { exact: true })
     .click({ position: { x: 385, y: 400 } });
-  await page.getByLabel("Switch to dark mode", { exact: true }).click();
+  await page.getByRole("button", { name: "More actions", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Switch to dark mode", exact: true })
+    .click();
   await page.getByLabel("Toggle library", { exact: true }).click();
   await page.getByLabel("Open library explorer", { exact: true }).click();
   const explorer = page.getByRole("dialog", {
